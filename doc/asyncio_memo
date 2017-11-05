@@ -1,0 +1,6 @@
+---------------------------------------------------------------
+To enable all debug checks for an application:
+
+    Enable the asyncio debug mode globally by setting the environment variable PYTHONASYNCIODEBUG to 1, or by calling AbstractEventLoop.set_debug().
+    Set the log level of the asyncio logger to logging.DEBUG. For example, call logging.basicConfig(level=logging.DEBUG) at startup.
+    Configure the warnings module to display ResourceWarning warnings. For example, use the -Wdefault command line option of Python to display them.

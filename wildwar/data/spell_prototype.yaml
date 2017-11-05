@@ -1,0 +1,7 @@
+# -*- coding: utf-8 -*-
+
+meteorite:
+  name: "隕石衝突"
+  cost: 3
+  target: "all"
+  description: "盤上の全てのUnitを破壊する"
