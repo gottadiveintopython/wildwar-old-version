@@ -1,39 +1,18 @@
 # -*- coding: utf-8 -*-
 
-__all__ = ('AutoLabel', 'StencilAll', )
+__all__ = ('fadeout_widget', 'AutoLabel', 'StencilAll', )
 
 
 import kivy
 kivy.require(r'1.10.0')
 from kivy.factory import Factory
-from kivy.lang import Builder
+# from kivy.lang import Builder
 # from kivy.clock import Clock
 from kivy.animation import Animation
-from kivy.properties import (
-    NumericProperty, StringProperty, ObjectProperty,
-    ListProperty
-)
-
-from kivy.garden.magnet import Magnet
 
 import setup_logging
 logger = setup_logging.get_logger(__name__)
 from adjustfontsizebehavior import AdjustFontsizeBehavior
-
-
-Builder.load_string(r'''
-<NotificationWidget>:
-    layout: id_layout
-    font_size: 30
-    do_scroll_x: False
-    do_scroll_y: True
-    BoxLayout:
-        id: id_layout
-        orientation: 'vertical'
-        spacing: 1
-        size_hint_y: None
-        height: self.minimum_height
-''')
 
 
 def fadeout_widget(widget, *, duration=1.3, transition='in_cubic'):
