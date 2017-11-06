@@ -3,3 +3,9 @@
 TimerWidget
 
 localize_str()を実装
+
+garden系のmoduleはrepositoryに含めてしまう
+
+cardbattle_gui.pyのサイズが大きすぎるので複数ファイルに分割する
+
+notificater/__init__.py

@@ -19,8 +19,8 @@ from kivy.factory import Factory
 import setup_logging
 logger = setup_logging.get_logger(__name__)
 import set_default_font_to_japanese
-from cardbattle_gui import CardBattleMain
-import cardbattle_core
+from cardbattle_client import CardBattleMain
+import cardbattle_server
 
 DATA_ROOT_DIR = os.path.join(
     os.path.dirname(sys.modules[__name__].__file__), 'data')
@@ -28,17 +28,17 @@ DATA_ROOT_DIR = os.path.join(
 
 def run_server_thread(**kwargs):
 
-    dealer = cardbattle_core.Dealer(
+    server = cardbattle_server.Server(
         data_dir=DATA_ROOT_DIR,
         n_tefuda_init=4,
         max_tefuda=8,
         board_size=(5, 5,),
         timeout=8,
         how_to_decide_player_order="random",
-        func_create_deck=cardbattle_core.RandomDeckCreater(n_cards=10),
+        func_create_deck=cardbattle_server.RandomDeckCreater(n_cards=10),
         **kwargs)
     thread = threading.Thread(
-        target=dealer.run,
+        target=server.run,
         name='server_thread',
         daemon=True,
     )
@@ -54,11 +54,11 @@ class DemoApp(App):
         return root
 
     def on_start(self):
-        senders, recievers = [], []
-        for child in self.root.children:
-            senders.append(child.create_sender())
-            recievers.append(child.create_reciever())
-            child.on_start()
+        children = self.root.children
+        senders = (child.get_sender() for child in children)
+        recievers = (child.get_reciever() for child in children)
+        children[0].on_start()
+        children[1].on_start()
         run_server_thread(senders=senders, recievers=recievers)
 
 

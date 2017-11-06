@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
-__all__ = ('Dealer', 'RandomDeckCreater', )
+__all__ = ('Server', 'RandomDeckCreater', )
 
 import os.path
 import random
 import time
 import itertools
-from json import JSONDecodeError
 
 import yaml
 
@@ -160,7 +159,7 @@ def untrusted_json_to_smartobject(json_str):
     return None
 
 
-class Dealer:
+class Server:
 
     # def __init__(
     #         self, *,
@@ -185,7 +184,7 @@ class Dealer:
         func_judge  # 勝敗判定を行うcallable
         func_create_deck  # 山札を作るcallable
         '''
-        self.senders = senders
+        self.sender_list = list(senders)
         self.board_size = board_size
         self.timeout = timeout
         self.n_tefuda_init = n_tefuda_init
@@ -247,11 +246,11 @@ class Dealer:
         )
 
     def run(self):
-        senders = self.senders
+        sender_list = self.sender_list
         for command in self.corerun():
             json_command = command.so_to_json(indent=2)
             logger.debug(json_command)
-            for sender in senders:
+            for sender in sender_list:
                 if (
                         command.send_to == '$all' or
                         command.send_to == sender.player_id):

@@ -5,21 +5,16 @@ __all__ = ('CardBattleMain', )
 import queue
 
 import yaml
-
 import kivy
 kivy.require(r'1.10.0')
 from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.factory import Factory
-from kivy.utils import get_color_from_hex
-# from kivy.factory import Factory
 from kivy.resources import resource_find
 from kivy.properties import (
     ObjectProperty, NumericProperty, StringProperty, ListProperty,
     BooleanProperty
 )
-# from kivy.graphics import Color, Line
-from kivy.animation import Animation
 
 import setup_logging
 logger = setup_logging.get_logger(__name__)
@@ -27,71 +22,15 @@ from smartobject import SmartObject
 # from dragrecognizer import DragRecognizer
 from magnetacrosslayout import MagnetAcrossLayout
 from basicwidgets import fadeout_widget, AutoLabel
-from tefudalayout import TefudaLayout
 from notificater import Notificater
+from .cardbattleplayer import Player, CardBattlePlayer
+from .card import UnknownCard, UnitCard, SpellCard
 
 
 Builder.load_string(r"""
 #:kivy 1.10.0
 
 #:set OVERLAY_COLOR_DICT { r'normal': [0, 0, 0, 0], r'down': [1, 1, 1, 0.15], }
-
-<UnknownCard>:
-    canvas.before:
-        Color:
-            rgba: 0.3, 0.3, 0.3, 1
-        RoundedRectangle
-            size: self.width, self.height
-            pos: 0, 0
-        RoundedRectangle
-            source: 'back_side.jpg'
-            size: self.width - 4, self.height - 4
-            pos: 2, 2
-
-<SpellCard,UnitCard>:
-    canvas.before:
-        Color:
-            rgba: 0.3, 0.3, 0.3, 1
-        RoundedRectangle
-            size: self.width, self.height
-            pos: 0, 0
-        Color:
-            rgba: self.background_color
-        RoundedRectangle
-            size: self.width - 4, self.height - 4
-            pos: 2, 2
-
-<SpellCard>:
-    Image:
-        source: root.imagefile
-    AutoLabel:
-        pos_hint: {'x': 0, 'top': 1}
-        size_hint: 0.2, 0.2
-        bold: True
-        text: str(root.spell_data.cost)
-
-<UnitCard>:
-    Image:
-        source: root.imagefile
-    AutoLabel:
-        pos_hint: {'x': 0, 'top': 1}
-        size_hint: 0.2, 0.2
-        bold: True
-        text: str(root.unit_data.cost)
-    BoxLayout:
-        size_hint: 1, 0.2
-        AutoLabel:
-            bold: True
-            id: id_label_attack
-            text: str(root.attack) if root.attack != 0 else ''
-        AutoLabel:
-            bold: True
-            id: id_label_power
-            text: str(root.power)
-        AutoLabel:
-            bold: True
-            id: id_label_defense
-            text: str(root.defense) if root.defense != 0 else ''
 
 <Cell>:
     canvas:
@@ -105,43 +44,6 @@ Builder.load_string(r"""
         Rectangle:
             pos: self.pos
             size: self.size
-
-<CardBattlePlayer>:
-    canvas.before:
-        Color:
-            rgba: .2, .2, .2, 1
-        Line:
-            rectangle: [*self.pos, *self.size]
-    BoxLayout:
-        orientation: 'horizontal'
-        pos_hint: {'x': 0, 'y': 0}
-        FloatLayout:
-            size_hint_x: 0.8
-            TefudaLayout:
-                id: id_tefuda
-                size_hint: 0.9, 0.9
-                child_aspect_ratio: 0.7
-                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-        BoxLayout:
-            size_hint_x: 0.2
-            orientation: 'vertical'
-            # id: id_status
-            AutoLabel:
-                size_hint_y: 1.7
-                # bold: True
-                text: root.id
-            BoxLayout:
-                Image:
-                    source: 'icon_cost.png'
-                AutoLabel:
-                    id: id_label_cost
-                    text: '{}/{}'.format(str(root.cost), str(root.max_cost))
-            BoxLayout:
-                Image:
-                    source: 'icon_deck.png'
-                AutoLabel:
-                    id: id_label_deck
-                    text: str(root.n_cards_in_deck)
 
 <CardBattleBoardsParent@FloatLayout+StencilAll>:
 
@@ -187,10 +89,7 @@ def copy_dictionary(dictionary, *, keys_exclude):
 
 
 def replace_widget(old, new):
-    r'''Widgetを入れ替える
-
-    old.parentは非None、new.parentはNoneでなければならない
-    '''
+    r'''old.parentは非None、new.parentはNoneでなければならない'''
     assert old.parent is not None
     assert new.parent is None
     new.pos = old.pos
@@ -203,19 +102,6 @@ def replace_widget(old, new):
     parent.add_widget(new, index=index)
 
 
-# def fadeout_widget(widget, *, duration=1, transition='in_cubic'):
-#     def start_animation(dt):
-#         def on_complete(animation, widget):
-#             widget.parent.remove_widget(widget)
-#         animation = Animation(
-#             duration=duration,
-#             transition=transition,
-#             opacity=0)
-#         animation.bind(on_complete=on_complete)
-#         animation.start(widget)
-#     Clock.schedule_once(start_animation, 0)
-
-
 def bring_widget_to_front(widget):
     parent = widget.parent
     parent.remove_widget(widget)
@@ -225,54 +111,6 @@ def bring_widget_to_front(widget):
 class GameState(Factory.EventDispatcher):
     nth_turn = NumericProperty()
     is_myturn = BooleanProperty()
-
-
-class Player(Factory.EventDispatcher):
-    id = StringProperty()
-    cost = NumericProperty()
-    max_cost = NumericProperty()
-    n_cards_in_deck = NumericProperty()
-    tefuda = ListProperty()
-    color = ListProperty()
-
-
-class UnknownCard(Factory.RelativeLayout):
-    pass
-
-
-class UnitCard(Factory.RelativeLayout):
-
-    unit_data = ObjectProperty()
-    imagefile = StringProperty()
-    background_color = ListProperty((0, 0, 0, 0, ))
-    power = NumericProperty()
-    attack = NumericProperty()
-    defense = NumericProperty()
-
-    def __init__(self, *, unit_data, **kwargs):
-        super().__init__(unit_data=unit_data, **kwargs)
-        self.power = unit_data.power
-        self.attack = unit_data.attack
-        self.defense = unit_data.defense
-
-
-for _name in r'id name skills tags cost'.split():
-    setattr(UnitCard, _name, property(
-        lambda self, _name=_name: getattr(self.unit_data, _name)
-    ))
-
-
-class SpellCard(Factory.RelativeLayout):
-
-    spell_data = ObjectProperty()
-    imagefile = StringProperty()
-    background_color = ListProperty((0, 0, 0, 0, ))
-
-
-for _name in r'id name cost description'.split():
-    setattr(SpellCard, _name, property(
-        lambda self, _name=_name: getattr(self.spell_data, _name)
-    ))
 
 
 class Cell(Factory.ButtonBehavior, Factory.FloatLayout):
@@ -362,74 +200,6 @@ class BoardWidget(Factory.GridLayout):
             logger.critical(r"Property 'rows' has changed after __init__().")
 
 
-class CardBattlePlayer(Factory.FloatLayout):
-    id = StringProperty()
-    cost = NumericProperty()
-    max_cost = NumericProperty()
-    n_cards_in_deck = NumericProperty()
-    color = ListProperty()
-
-    unused_property_names = ('tefuda', )
-
-    def __init__(self, *, player, **kwargs):
-        super().__init__(
-            id=player.id,
-            cost=player.cost,
-            max_cost=player.max_cost,
-            n_cards_in_deck=player.n_cards_in_deck,
-            color=player.color,
-            **kwargs)
-        player.bind(
-            id=self.setter('id'),
-            cost=self.on_cost_changed,
-            max_cost=self.on_cost_changed,
-            n_cards_in_deck=self.on_n_deck_changed,
-            color=self.setter('color'))
-
-    def on_cost_changed(self, player, value):
-        label = self.ids.id_label_cost
-        self.cost = player.cost
-        self.max_cost = player.max_cost
-        animation = getattr(self, '_cost_animation', None)
-        # costが最大値を上回っていないなら白色で非点滅
-        if player.cost <= player.max_cost:
-            if animation is not None:
-                label.color = get_color_from_hex('#ffffff')
-                animation.stop(label)
-                self._cost_animation = None
-        # costが最大値を上回っているなら赤色で点滅
-        elif animation is None:
-            label.color = get_color_from_hex('#ff2222')
-            animation = Animation(
-                opacity=0,
-                duration=0.8,
-                transition='in_cubic') + Animation(
-                    opacity=1,
-                    duration=0.8,
-                    transition='out_cubic')
-            animation.repeat = True
-            animation.start(label)
-            self._cost_animation = animation
-
-    def on_n_deck_changed(self, player, value):
-        label = self.ids.id_label_deck
-
-        def on_fadeout_complete(animation, widget):
-            self.n_cards_in_deck = value
-            animation_fadein = Animation(
-                opacity=1,
-                duration=0.1,
-                transition='linear')
-            animation_fadein.start(label)
-
-        animation_fadeout = Animation(
-            opacity=0,
-            duration=0.1,
-            transition=r'linear')
-        animation_fadeout.bind(on_complete=on_fadeout_complete)
-        animation_fadeout.start(label)
-
-
 class QueueReciever:
 
     def __init__(self, *, player_id, queue_instance):
@@ -469,12 +239,12 @@ class CardBattleMain(Factory.RelativeLayout):
         self.gamestate = GameState(
             nth_turn=0, is_myturn=False)
 
-    def create_reciever(self):
+    def get_reciever(self):
         return QueueReciever(
             player_id=self.player_id,
             queue_instance=self.outqueue)
 
-    def create_sender(self):
+    def get_sender(self):
         return QueueSender(
             player_id=self.player_id,
             queue_instance=self.inqueue)
