@@ -236,6 +236,7 @@ class Server:
                     prototype_dict=prototype_dict))
             for reciever, color in zip(reciever_list, player_colors)
         ]
+        self.player_dict = {player.id: player for player in self.player_list}
 
         # ----------------------------------------------------------------------
         # Board
@@ -256,6 +257,22 @@ class Server:
                         command.send_to == '$all' or
                         command.send_to == sender.player_id):
                     sender.send(json_command)
+
+    def draw_card(self, player):
+        card = player.draw_card()
+        if card is not None:
+            yield SmartObject(
+                klass='Command',
+                type='set_card_info',
+                send_to=player.id,
+                params=SmartObject(card=card)
+            )
+            yield SmartObject(
+                klass='Command',
+                type='draw',
+                send_to='$all',
+                params=SmartObject(drawer_id=player.id, card_id=card.id)
+            )
 
     def corerun(self):
         prototype_dict = self.prototype_dict
@@ -284,20 +301,7 @@ class Server:
         # ----------------------------------------------------------------------
         for player in player_list:
             for i in range(self.n_tefuda_init):
-                card = player.draw_card()
-                if card is not None:
-                    yield SmartObject(
-                        klass='Command',
-                        type='set_card_info',
-                        send_to=player.id,
-                        params=SmartObject(card=card)
-                    )
-                    yield SmartObject(
-                        klass='Command',
-                        type='draw',
-                        send_to='$all',
-                        params=SmartObject(drawer_id=player.id, card_id=card.id)
-                    )
+                yield from self.draw_card(player)
 
         # ----------------------------------------------------------------------
         # 各PlayerのTurnを回すLoop
@@ -310,6 +314,7 @@ class Server:
 
         # Main Loop
         for reciever in itertools.cycle(self.reciever_list):
+            player = self.player_dict[reciever.player_id]
             nth_turn += 1
             yield SmartObject(
                 klass='Command',
@@ -319,6 +324,7 @@ class Server:
                     nth_turn=nth_turn,
                     player_id=reciever.player_id)
             )
+            yield from self.draw_card(player)
             time_limit = time.time() + actual_timeout
             # print('time_limit:', time_limit)
             try:
