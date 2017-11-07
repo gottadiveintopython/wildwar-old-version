@@ -149,7 +149,7 @@ def untrusted_json_to_smartobject(json_str):
             obj.klass == 'Command' and
             isinstance(obj.type, str) and
             (obj.params is None or isinstance(obj.params, SmartObject)) and
-            isinstance(obj.current_turn, int)
+            isinstance(obj.nth_turn, int)
         ):
             return obj
     except Exception as e:
@@ -202,7 +202,7 @@ class Server:
             os.path.join(data_dir, 'spell_prototype.yaml')
         )
         if set(unit_prototype_dict.keys()) & set(spell_prototype_dict.keys()):
-            logger.critical('Server: unitとspellのidに被りがあります')
+            logger.critical('[S] unitとspellのidに被りがあります')
             return
         prototype_dict = {**unit_prototype_dict, **spell_prototype_dict, }
         self.unit_prototype_dict = unit_prototype_dict
@@ -249,6 +249,7 @@ class Server:
         sender_list = self.sender_list
         for command in self.corerun():
             json_command = command.so_to_json(indent=2)
+            logger.debug('[S] SERVER COMMAND')
             logger.debug(json_command)
             for sender in sender_list:
                 if (
@@ -261,7 +262,7 @@ class Server:
         board_size = self.board_size
         player_list = self.player_list
 
-        current_turn = 0
+        nth_turn = 0
 
         # ----------------------------------------------------------------------
         # Game開始の合図
@@ -270,7 +271,6 @@ class Server:
             klass='Command',
             type='game_begin',
             send_to='$all',
-            current_turn=current_turn,
             params=SmartObject(
                 prototype_dict=prototype_dict,
                 timeout=self.timeout,
@@ -310,13 +310,14 @@ class Server:
 
         # Main Loop
         for reciever in itertools.cycle(self.reciever_list):
-            current_turn += 1
+            nth_turn += 1
             yield SmartObject(
                 klass='Command',
                 type='turn_begin',
                 send_to='$all',
-                current_turn=current_turn,
-                params=SmartObject(player_id=reciever.player_id)
+                params=SmartObject(
+                    nth_turn=nth_turn,
+                    player_id=reciever.player_id)
             )
             time_limit = time.time() + actual_timeout
             # print('time_limit:', time_limit)
@@ -329,10 +330,11 @@ class Server:
                             reciever.recieve(timeout=time_limit - current_time))
                         if command is None:
                             continue
-                        if command.current_turn != current_turn:
+                        if command.nth_turn != nth_turn:
                             logger.debug(
-                                '[S] current_turn unmatched. ({} != {})'.format(
-                                    current_turn, command.current_turn))
+                                '[S] nth_turn unmatched. ({} != {})'.format(
+                                    nth_turn, command.nth_turn))
+                            logger.debug(str(command))
                             continue
                         # logger.debug(command)
                         if command.type not in CLIENT_COMMANDS:
@@ -343,7 +345,7 @@ class Server:
                             command_handler = getattr(
                                 self, 'on_command_' + command.type)
                             command_handler(
-                                current_turn=current_turn,
+                                nth_turn=nth_turn,
                                 params=command.params)
                         # elif command.type == 'turn_end':
                         #     raise TurnEnd()
@@ -360,10 +362,9 @@ class Server:
                     klass='Command',
                     type='notification',
                     send_to=reciever.player_id,
-                    current_turn=current_turn,
                     params=SmartObject(
                         message="Time's up.",
-                        type='warning'),
+                        type='information'),
                 )
             except TurnEnd:
                 pass
@@ -372,6 +373,8 @@ class Server:
                     klass='Command',
                     type='turn_end',
                     send_to='$all',
-                    current_turn=current_turn,
-                    params=None
+                    params=SmartObject(nth_turn=nth_turn)
                 )
+
+    def on_command_turn_end(self, *, nth_turn, params):
+        raise TurnEnd()

@@ -1,2 +1,2 @@
-pip install pyyaml kivy 
-garden install magnet
+pyyaml
+kivy

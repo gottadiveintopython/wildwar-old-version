@@ -25,6 +25,7 @@ from basicwidgets import fadeout_widget, AutoLabel
 from notificater import Notificater
 from .cardbattleplayer import Player, CardBattlePlayer
 from .card import UnknownCard, UnitCard, SpellCard
+from .timer import Timer
 
 
 Builder.load_string(r"""
@@ -51,15 +52,27 @@ Builder.load_string(r"""
     card_layer: id_card_layer
     message_layer: id_message_layer
     notificater: id_notificater
+    timer: id_timer
     BoxLayout:
         orientation: 'vertical'
         Widget:
             id: id_playerwidget_enemy
             size_hint_y: 0.15
-        CardBattleBoardsParent:
-            id: id_boards_parent
+        BoxLayout:
+            orientation: 'horizontal'
             size_hint_y: 0.7
-            size_hint_x: 0.8
+            CardBattleBoardsParent:
+                id: id_boards_parent
+                size_hint_x: 0.8
+            RelativeLayout:
+                size_hint_x: 0.2
+                Timer:
+                    id: id_timer
+                    line_width: 5
+                AutoLabel:
+                    size_hint: 0.5, 0.5
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5, }
+                    text: 'Turn\n  ' + str(root.gamestate.nth_turn)
         Widget:
             id: id_playerwidget_mine
             size_hint_y: 0.15
@@ -230,14 +243,39 @@ class CardBattleMain(Factory.RelativeLayout):
     card_layer = ObjectProperty()
     message_layer = ObjectProperty()
     notificater = ObjectProperty()
+    timer = ObjectProperty()
+    # gamestate = ObjectProperty()
 
     def __init__(self, *, player_id, inqueue=None, outqueue=None, **kwargs):
+        self.gamestate = GameState(
+            nth_turn=0, is_myturn=False)
         super().__init__(**kwargs)
         self.inqueue = queue.Queue() if inqueue is None else inqueue
         self.outqueue = queue.Queue() if outqueue is None else outqueue
         self.player_id = player_id
-        self.gamestate = GameState(
-            nth_turn=0, is_myturn=False)
+        self.timer.bind(int_current_time=self.on_timer_tick)
+
+    def on_timer_tick(self, timer, seconds):
+        time_limit = timer.time_limit
+        if self.gamestate.is_myturn:
+            if seconds >= time_limit:
+                self.send_command(
+                    type='turn_end',
+                    params=None)
+            elif seconds == time_limit - 5:
+                timer.color = (1, 0, 0, 1, )
+                self.on_command_notification(params=SmartObject(
+                    message=localize_str('残り5秒'), type='warning'))
+
+    def send_command(self, *, type, params):
+        json_command = SmartObject(
+            klass='Command',
+            type=type,
+            nth_turn=self.gamestate.nth_turn,
+            params=params).so_to_json(indent=2)
+        logger.debug('[C] CLIENT COMMAND')
+        logger.debug(json_command)
+        self.outqueue.put(json_command)
 
     def get_reciever(self):
         return QueueReciever(
@@ -273,6 +311,11 @@ class CardBattleMain(Factory.RelativeLayout):
             pass
 
     def on_command_game_begin(self, params):
+        if hasattr(self, '_on_command_game_begin_called'):
+            logger.critical("[C] Don't call on_command_game_begin twice.")
+            return
+        self._on_command_game_begin_called = True
+
         self.prototype_dict = params.prototype_dict.__dict__.copy()
         with open(
                 resource_find('imagefile_dict.yaml'),
@@ -307,29 +350,38 @@ class CardBattleMain(Factory.RelativeLayout):
             pos_hint={'center_y': 0.5, 'center_x': 0.5}
         )
         self.ids.id_boards_parent.add_widget(self.board)
+        self.timer.time_limit = params.timeout
 
     def on_command_turn_begin(self, params):
+        gamestate = self.gamestate
         is_myturn = params.player_id == self.player_id
-        self.gamestate.is_myturn = is_myturn
+        gamestate.is_myturn = is_myturn
+        gamestate.nth_turn = params.nth_turn
         label = AutoLabel(
             text=(
                 localize_str('あなたの番') if is_myturn
-                else localize_str('相手の番')),
+                else localize_str(' 相手の番 ')),
             color=(0, 0, 0, 1),
             outline_color=(1, 1, 1, ),
             outline_width=3,
         )
         self.message_layer.add_widget(label)
         fadeout_widget(label)
+        self.timer.color = (1, 1, 1, 1, )
+        self.timer.start()
 
     def on_command_turn_end(self, params):
+        gamestate = self.gamestate
+        if gamestate.nth_turn != params.nth_turn:
+            logger.critical("[C] 'nth_turn' mismatched on 'on_command_turn_end'.")
         self.gamestate.is_myturn = False
+        self.timer.stop()
 
     def on_command_notification(self, params):
         self.notificater.add_notification(
             text=params.message,
             icon_key=params.type,
-            duration=4)
+            duration=3)
 
     def on_command_draw(self, params):
         r'''drawは「描く」ではなく「(カードを)引く」の意'''
