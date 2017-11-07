@@ -7,6 +7,7 @@ import os.path
 
 import kivy
 kivy.require(r'1.10.0')
+from kivy.core.audio import SoundLoader
 from kivy.atlas import Atlas
 from kivy.factory import Factory
 from kivy.lang import Builder
@@ -19,9 +20,9 @@ from kivy.properties import (
 
 from kivy.garden.magnet import Magnet
 
-
-ATLAS_PATH = os.path.join(
-    os.path.dirname(sys.modules[__name__].__file__), 'notificater-icons.atlas')
+DATA_ROOT = os.path.dirname(sys.modules[__name__].__file__)
+ATLAS_PATH = os.path.join(DATA_ROOT, 'notificater-icons.atlas')
+SOUND_PATH = os.path.join(DATA_ROOT, 'se_maoudamashii_system41.ogg')
 
 
 def fadeout_widget(widget, *, duration=4, transition='in_cubic'):
@@ -91,6 +92,7 @@ class Notificater(Factory.BoxLayout, Factory.StencilView):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.icon_texture_dict = Atlas(ATLAS_PATH).textures
+        self.sound = SoundLoader.load(SOUND_PATH)
 
     def add_notification(
             self, *,
@@ -114,6 +116,10 @@ class Notificater(Factory.BoxLayout, Factory.StencilView):
         item.bind(height=magnet.setter('height'))
         magnet.add_widget(item)
         self.add_widget(magnet)
+        sound = self.sound
+        if sound.state == 'play':
+            sound.stop()
+        sound.play()
         Clock.schedule_once(
             lambda __: fadeout_widget(magnet, duration=2),
             duration)
