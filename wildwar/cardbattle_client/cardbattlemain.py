@@ -25,7 +25,7 @@ from magnetacrosslayout import MagnetAcrossLayout
 from basicwidgets import fadeout_widget, AutoLabel
 from notificater import Notificater
 from .cardbattleplayer import Player, CardBattlePlayer
-from .card import UnknownCard, UnitCard, SpellCard
+from .card import UnknownCard, UnitPrototypeCard, SpellCard
 from .timer import Timer
 
 
@@ -401,7 +401,7 @@ class CardBattleMain(Factory.RelativeLayout):
             prototype = self.prototype_dict[prototype_id]
             # print(prototype)
             if prototype.klass == 'UnitPrototype':
-                card = UnitCard(
+                card = UnitPrototypeCard(
                     prototype=prototype,
                     background_color=self.player_dict[self.player_id].color,
                     imagefile=self.imagefile_dict[prototype_id],
