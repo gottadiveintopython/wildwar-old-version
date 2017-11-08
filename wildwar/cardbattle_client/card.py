@@ -50,7 +50,7 @@ Builder.load_string(r"""
         pos_hint: {'x': 0, 'top': 1}
         size_hint: 0.2, 0.2
         bold: True
-        text: str(root.spell_data.cost)
+        text: str(root.prototype.cost)
 
 <UnitCard>:
     Image:
@@ -59,7 +59,7 @@ Builder.load_string(r"""
         pos_hint: {'x': 0, 'top': 1}
         size_hint: 0.2, 0.2
         bold: True
-        text: str(root.unit_data.cost)
+        text: str(root.prototype.cost)
     BoxLayout:
         size_hint: 1, 0.2
         AutoLabel:
@@ -84,34 +84,34 @@ class UnknownCard(Factory.RelativeLayout):
 
 class UnitCard(Factory.RelativeLayout):
 
-    unit_data = ObjectProperty()
+    prototype = ObjectProperty()
     imagefile = StringProperty()
     background_color = ListProperty((0, 0, 0, 0, ))
     power = NumericProperty()
     attack = NumericProperty()
     defense = NumericProperty()
 
-    def __init__(self, *, unit_data, **kwargs):
-        super().__init__(unit_data=unit_data, **kwargs)
-        self.power = unit_data.power
-        self.attack = unit_data.attack
-        self.defense = unit_data.defense
+    def __init__(self, *, prototype, **kwargs):
+        super().__init__(prototype=prototype, **kwargs)
+        self.power = prototype.power
+        self.attack = prototype.attack
+        self.defense = prototype.defense
 
 
 for _name in r'id name skills tags cost'.split():
     setattr(UnitCard, _name, property(
-        lambda self, _name=_name: getattr(self.unit_data, _name)
+        lambda self, _name=_name: getattr(self.prototype, _name)
     ))
 
 
 class SpellCard(Factory.RelativeLayout):
 
-    spell_data = ObjectProperty()
+    prototype = ObjectProperty()
     imagefile = StringProperty()
     background_color = ListProperty((0, 0, 0, 0, ))
 
 
 for _name in r'id name cost description'.split():
     setattr(SpellCard, _name, property(
-        lambda self, _name=_name: getattr(self.spell_data, _name)
+        lambda self, _name=_name: getattr(self.prototype, _name)
     ))

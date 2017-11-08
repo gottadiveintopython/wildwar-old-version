@@ -100,7 +100,7 @@ class CardFactory:
         return card
 
 
-class UnitFactory:
+class UnitInstanceFactory:
 
     def __init__(self, prototype_dict):
         self.prototype_dict = prototype_dict
@@ -128,14 +128,26 @@ class UnitFactory:
 
 class RandomDeckCreater:
 
-    def __init__(self, *, n_cards):
+    def __init__(self, *, n_cards, unit_ratio=0.8):
         self.n_cards = n_cards
+        self.unit_ratio = unit_ratio
 
-    def __call__(self, *, player_id, card_factory, prototype_dict):
-        prototype_id_list = list(prototype_dict.keys())
-        return [
-            card_factory.create(prototype_id=random.choice(prototype_id_list))
-            for i in range(self.n_cards)]
+    def __call__(
+            self, *, player_id, card_factory,
+            unit_prototype_dict, spell_prototype_dict):
+        unit_prototype_id_list = list(unit_prototype_dict.keys())
+        spell_prototype_id_list = list(spell_prototype_dict.keys())
+
+        unit_ratio = self.unit_ratio
+        deck = []
+        for __ in range(self.n_cards):
+            id_list = (
+                unit_prototype_id_list if random.random() <= unit_ratio
+                else spell_prototype_id_list)
+            deck.append(card_factory.create(
+                prototype_id=random.choice(id_list)))
+
+        return deck
 
 
 def func_judge_default(**kwargs):
@@ -213,7 +225,7 @@ class Server:
         # Factory
         # ----------------------------------------------------------------------
         self.card_factory = card_factory = CardFactory()
-        self.unit_factory = UnitFactory(unit_prototype_dict)
+        self.unit_instance_factory = UnitInstanceFactory(unit_prototype_dict)
 
         # ----------------------------------------------------------------------
         # Player
@@ -233,7 +245,8 @@ class Server:
                 deck=func_create_deck(
                     player_id=reciever.player_id,
                     card_factory=card_factory,
-                    prototype_dict=prototype_dict))
+                    unit_prototype_dict=unit_prototype_dict,
+                    spell_prototype_dict=spell_prototype_dict))
             for reciever, color in zip(reciever_list, player_colors)
         ]
         self.player_dict = {player.id: player for player in self.player_list}
@@ -276,6 +289,8 @@ class Server:
 
     def corerun(self):
         prototype_dict = self.prototype_dict
+        unit_prototype_dict = self.unit_prototype_dict
+        spell_prototype_dict = self.spell_prototype_dict
         board_size = self.board_size
         player_list = self.player_list
 
@@ -289,7 +304,8 @@ class Server:
             type='game_begin',
             send_to='$all',
             params=SmartObject(
-                prototype_dict=prototype_dict,
+                unit_prototype_dict=unit_prototype_dict,
+                spell_prototype_dict=spell_prototype_dict,
                 timeout=self.timeout,
                 board_size=board_size,
                 player_list=[player.to_public() for player in player_list],

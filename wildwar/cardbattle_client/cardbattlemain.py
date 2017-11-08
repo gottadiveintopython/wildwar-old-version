@@ -319,7 +319,10 @@ class CardBattleMain(Factory.RelativeLayout):
             return
         self._on_command_game_begin_called = True
 
-        self.prototype_dict = params.prototype_dict.__dict__.copy()
+        self.unit_prototype_dict = params.unit_prototype_dict.__dict__.copy()
+        self.spell_prototype_dict = params.spell_prototype_dict.__dict__.copy()
+        self.prototype_dict = {
+            **self.unit_prototype_dict, **self.spell_prototype_dict, }
         with open(
                 resource_find('imagefile_dict.yaml'),
                 'rt', encoding='utf-8') as reader:
@@ -399,13 +402,13 @@ class CardBattleMain(Factory.RelativeLayout):
             # print(prototype)
             if prototype.klass == 'UnitPrototype':
                 card = UnitCard(
-                    unit_data=self.prototype_dict[prototype_id],
+                    prototype=prototype,
                     background_color=self.player_dict[self.player_id].color,
                     imagefile=self.imagefile_dict[prototype_id],
                     pos=card_pos)
             elif prototype.klass == 'SpellPrototype':
                 card = SpellCard(
-                    spell_data=self.prototype_dict[prototype_id],
+                    prototype=prototype,
                     background_color=self.player_dict[self.player_id].color,
                     imagefile=self.imagefile_dict[prototype_id],
                     pos=card_pos)
