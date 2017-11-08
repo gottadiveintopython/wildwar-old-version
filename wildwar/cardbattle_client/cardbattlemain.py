@@ -15,11 +15,12 @@ from kivy.properties import (
     ObjectProperty, NumericProperty, StringProperty, ListProperty,
     BooleanProperty
 )
+from kivy.graphics import Line, Color
 
 import setup_logging
 logger = setup_logging.get_logger(__name__)
 from smartobject import SmartObject
-# from dragrecognizer import DragRecognizer
+from dragrecognizer import DragRecognizer
 from magnetacrosslayout import MagnetAcrossLayout
 from basicwidgets import fadeout_widget, AutoLabel
 from notificater import Notificater
@@ -47,6 +48,8 @@ Builder.load_string(r"""
             size: self.size
 
 <CardBattleBoardsParent@FloatLayout+StencilAll>:
+
+<CardLayer@DragRecognizerDashLine+Widget>:
 
 <CardBattleMain>:
     card_layer: id_card_layer
@@ -76,7 +79,7 @@ Builder.load_string(r"""
         Widget:
             id: id_playerwidget_mine
             size_hint_y: 0.15
-    Widget:
+    CardLayer:
         id: id_card_layer
     FloatLayout:
         id: id_message_layer
@@ -444,25 +447,54 @@ class CardBattleMain(Factory.RelativeLayout):
     #     modalview.open(self)
 
 
-# class GamePlayer(DragRecognizer, CardBattleMain):
+class DragRecognizerDashLine(DragRecognizer):
+
+    def on_drag_start(self, touch):
+        inst_list = [
+            Color([1, 1, 1, 1]),
+            Line(
+                points=[touch.ox, touch.oy, touch.ox, touch.oy, ],
+                dash_length=4,
+                dash_offset=8
+            )
+        ]
+        for inst in inst_list:
+            self.canvas.after.add(inst)
+        ud_key = self._get_uid(prefix=r'DragRecognizerDashLine')
+        touch.ud[ud_key] = {'inst_list': inst_list, }
+
+    def on_being_dragged(self, touch):
+        ud_key = self._get_uid(prefix=r'DragRecognizerDashLine')
+        ud = touch.ud[ud_key]
+
+        line = ud['inst_list'][1]
+        points = line.points
+        points[2] += touch.dx
+        points[3] += touch.dy
+        line.points = points
+
+    def on_drag_finish(self, touch):
+        ud_key = self._get_uid(prefix=r'DragRecognizerDashLine')
+        ud = touch.ud[ud_key]
+
+        inst_list = ud[r'inst_list']
+        for inst in inst_list:
+            self.canvas.after.remove(inst)
+
+
+Factory.register('DragRecognizerDashLine', cls=DragRecognizerDashLine)
+
+
+# class CardBattleMain2(DragRecognizerDashLine):
 
 #     def on_drag_start(self, touch):
+#         super().on_drag_start(touch)
 #         cell_from = None
 #         for cell in self.board.children:
 #             if cell.collide_point(*touch.opos):
 #                 cell_from = cell
 #                 cell_from.state = r'down'
 
-#         inst_list = [
-#             Color([1, 1, 1, 1]),
-#             Line(
-#                 points=[touch.ox, touch.oy, touch.ox, touch.oy, ],
-#                 dash_length=4,
-#                 dash_offset=8
-#             )
-#         ]
-#         for inst in inst_list:
-#             self.canvas.after.add(inst)
 #         ud_key = self._get_uid(prefix=r'CardBattleMain')  # _get_uidは親ClassのMethod
 #         touch.ud[ud_key] = {
 #             r'inst_list': inst_list,
@@ -471,6 +503,7 @@ class CardBattleMain(Factory.RelativeLayout):
 #         }
 
 #     def on_being_dragged(self, touch):
+#         super().on_being_dragged(touch)
 #         ud_key = self._get_uid(prefix=r'CardBattleMain')
 #         ud = touch.ud[ud_key]
 
@@ -492,13 +525,8 @@ class CardBattleMain(Factory.RelativeLayout):
 #             if current_cell_to is not None:
 #                 current_cell_to.state = r'down'
 
-#         line = ud[r'inst_list'][1]
-#         points = line.points
-#         points[2] += touch.dx
-#         points[3] += touch.dy
-#         line.points = points
-
 #     def on_drag_finish(self, touch):
+#         super().on_drag_finish(touch)
 #         ud_key = self._get_uid(prefix=r'CardBattleMain')
 #         ud = touch.ud[ud_key]
 
@@ -509,10 +537,6 @@ class CardBattleMain(Factory.RelativeLayout):
 #             cell_from.state = r'normal'
 #         if cell_to is not None:
 #             cell_to.state = r'normal'
-
-#         inst_list = ud[r'inst_list']
-#         for inst in inst_list:
-#             self.canvas.after.remove(inst)
 
 #         if cell_from is None or cell_to is None:
 #             return
