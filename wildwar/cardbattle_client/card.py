@@ -91,12 +91,14 @@ class UnknownCard(Factory.RelativeLayout):
 
 
 class UnitCard(Factory.ButtonBehavior, Factory.RelativeLayout):
+    id = StringProperty()
     prototype = ObjectProperty()
     imagefile = StringProperty()
     background_color = ListProperty((0, 0, 0, 0, ))
 
 
 class SpellCard(Factory.ButtonBehavior, Factory.RelativeLayout):
+    id = StringProperty()
     prototype = ObjectProperty()
     imagefile = StringProperty()
     background_color = ListProperty((0, 0, 0, 0, ))
