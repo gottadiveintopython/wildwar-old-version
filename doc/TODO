@@ -2,4 +2,7 @@
 
 localize_str()を実装
 
-cardbattle_gui.pyのサイズが大きすぎるので複数ファイルに分割する
+ユーザーが手札のCardをDragした時、どのように手札のCardであるか判別するか。又、どのよ
+うに画像効果を与えるか。
+
+Labelに対するFadeinoutアニメーションを関数として抽出

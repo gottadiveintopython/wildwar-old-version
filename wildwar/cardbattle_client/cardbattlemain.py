@@ -53,7 +53,7 @@ Builder.load_string(r"""
 
 <CardBattleMain>:
     card_layer: id_card_layer
-    message_layer: id_message_layer
+    popup_layer: id_popup_layer
     notificater: id_notificater
     timer: id_timer
     BoxLayout:
@@ -82,7 +82,7 @@ Builder.load_string(r"""
     CardLayer:
         id: id_card_layer
     FloatLayout:
-        id: id_message_layer
+        id: id_popup_layer
         Notificater:
             id: id_notificater
             size_hint: 0.5, 0.3
@@ -244,7 +244,7 @@ class QueueSender:
 class CardBattleMain(Factory.RelativeLayout):
 
     card_layer = ObjectProperty()
-    message_layer = ObjectProperty()
+    popup_layer = ObjectProperty()
     notificater = ObjectProperty()
     timer = ObjectProperty()
     # gamestate = ObjectProperty()
@@ -371,7 +371,7 @@ class CardBattleMain(Factory.RelativeLayout):
             outline_color=(1, 1, 1, ),
             outline_width=3,
         )
-        self.message_layer.add_widget(label)
+        self.popup_layer.add_widget(label)
         fadeout_widget(label)
         self.timer.color = (1, 1, 1, 1, )
         self.timer.start()
