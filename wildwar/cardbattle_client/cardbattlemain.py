@@ -315,7 +315,7 @@ class CardBattleMain(Factory.RelativeLayout):
 
     def on_command_game_begin(self, params):
         if hasattr(self, '_on_command_game_begin_called'):
-            logger.critical("[C] Don't call on_command_game_begin twice.")
+            logger.critical("[C] on_command_game_begin was called multiple times.")
             return
         self._on_command_game_begin_called = True
 
@@ -392,10 +392,11 @@ class CardBattleMain(Factory.RelativeLayout):
     def on_command_draw(self, params):
         r'''drawは「描く」ではなく「(カードを)引く」の意'''
         card_layer = self.card_layer
-        card_pos = card_layer.to_widget(
-            *card_layer.to_window(
-                card_layer.right,
-                card_layer.top - card_layer.height / 2))
+        # card_pos = card_layer.to_widget(
+        #     *card_layer.to_window(
+        #         card_layer.right,
+        #         card_layer.top - card_layer.height / 2))
+        card_pos = (card_layer.right, card_layer.top - card_layer.height / 2, )
         if params.drawer_id == self.player_id:
             prototype_id = self.card_dict[params.card_id].prototype_id
             prototype = self.prototype_dict[prototype_id]
