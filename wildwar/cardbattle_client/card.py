@@ -17,6 +17,7 @@ from basicwidgets import AutoLabel
 
 Builder.load_string(r"""
 #:kivy 1.10.0
+#:set OVERLAY_COLOR_DICT { r'normal': [0, 0, 0, 0], r'down': [1, 1, 1, 0.15], }
 
 <UnknownCard>:
     canvas.before:
@@ -42,6 +43,12 @@ Builder.load_string(r"""
         RoundedRectangle:
             size: self.width - 4, self.height - 4
             pos: 2, 2
+    canvas.after:
+        Color:
+            rgba: OVERLAY_COLOR_DICT[self.state]
+        RoundedRectangle:
+            size: self.width, self.height
+            pos: self.pos
 
 <SpellCard>:
     Image:
@@ -83,13 +90,13 @@ class UnknownCard(Factory.RelativeLayout):
     pass
 
 
-class UnitCard(Factory.RelativeLayout):
+class UnitCard(Factory.ButtonBehavior, Factory.RelativeLayout):
     prototype = ObjectProperty()
     imagefile = StringProperty()
     background_color = ListProperty((0, 0, 0, 0, ))
 
 
-class SpellCard(Factory.RelativeLayout):
+class SpellCard(Factory.ButtonBehavior, Factory.RelativeLayout):
     prototype = ObjectProperty()
     imagefile = StringProperty()
     background_color = ListProperty((0, 0, 0, 0, ))
