@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-__all__ = ('fadeout_widget', 'AutoLabel', 'StencilAll', )
-
+__all__ = (
+    'fadeout_widget', 'AutoLabel', 'StencilAll', 'wrap_function_for_bind',
+    'change_label_text_with_fade_animation',
+)
 
 import kivy
 kivy.require(r'1.10.0')
@@ -24,6 +26,32 @@ def fadeout_widget(widget, *, duration=1.3, transition='in_cubic'):
         opacity=0)
     animation.bind(on_complete=on_complete)
     animation.start(widget)
+
+
+def change_label_text_with_fade_animation(label, *, value, duration):
+    r'''Labelのtextをfade-out,fade-inさせながら書き換える'''
+
+    def on_fadeout_complete(animation, label):
+        label.text = str(value)
+        animation_fadein = Animation(
+            opacity=1,
+            duration=duration / 2,
+            transition='linear')
+        animation_fadein.start(label)
+
+    animation_fadeout = Animation(
+        opacity=0,
+        duration=duration / 2,
+        transition=r'linear')
+    animation_fadeout.bind(on_complete=on_fadeout_complete)
+    animation_fadeout.start(label)
+
+
+def wrap_function_for_bind(function, *args, **kwargs):
+    r'''functionをbindのkeyword引数の値に渡せる形に変換する。
+
+    functionは仮引数value(Propertyの新しい値が渡される)を持っている必要がある'''
+    return lambda __, value: function(*args, value=value, **kwargs)
 
 
 class AutoLabel(AdjustFontsizeBehavior, Factory.Label):

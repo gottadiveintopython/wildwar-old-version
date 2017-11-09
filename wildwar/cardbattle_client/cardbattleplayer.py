@@ -17,7 +17,10 @@ from kivy.animation import Animation
 
 import setup_logging
 logger = setup_logging.get_logger(__name__)
-from basicwidgets import AutoLabel
+from basicwidgets import (
+    AutoLabel,
+    change_label_text_with_fade_animation, wrap_function_for_bind,
+)
 from tefudalayout import TefudaLayout
 
 
@@ -63,6 +66,13 @@ Builder.load_string(r"""
 """)
 
 
+def let_label_animate(label, duration=0.2):
+    r'''内部で呼び出している関数の名前が長いので、この関数を用意した'''
+    return wrap_function_for_bind(
+        change_label_text_with_fade_animation,
+        label, duration=duration)
+
+
 class Player(Factory.EventDispatcher):
     id = StringProperty()
     cost = NumericProperty()
@@ -91,7 +101,7 @@ class CardBattlePlayer(Factory.FloatLayout):
             id=self.setter('id'),
             cost=self.on_cost_changed,
             max_cost=self.on_cost_changed,
-            n_cards_in_deck=self.on_n_cards_in_deck_changed,
+            n_cards_in_deck=let_label_animate(self.ids.id_label_deck),
             color=self.setter('color'))
 
     def on_cost_changed(self, player, value):
@@ -119,20 +129,20 @@ class CardBattlePlayer(Factory.FloatLayout):
             animation.start(label)
             self._cost_animation = animation
 
-    def on_n_cards_in_deck_changed(self, player, value):
-        label = self.ids.id_label_deck
+    # def on_n_cards_in_deck_changed(self, player, value):
+    #     label = self.ids.id_label_deck
 
-        def on_fadeout_complete(animation, widget):
-            self.n_cards_in_deck = value
-            animation_fadein = Animation(
-                opacity=1,
-                duration=0.1,
-                transition='linear')
-            animation_fadein.start(label)
+    #     def on_fadeout_complete(animation, widget):
+    #         self.n_cards_in_deck = value
+    #         animation_fadein = Animation(
+    #             opacity=1,
+    #             duration=0.1,
+    #             transition='linear')
+    #         animation_fadein.start(label)
 
-        animation_fadeout = Animation(
-            opacity=0,
-            duration=0.1,
-            transition=r'linear')
-        animation_fadeout.bind(on_complete=on_fadeout_complete)
-        animation_fadeout.start(label)
+    #     animation_fadeout = Animation(
+    #         opacity=0,
+    #         duration=0.1,
+    #         transition=r'linear')
+    #     animation_fadeout.bind(on_complete=on_fadeout_complete)
+    #     animation_fadeout.start(label)
