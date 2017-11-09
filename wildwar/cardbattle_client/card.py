@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-__all__ = ('UnknownCard', 'SpellCard', 'UnitPrototypeCard', )
+__all__ = ('UnknownCard', 'SpellCard', 'UnitCard', )
 
 import kivy
 kivy.require(r'1.10.0')
@@ -30,7 +30,7 @@ Builder.load_string(r"""
             size: self.width - 4, self.height - 4
             pos: 2, 2
 
-<SpellCard,UnitPrototypeCard>:
+<SpellCard,UnitCard>:
     canvas.before:
         Color:
             rgba: 0.3, 0.3, 0.3, 1
@@ -52,7 +52,7 @@ Builder.load_string(r"""
         bold: True
         text: str(root.prototype.cost)
 
-<UnitPrototypeCard>:
+<UnitCard>:
     Image:
         source: root.imagefile
     AutoLabel:
@@ -83,7 +83,7 @@ class UnknownCard(Factory.RelativeLayout):
     pass
 
 
-class UnitPrototypeCard(Factory.RelativeLayout):
+class UnitCard(Factory.RelativeLayout):
     prototype = ObjectProperty()
     imagefile = StringProperty()
     background_color = ListProperty((0, 0, 0, 0, ))
