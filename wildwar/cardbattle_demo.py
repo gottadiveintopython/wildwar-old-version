@@ -10,6 +10,7 @@ from kivy.config import Config
 Config.set('graphics', 'width', 600 + 600 + 30)
 Config.set('graphics', 'height', 900)
 # Config.set('modules', 'inspector', '')
+Config.set('modules', 'touchring', 'image=cursor.png')
 from kivy.resources import resource_add_path
 from kivy.app import App
 # from kivy.clock import Clock
