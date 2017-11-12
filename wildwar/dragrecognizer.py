@@ -28,11 +28,11 @@ class DragRecognizer(object):
     drag_timeout = NumericProperty(_scroll_timeout)
 
     def __init__(self, **kwargs):
-        self._drag_touch = None
-        super(DragRecognizer, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.register_event_type(r'on_drag_start')
         self.register_event_type(r'on_being_dragged')
         self.register_event_type(r'on_drag_finish')
+        self._touch_dict = {}
 
     def on_drag_start(self, touch):
         pass
@@ -50,30 +50,28 @@ class DragRecognizer(object):
         if not self.collide_point(*touch.pos):
             touch.ud[self._get_uid('svavoid')] = True
             return super(DragRecognizer, self).on_touch_down(touch)
-        if self._drag_touch or ('button' in touch.profile and
-                                touch.button.startswith('scroll')):
+        if touch.is_mouse_scrolling:
             return super(DragRecognizer, self).on_touch_down(touch)
 
         # no mouse scrolling, so the user is going to drag with this touch.
-        self._drag_touch = touch
+        self._touch_dict[touch.uid] = touch
         uid = self._get_uid()
         touch.grab(self)
         touch.ud[uid] = {
             'mode': 'unknown',
             'dx': 0,
             'dy': 0}
-        Clock.schedule_once(self._change_touch_mode,
+        Clock.schedule_once(partial(self._change_touch_mode, touch),
                             self.drag_timeout / 1000.)
         return True
 
     def on_touch_move(self, touch):
         if self._get_uid('svavoid') in touch.ud or\
-                self._drag_touch is not touch:
+                touch.uid not in self._touch_dict:
             return super(DragRecognizer, self).on_touch_move(touch) or\
                 self._get_uid() in touch.ud
         if touch.grab_current is not self:
             return True
-
         uid = self._get_uid()
         ud = touch.ud[uid]
         mode = ud['mode']
@@ -96,9 +94,9 @@ class DragRecognizer(object):
         if self._get_uid('svavoid') in touch.ud:
             return super(DragRecognizer, self).on_touch_up(touch)
 
-        if self._drag_touch and self in [x() for x in touch.grab_list]:
+        if touch.grab_current is self:
             touch.ungrab(self)
-            self._drag_touch = None
+            del self._touch_dict[touch.uid]
             ud = touch.ud[self._get_uid()]
             if ud['mode'] == 'unknown':
                 super(DragRecognizer, self).on_touch_down(touch)
@@ -106,7 +104,7 @@ class DragRecognizer(object):
             else:
                 self.dispatch(r'on_drag_finish', touch)
         else:
-            if self._drag_touch is not touch:
+            if touch.uid not in self._touch_dict:
                 super(DragRecognizer, self).on_touch_up(touch)
         return self._get_uid() in touch.ud
 
@@ -122,16 +120,16 @@ class DragRecognizer(object):
             super(DragRecognizer, self).on_touch_up(touch)
         touch.grab_current = None
 
-    def _change_touch_mode(self, *largs):
-        if not self._drag_touch:
+    def _change_touch_mode(self, touch, *largs):
+        if touch.uid not in self._touch_dict:
             return
         uid = self._get_uid()
-        touch = self._drag_touch
+        touch = self._touch_dict[touch.uid]
         ud = touch.ud[uid]
         if ud['mode'] != 'unknown':
             return
         touch.ungrab(self)
-        self._drag_touch = None
+        del self._touch_dict[touch.uid]
         super(DragRecognizer, self).on_touch_down(touch)
         return
 
@@ -139,15 +137,19 @@ class DragRecognizer(object):
 def _test():
 
     from kivy.base import runTouchApp
-    from kivy.uix.widget import Widget
+    from kivy.factory import Factory
+    from kivy.lang import Builder
     from kivy.graphics import Color, Line
 
-    class DragRecognizerTest(DragRecognizer, Widget):
+    class DragRecognizerTest(DragRecognizer, Factory.RelativeLayout):
 
-        UD_KEY = r'DragRecognizerTest'
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+            self._ud_key = self._get_uid(self.__class__.__name__)
+            print(self._ud_key)
 
         def on_drag_start(self, touch):
-            print(r'on_drag_start :', touch.opos)
+            # print(r'on_drag_start :', touch.opos)
             inst_list = [
                 Color([1, 1, 1, 1]),
                 Line(
@@ -158,13 +160,13 @@ def _test():
             ]
             for inst in inst_list:
                 self.canvas.after.add(inst)
-            touch.ud[self.UD_KEY] = {
+            touch.ud[self._ud_key] = {
                 r'inst_list': inst_list,
             }
 
         def on_being_dragged(self, touch):
-            print(r'on_being_dragged :', touch.pos)
-            ud = touch.ud[self.UD_KEY]
+            # print(r'on_being_dragged :', touch.pos)
+            ud = touch.ud[self._ud_key]
 
             line = ud[r'inst_list'][1]
             points = line.points
@@ -173,14 +175,55 @@ def _test():
             line.points = points
 
         def on_drag_finish(self, touch):
-            print(r'on_drag_finish :', touch.pos)
-            ud = touch.ud[self.UD_KEY]
+            # print(r'on_drag_finish :', touch.pos)
+            ud = touch.ud[self._ud_key]
 
             inst_list = ud[r'inst_list']
             for inst in inst_list:
                 self.canvas.after.remove(inst)
+            del touch.ud[self._ud_key]
 
-    runTouchApp(DragRecognizerTest())
+    root = Builder.load_string(r'''
+<Widget>:
+    canvas.after:
+        Line:
+            rectangle: self.x+1,self.y+1,self.width-1,self.height-1
+            dash_offset: 5
+            dash_length: 3
+
+<Label>:
+    font_size: 40
+
+<CustomButton@Button>:
+    size_hint: None, None
+    pos: 50, 50
+    on_touch_down: print(self.text, 'on_touch_down', str(args[1].pos))
+    on_press: print(self.text, 'on_press')
+
+
+GridLayout:
+    on_touch_down: print('----------------------------------------------------')
+    cols: 2
+    DragRecognizerTest:
+        CustomButton:
+            text: 'A'
+    DragRecognizerTest:
+        CustomButton:
+            text: 'B'
+        # Widget:
+        #     size_hint: None, None
+        #     pos: 100, 100
+        #     on_touch_down:
+        #         print(args[1].pos)
+        #         if self.collide_point(*args[1].pos): print('collision')
+    DragRecognizerTest:
+        CustomButton:
+            text: 'C'
+    DragRecognizerTest:
+        CustomButton:
+            text: 'D'
+    ''')
+    runTouchApp(root)
 
 
 if __name__ == '__main__':
