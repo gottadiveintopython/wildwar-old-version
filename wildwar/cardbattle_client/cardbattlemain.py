@@ -2,6 +2,7 @@
 
 __all__ = ('CardBattleMain', )
 
+from functools import partial
 import queue
 
 import yaml
@@ -22,6 +23,7 @@ from smartobject import SmartObject
 from dragrecognizer import DragRecognizerDashLine
 from magnetacrosslayout import MagnetAcrossLayout
 from basicwidgets import fadeout_widget, AutoLabel
+from custommodalview_nobackground import CustomModalViewNoBackground
 from notificater import Notificater
 from .cardbattleplayer import Player, CardBattlePlayer
 from .card import UnknownCard, UnitCard, SpellCard
@@ -431,8 +433,9 @@ class CardBattleMain(Factory.RelativeLayout):
         else:
             card = UnknownCard(pos=card_pos)
         playerwidget = self.playerwidget_dict[params.drawer_id]
-        playerwidget.ids.id_tefuda.add_widget(
-            self.wrap_in_magnet(card))
+        magnet = self.wrap_in_magnet(card)
+        card.bind(on_release=partial(self.show_detail_of_a_card, magnet=magnet))
+        playerwidget.ids.id_tefuda.add_widget(magnet)
         player = self.player_dict[params.drawer_id]
         player.n_cards_in_deck -= 1
         player.tefuda.append(params.card_id)
@@ -447,6 +450,24 @@ class CardBattleMain(Factory.RelativeLayout):
     #     logger.debug(r'on_operation_click :' + cell.id)
     #     if cell.is_not_empty():
     #         self.show_detail_of_a_card(cell)
+
+    def show_detail_of_a_card(self, card, *, magnet):
+        tefuda_layout = magnet.parent
+        tefuda_layout.remove_widget(magnet)
+        # modalview = ModalViewWithoutBackground(
+        modalview = CustomModalViewNoBackground(
+            attach_to=self,
+            auto_dismiss=True,
+            size_hint=(0.9, 0.6, ),
+            pos_hint={'center_x': 0.5, 'center_y': 0.5, })
+        modalview.add_widget(magnet)
+
+        def on_dismiss(*args):
+            bring_widget_to_front(card)
+            modalview.remove_widget(magnet)
+            tefuda_layout.add_widget(magnet)
+        modalview.bind(on_dismiss=on_dismiss)
+        modalview.open(self)
 
     # def show_detail_of_a_card(self, cell):
     #     modalview = Factory.ModalView(
