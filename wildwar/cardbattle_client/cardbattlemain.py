@@ -15,18 +15,18 @@ from kivy.properties import (
     ObjectProperty, NumericProperty, StringProperty, ListProperty,
     BooleanProperty
 )
-from kivy.graphics import Line, Color
 
 import setup_logging
 logger = setup_logging.get_logger(__name__)
 from smartobject import SmartObject
-from dragrecognizer import DragRecognizer
+from dragrecognizer import DragRecognizerDashLine
 from magnetacrosslayout import MagnetAcrossLayout
 from basicwidgets import fadeout_widget, AutoLabel
 from notificater import Notificater
 from .cardbattleplayer import Player, CardBattlePlayer
 from .card import UnknownCard, UnitCard, SpellCard
 from .timer import Timer
+from .turnendbutton import TurnEndButton
 
 
 Builder.load_string(r"""
@@ -67,15 +67,28 @@ Builder.load_string(r"""
             CardBattleBoardsParent:
                 id: id_boards_parent
                 size_hint_x: 0.8
-            RelativeLayout:
+            BoxLayout:
+                orientation: 'vertical'
                 size_hint_x: 0.2
-                Timer:
-                    id: id_timer
-                    line_width: 5
-                AutoLabel:
-                    size_hint: 0.5, 0.5
-                    pos_hint: {'center_x': 0.5, 'center_y': 0.5, }
-                    text: 'Turn\n  ' + str(root.gamestate.nth_turn)
+                Widget:
+                FloatLayout:
+                    Timer:
+                        id: id_timer
+                        line_width: 4
+                        pos:self.parent.pos
+                    AutoLabel:
+                        size_hint: 0.5, 0.5
+                        pos_hint: {'center_x': 0.5, 'center_y': 0.5, }
+                        text: 'Turn\n  ' + str(root.gamestate.nth_turn)
+                FloatLayout:
+                    TurnEndButton:
+                        length: min(*self.parent.size)
+                        disabled: not root.gamestate.is_myturn
+                        size_hint: None, None
+                        width: self.length * 0.8
+                        height: self.width
+                        pos_hint: {'center_x': 0.5, 'center_y': 0.5, }
+                        on_press: root.on_turnendbutton_press()
         Widget:
             id: id_playerwidget_mine
             size_hint_y: 0.15
@@ -270,6 +283,9 @@ class CardBattleMain(Factory.RelativeLayout):
                 self.on_command_notification(params=SmartObject(
                     message=localize_str('残り5秒'), type='warning'))
 
+    def on_turnendbutton_press(self):
+        self.send_command(type='turn_end', params=None)
+
     def send_command(self, *, type, params):
         json_command = SmartObject(
             klass='Command',
@@ -448,45 +464,6 @@ class CardBattleMain(Factory.RelativeLayout):
     #         on_dismiss=lambda *args: cell.attach(cell_temp.detach())
     #     )
     #     modalview.open(self)
-
-
-class DragRecognizerDashLine(DragRecognizer):
-
-    def on_drag_start(self, touch):
-        inst_list = [
-            Color([1, 1, 1, 1]),
-            Line(
-                points=[touch.ox, touch.oy, touch.ox, touch.oy, ],
-                dash_length=4,
-                dash_offset=8
-            )
-        ]
-        for inst in inst_list:
-            self.canvas.after.add(inst)
-        ud_key = self._get_uid(prefix=r'DragRecognizerDashLine')
-        touch.ud[ud_key] = {'inst_list': inst_list, }
-
-    def on_being_dragged(self, touch):
-        ud_key = self._get_uid(prefix=r'DragRecognizerDashLine')
-        ud = touch.ud[ud_key]
-
-        line = ud['inst_list'][1]
-        points = line.points
-        points[2] += touch.dx
-        points[3] += touch.dy
-        line.points = points
-
-    def on_drag_finish(self, touch):
-        ud_key = self._get_uid(prefix=r'DragRecognizerDashLine')
-        ud = touch.ud[ud_key]
-
-        inst_list = ud[r'inst_list']
-        for inst in inst_list:
-            self.canvas.after.remove(inst)
-
-
-Factory.register('DragRecognizerDashLine', cls=DragRecognizerDashLine)
-
 
 # class CardBattleMain2(DragRecognizerDashLine):
 
