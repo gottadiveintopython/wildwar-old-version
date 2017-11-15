@@ -117,15 +117,15 @@ class DragRecognizer(object):
         # print('DragRecognizer _do_touch_up')
         # don't forget about grab event!
         # print('[----grab_list----')
-        for x in touch.grab_list[:]:
-            touch.grab_list.remove(x)
-            x = x()
-            if not x:
+        for weak_ref in touch.grab_list[:]:
+            touch.grab_list.remove(weak_ref)
+            widget = weak_ref()
+            if not widget:
                 continue
-            touch.grab_current = x
+            touch.grab_current = widget
             touch.push()
-            touch.apply_transform_2d(x.parent.to_widget)
-            x.on_touch_up(touch)
+            touch.apply_transform_2d(widget.parent.to_widget)
+            widget.on_touch_up(touch)
             touch.pop()
         touch.grab_current = None
         # print('----grab_list----]')
