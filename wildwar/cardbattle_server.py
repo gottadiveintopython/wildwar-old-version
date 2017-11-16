@@ -176,18 +176,18 @@ class Server:
     # def __init__(
     #         self, *,
     #         senders, recievers,
-    #         data_dir, board_size, timeout, how_to_decide_player_order,
+    #         database_dir, board_size, timeout, how_to_decide_player_order,
     #         n_tefuda_init, max_tefuda,
     #         func_judge=None, func_create_deck):
     def __init__(
-            self, *, senders, recievers, data_dir, board_size, timeout,
+            self, *, senders, recievers, database_dir, board_size, timeout,
             how_to_decide_player_order, n_tefuda_init, max_tefuda,
             func_judge=None, func_create_deck):
         r'''引数解説
 
         senders
         recievers
-        data_dir  # GameのDatabseであるYAMLがあるDirectory
+        database_dir  # GameのDatabseであるunit_prototype.yamlがあるDirectory
         board_size  # (横のマス目の数, 縦のマス目の数, )
         timeout  # Turn毎の制限時間
         how_to_decide_player_order
@@ -208,10 +208,10 @@ class Server:
         # Prototype
         # ----------------------------------------------------------------------
         unit_prototype_dict = load_unit_prototype_from_file(
-            os.path.join(data_dir, 'unit_prototype.yaml')
+            os.path.join(database_dir, 'unit_prototype.yaml')
         )
         spell_prototype_dict = load_spell_prototype_from_file(
-            os.path.join(data_dir, 'spell_prototype.yaml')
+            os.path.join(database_dir, 'spell_prototype.yaml')
         )
         if set(unit_prototype_dict.keys()) & set(spell_prototype_dict.keys()):
             logger.critical('[S] unitとspellのidに被りがあります')

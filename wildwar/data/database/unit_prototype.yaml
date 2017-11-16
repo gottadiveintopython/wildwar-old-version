@@ -3,38 +3,29 @@
 # statsは[power, attack, defense]の順に記述する
 
 cat:
-  name: "猫"
   cost: 1
   stats: [1, 1, 0]
 bonobo:
-  name: "Bonobo(猿の一種)"
   cost: 2
   stats: [1, 2, 1]
 horse:
-  name: "馬"
   cost: 3
   stats: [3, 0, 0]
 serval:
-  name: "Serval(猫科)"
   cost: 4
   stats: [2, 2, 0]
 python:
-  name: "錦蛇"
   cost: 3
   stats: [2, 1, 1]
 flying_squirrel:
-  name: "ももんが"
   cost: 1
   stats: [1, 1, 1]
 human_male:
-  name: "人♂"
   cost: 0
   stats: [1, 0, 0]
 raccoon:
-  name: "狸"
   cost: 2
   stats: [1, 0, 1]
 jaguar:
-  name: "Jaguar"
   cost: 5
   stats: [4, 4, 0]

@@ -1,0 +1,21 @@
+# -*- coding: utf-8 -*-
+
+cat:
+  name: "猫"
+bonobo:
+  name: "Bonobo(猿の一種)"
+horse:
+  name: "馬"
+serval:
+  name: "Serval(猫科)"
+python:
+  name: "錦蛇"
+flying_squirrel:
+  name: "ももんが"
+human_male:
+  name: "人♂"
+raccoon:
+  name: "狸"
+jaguar:
+  name: "Jaguar"
+

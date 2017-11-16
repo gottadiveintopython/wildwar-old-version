@@ -30,7 +30,7 @@ DATA_ROOT_DIR = os.path.join(
 def run_server_thread(**kwargs):
 
     server = cardbattle_server.Server(
-        data_dir=DATA_ROOT_DIR,
+        database_dir=os.path.join(DATA_ROOT_DIR, 'database'),
         n_tefuda_init=4,
         max_tefuda=8,
         board_size=(5, 5,),
@@ -50,8 +50,8 @@ class DemoApp(App):
 
     def build(self):
         self.root = root = Factory.BoxLayout(spacing=30)
-        root.add_widget(CardBattleMain(player_id='DemoPlayer1'))
-        root.add_widget(CardBattleMain(player_id='DemoPlayer2'))
+        root.add_widget(CardBattleMain(player_id='DemoPlayer1', iso639='ja'))
+        root.add_widget(CardBattleMain(player_id='DemoPlayer2', iso639='ja'))
         return root
 
     def on_start(self):

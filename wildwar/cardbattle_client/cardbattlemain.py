@@ -264,7 +264,7 @@ class CardBattleMain(Factory.RelativeLayout):
     timer = ObjectProperty()
     # gamestate = ObjectProperty()
 
-    def __init__(self, *, player_id, inqueue=None, outqueue=None, **kwargs):
+    def __init__(self, *, player_id, iso639, inqueue=None, outqueue=None, **kwargs):
         self.gamestate = GameState(
             nth_turn=0, is_myturn=False)
         super().__init__(**kwargs)
@@ -272,6 +272,7 @@ class CardBattleMain(Factory.RelativeLayout):
         self.outqueue = queue.Queue() if outqueue is None else outqueue
         self.player_id = player_id
         self.timer.bind(int_current_time=self.on_timer_tick)
+        self._iso639 = iso639
 
     def on_timer_tick(self, timer, seconds):
         time_limit = timer.time_limit
@@ -331,16 +332,39 @@ class CardBattleMain(Factory.RelativeLayout):
         except queue.Empty as e:
             pass
 
+    @staticmethod
+    def _merge_database(smartobject_dict, dict_dict):
+        r'''internal use'''
+        keys = frozenset(smartobject_dict.keys())
+        if keys != frozenset(dict_dict.keys()):
+            logger.critical('databaseのkeyが一致していません。')
+            return
+        return {
+            key: SmartObject(**dict_dict[key], **smartobject_dict[key].__dict__)
+            for key in keys
+        }
+
     def on_command_game_begin(self, params):
         if hasattr(self, '_on_command_game_begin_called'):
-            logger.critical("[C] on_command_game_begin was called multiple times.")
+            logger.critical("[C] Don't call on_command_game_begin multiple times.")
             return
         self._on_command_game_begin_called = True
 
-        self.unit_prototype_dict = params.unit_prototype_dict.__dict__.copy()
-        self.spell_prototype_dict = params.spell_prototype_dict.__dict__.copy()
+        with open(
+                resource_find('unit_prototype_{}.yaml'.format(self._iso639)),
+                'rt', encoding='utf-8') as reader:
+            self.unit_prototype_dict = CardBattleMain._merge_database(
+                params.unit_prototype_dict.__dict__,
+                yaml.load(reader))
+        with open(
+                resource_find('spell_prototype_{}.yaml'.format(self._iso639)),
+                'rt', encoding='utf-8') as reader:
+            self.spell_prototype_dict = CardBattleMain._merge_database(
+                params.spell_prototype_dict.__dict__,
+                yaml.load(reader))
         self.prototype_dict = {
             **self.unit_prototype_dict, **self.spell_prototype_dict, }
+        print('ああああ')
         with open(
                 resource_find('imagefile_dict.yaml'),
                 'rt', encoding='utf-8') as reader:
