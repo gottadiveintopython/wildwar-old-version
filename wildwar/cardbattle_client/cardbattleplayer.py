@@ -21,7 +21,7 @@ from basicwidgets import (
     AutoLabel,
     change_label_text_with_fade_animation, wrap_function_for_bind,
 )
-from tefudalayout import TefudaLayout
+from .tefudalayout import TefudaLayout
 
 
 Builder.load_string(r"""
