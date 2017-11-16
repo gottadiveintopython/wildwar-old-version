@@ -364,7 +364,6 @@ class CardBattleMain(Factory.RelativeLayout):
                 yaml.load(reader))
         self.prototype_dict = {
             **self.unit_prototype_dict, **self.spell_prototype_dict, }
-        print('ああああ')
         with open(
                 resource_find('imagefile_dict.yaml'),
                 'rt', encoding='utf-8') as reader:

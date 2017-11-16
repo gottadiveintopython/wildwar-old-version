@@ -133,10 +133,11 @@ class SmartObject(object):
             )
 
     def __str__(self):
-        return json.dumps(self.so_to_dict(), indent=2)
+        return json.dumps(self.so_to_dict(), ensure_ascii=False, indent=2)
 
     def so_to_json(self, **json_dumps_kwargs):
-        return json.dumps(self.so_to_dict(), **json_dumps_kwargs)
+        return json.dumps(
+            self.so_to_dict(), ensure_ascii=False, **json_dumps_kwargs)
 
     def so_overwrite(self, **kwargs):
         r'''overwrite attributes that already exist'''
