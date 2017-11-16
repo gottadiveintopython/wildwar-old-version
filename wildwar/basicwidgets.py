@@ -2,7 +2,7 @@
 
 __all__ = (
     'fadeout_widget', 'AutoLabel', 'StencilAll', 'wrap_function_for_bind',
-    'change_label_text_with_fade_animation', 'ModalViewWithoutBackground'
+    'change_label_text_with_fade_animation', 'ModalViewNoBackground'
 )
 
 import kivy
@@ -74,7 +74,7 @@ class StencilAll(Factory.StencilView):
             return super().on_touch_up(touch)
 
 
-class ModalViewWithoutBackground(Factory.ModalView):
+class ModalViewNoBackground(Factory.ModalView):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
