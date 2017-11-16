@@ -80,6 +80,9 @@ class CustomModalViewNoBackground(Factory.AnchorLayout):
 
 def _test():
     from kivy.base import runTouchApp
+    from kivy.core.window import Window
+
+    Window.clearcolor = (.5, .5, 0, 1, )
 
     root = Builder.load_string(r'''
 BoxLayout:
