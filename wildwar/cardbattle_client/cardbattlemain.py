@@ -23,7 +23,7 @@ from smartobject import SmartObject
 from dragrecognizer import DragRecognizerDashLine
 from magnetacrosslayout import MagnetAcrossLayout
 from basicwidgets import fadeout_widget, AutoLabel
-from custommodalview_nobackground import CustomModalViewNoBackground
+from custommodalview import CustomModalViewNoBackground
 from notificater import Notificater
 from .cardbattleplayer import Player, CardBattlePlayer
 from .card import UnknownCard, UnitCard, SpellCard
