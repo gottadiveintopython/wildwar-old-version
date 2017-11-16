@@ -61,7 +61,7 @@ Builder.load_string(r"""
     BoxLayout:
         orientation: 'vertical'
         Widget:
-            id: id_playerwidget_enemy
+            id: id_playerwidget_opponent
             size_hint_y: 0.15
         BoxLayout:
             orientation: 'horizontal'
@@ -198,7 +198,7 @@ class BoardWidget(Factory.GridLayout):
         rows = kwargs['rows']
 
         for i in range(cols):
-            cell = Cell(id='enemy{}'.format(i))
+            cell = Cell(id='opponent{}'.format(i))
             self.add_widget(cell)
         self.row_list = [
             [
@@ -363,7 +363,7 @@ class CardBattleMain(Factory.RelativeLayout):
                 old=self.ids[
                     'id_playerwidget_mine'
                     if key == self.player_id
-                    else 'id_playerwidget_enemy'
+                    else 'id_playerwidget_opponent'
                 ],
                 new=playerwidget)
         self.card_dict = {}

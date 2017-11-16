@@ -104,11 +104,11 @@ BoxLayout:
         orientation: 'horizontal'
         size_hint_y: 0.4
         TefudaLayout:
-            id: id_enemy_tefuda
+            id: id_opponent_tefuda
             size_hint_x: 0.8
             pop_direction: 'down'
         Button:
-            id: id_enemy_button
+            id: id_opponent_button
             text: 'draw card'
             size_hint_x: 0.2
     FloatLayout:
@@ -145,10 +145,10 @@ BoxLayout:
             add_random_card_to_layout,
             layout=root.ids.id_self_tefuda))
 
-    root.ids.id_enemy_button.bind(
+    root.ids.id_opponent_button.bind(
         on_press=functools.partial(
             add_random_card_to_layout,
-            layout=root.ids.id_enemy_tefuda))
+            layout=root.ids.id_opponent_tefuda))
 
     runTouchApp(root)
 
