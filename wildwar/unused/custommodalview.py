@@ -102,6 +102,9 @@ class CustomModalView(Factory.AnchorLayout):
 
 def _test():
     from kivy.base import runTouchApp
+    from kivy.core.window import Window
+
+    Window.clearcolor = (.5, .5, 0, 1, )
 
     root = Builder.load_string(r'''
 BoxLayout:
@@ -111,8 +114,8 @@ BoxLayout:
         Button:
             id: button
             text: 'open modalview'
-    # FloatLayout:
-    RelativeLayout:
+    FloatLayout:
+    # RelativeLayout:
         id: modalviews_parent
     ''')
 
