@@ -22,7 +22,9 @@ logger = setup_logging.get_logger(__name__)
 from smartobject import SmartObject
 from dragrecognizer import DragRecognizerDashLine
 from magnetacrosslayout import MagnetAcrossLayout
-from basicwidgets import fadeout_widget, AutoLabel
+from basicwidgets import (
+    replace_widget, bring_widget_to_front, fadeout_widget, AutoLabel,
+)
 from custommodalview import CustomModalViewNoBackground
 from notificater import Notificater
 from .cardbattleplayer import Player, CardBattlePlayer
@@ -117,26 +119,6 @@ def copy_dictionary(dictionary, *, keys_exclude):
     return {
         key: value
         for key, value in dictionary.items() if key not in keys_exclude}
-
-
-def replace_widget(old, new):
-    r'''old.parentは非None、new.parentはNoneでなければならない'''
-    assert old.parent is not None
-    assert new.parent is None
-    new.pos = old.pos
-    new.pos_hint = old.pos_hint
-    new.size = old.size
-    new.size_hint = old.size_hint
-    parent = old.parent
-    index = parent.children.index(old)
-    parent.remove_widget(old)
-    parent.add_widget(new, index=index)
-
-
-def bring_widget_to_front(widget):
-    parent = widget.parent
-    parent.remove_widget(widget)
-    parent.add_widget(widget)
 
 
 class GameState(Factory.EventDispatcher):

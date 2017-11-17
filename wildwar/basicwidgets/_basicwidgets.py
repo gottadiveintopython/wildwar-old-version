@@ -2,7 +2,8 @@
 
 __all__ = (
     'fadeout_widget', 'AutoLabel', 'StencilAll', 'wrap_function_for_bind',
-    'change_label_text_with_fade_animation', 'ModalViewNoBackground'
+    'change_label_text_with_fade_animation', 'ModalViewNoBackground',
+    'replace_widget', 'bring_widget_to_front',
 )
 
 import kivy
@@ -13,6 +14,26 @@ from kivy.factory import Factory
 from kivy.animation import Animation
 
 from .adjustfontsizebehavior import AdjustFontsizeBehavior
+
+
+def replace_widget(old, new):
+    r'''old.parentは非None、new.parentはNoneでなければならない'''
+    assert old.parent is not None
+    assert new.parent is None
+    new.pos = old.pos
+    new.pos_hint = old.pos_hint
+    new.size = old.size
+    new.size_hint = old.size_hint
+    parent = old.parent
+    index = parent.children.index(old)
+    parent.remove_widget(old)
+    parent.add_widget(new, index=index)
+
+
+def bring_widget_to_front(widget):
+    parent = widget.parent
+    parent.remove_widget(widget)
+    parent.add_widget(widget)
 
 
 def fadeout_widget(widget, *, duration=1.3, transition='in_cubic'):
