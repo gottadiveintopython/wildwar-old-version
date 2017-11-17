@@ -12,9 +12,7 @@ from kivy.factory import Factory
 # from kivy.clock import Clock
 from kivy.animation import Animation
 
-import setup_logging
-logger = setup_logging.get_logger(__name__)
-from adjustfontsizebehavior import AdjustFontsizeBehavior
+from .adjustfontsizebehavior import AdjustFontsizeBehavior
 
 
 def fadeout_widget(widget, *, duration=1.3, transition='in_cubic'):
