@@ -3,3 +3,4 @@ from ._basicwidgets import (
     change_label_text_with_fade_animation, ModalViewNoBackground,
 )
 from .adjustfontsizebehavior import AdjustFontsizeBehavior
+from .roundedrectbackground import RoundedRectBackground
