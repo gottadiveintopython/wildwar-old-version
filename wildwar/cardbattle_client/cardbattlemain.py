@@ -26,6 +26,7 @@ from basicwidgets import (
     replace_widget, bring_widget_to_front, fadeout_widget, AutoLabel,
 )
 from custommodalview import CustomModalViewNoBackground
+from detailviewer import UnitCardDetailViewer
 from notificater import Notificater
 from .cardbattleplayer import Player, CardBattlePlayer
 from .card import UnknownCard, UnitCard, SpellCard
@@ -493,15 +494,24 @@ class CardBattleMain(Factory.RelativeLayout):
         modalview = CustomModalViewNoBackground(
             attach_to=self,
             auto_dismiss=True,
-            size_hint=(0.9, 0.6, ),
+            size_hint=(0.95, 0.6, ),
             pos_hint={'center_x': 0.5, 'center_y': 0.5, })
-        modalview.add_widget(magnet)
+        if isinstance(card, UnitCard):
+            viewer = UnitCardDetailViewer(
+                card=card, magnet=magnet,
+                tag_translation_dict=self.tag_translation_dict,
+                skill_dict=self.skill_dict)
+        # elif isinstance(card, SpellCard:
+        else:
+            viewer = magnet
+        modalview.add_widget(viewer)
 
         def on_dismiss(*args):
             bring_widget_to_front(card)
-            modalview.remove_widget(magnet)
+            magnet.parent.remove_widget(magnet)
             tefuda_layout.add_widget(magnet)
         modalview.bind(on_dismiss=on_dismiss)
+        bring_widget_to_front(card)
         modalview.open(self)
 
     # def show_detail_of_a_card(self, cell):
