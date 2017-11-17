@@ -11,6 +11,7 @@ bonobo:
 horse:
   cost: 3
   stats: [3, 0, 0]
+  skill_id_list: ["dash"]
 serval:
   cost: 4
   stats: [2, 2, 0]

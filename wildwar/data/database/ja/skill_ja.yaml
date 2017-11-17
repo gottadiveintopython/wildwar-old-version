@@ -1,0 +1,8 @@
+# -*- coding: utf-8 -*-
+
+dash:
+  name: "駆ける"
+  description: "2マス動ける"
+neurotoxicity:
+  name: "神経毒"
+  description: "戦闘後、敵は動けなくなる"

@@ -1,0 +1,7 @@
+# -*- coding: utf-8 -*-
+
+anti_hot: "高温耐性"
+anti_cold: "低温耐性"
+anti_dry: "乾燥耐性"
+can_fly: "飛べる"
+can_swim: "泳げる"

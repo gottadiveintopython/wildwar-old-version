@@ -350,30 +350,57 @@ class CardBattleMain(Factory.RelativeLayout):
             return
         self._on_command_game_begin_called = True
 
+        # ----------------------------------------------------------------------
+        # Databaseを初期化
+        # ----------------------------------------------------------------------
+
+        # UnitPrototypeの辞書
         with open(
                 resource_find('unit_prototype_{}.yaml'.format(self._iso639)),
                 'rt', encoding='utf-8') as reader:
             self.unit_prototype_dict = CardBattleMain._merge_database(
                 params.unit_prototype_dict.__dict__,
                 yaml.load(reader))
+        # SpellPrototypeの辞書
         with open(
                 resource_find('spell_prototype_{}.yaml'.format(self._iso639)),
                 'rt', encoding='utf-8') as reader:
             self.spell_prototype_dict = CardBattleMain._merge_database(
                 params.spell_prototype_dict.__dict__,
                 yaml.load(reader))
+        # 利便性の為、UnitPrototypeの辞書とSpellPrototypeの辞書を合成した辞書も作る
         self.prototype_dict = {
             **self.unit_prototype_dict, **self.spell_prototype_dict, }
+        # Skillの辞書
+        with open(
+                resource_find('skill_{}.yaml'.format(self._iso639)),
+                'rt', encoding='utf-8') as reader:
+            self.skill_dict = {
+                key: SmartObject(type='Skill', id=key, **value)
+                for key, value in yaml.load(reader).items()
+            }
+        # Tagの翻訳用辞書
+        with open(
+                resource_find('tag_translation_{}.yaml'.format(self._iso639)),
+                'rt', encoding='utf-8') as reader:
+            self.tag_translation_dict = yaml.load(reader)
+
+        # 画像Fileの辞書
         with open(
                 resource_find('imagefile_dict.yaml'),
                 'rt', encoding='utf-8') as reader:
             self.imagefile_dict = yaml.load(reader)
+        # Cardの辞書
+        self.card_dict = {}
+
+        # ----------------------------------------------------------------------
+        # Playerを初期化
+        # ----------------------------------------------------------------------
         self.player_list = [
             Player(**copy_dictionary(
                 player.__dict__,
                 keys_exclude=('n_tefuda', 'klass', )
             )) for player in params.player_list]
-        self.is_black = self.player_list[0].id == self.player_id  # 先手か否か
         self.player_dict = {
             player.id: player for player in self.player_list
         }
@@ -389,7 +416,10 @@ class CardBattleMain(Factory.RelativeLayout):
                     else 'id_playerwidget_opponent'
                 ],
                 new=playerwidget)
-        self.card_dict = {}
+        # ----------------------------------------------------------------------
+        #
+        # ----------------------------------------------------------------------
+        self.is_black = self.player_list[0].id == self.player_id  # 先手か否か
         self.board = BoardWidget(
             cols=params.board_size[0],
             rows=params.board_size[1] + 2,
