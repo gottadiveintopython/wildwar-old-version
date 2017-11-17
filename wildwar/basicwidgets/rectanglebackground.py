@@ -3,7 +3,7 @@
 r"""
 """
 
-__all__ = ('RoundedRectBackground', )
+__all__ = ('RectangleBackground', )
 
 import kivy
 kivy.require(r'1.10.0')
@@ -14,36 +14,31 @@ from kivy.properties import ListProperty
 
 Builder.load_string(r'''
 #:set BORDER_WIDTH 2
-#:set SEGMENTS 6
 
-<RoundedRectBackground>:
+<RectangleBackground>:
     canvas.before:
         Color:
             rgba: self.border_color
-        RoundedRectangle:
+        Rectangle:
             pos: self.pos
             size: self.size
-            segments: SEGMENTS
-            radius: [(self.width / 4, self.height / 4), ]
         Color:
             rgba: self.background_color
-        RoundedRectangle:
+        Rectangle:
             pos: self.x + BORDER_WIDTH, self.y + BORDER_WIDTH
             size: self.width - 2 * BORDER_WIDTH, self.height - 2 * BORDER_WIDTH
-            segments: SEGMENTS
-            radius: [(self.width / 4, self.height / 4), ]
 ''')
 
 
-class RoundedRectBackground:
+class RectangleBackground:
 
     border_color = ListProperty((1, 1, 1, 1, ))
     background_color = ListProperty((0, 0, 0, 1, ))
 
 
 Factory.register(
-    'RoundedRectBackground',
-    cls=RoundedRectBackground)
+    'RectangleBackground',
+    cls=RectangleBackground)
 
 
 def _test():
@@ -51,11 +46,14 @@ def _test():
 
     root = Builder.load_string(r'''
 
-<TestWidget@RoundedRectBackground+Widget>:
+<TestWidget@RectangleBackground+Widget>:
 
-TestWidget:
-    border_color: .5, .5, 0, 1
-    background_color: .2, .2, .2, 1
+FloatLayout:
+    TestWidget:
+        size_hint: 0.5, 0.5
+        pos: 30, 30
+        border_color: .5, .5, 0, 1
+        background_color: .2, .2, .2, 1
     ''')
 
     runTouchApp(root)

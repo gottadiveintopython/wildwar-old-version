@@ -5,3 +5,4 @@ from ._basicwidgets import (
 )
 from .adjustfontsizebehavior import AdjustFontsizeBehavior
 from .roundedrectbackground import RoundedRectBackground
+from .rectanglebackground import RectangleBackground
