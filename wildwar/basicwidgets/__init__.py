@@ -4,5 +4,5 @@ from ._basicwidgets import (
     replace_widget, bring_widget_to_front,
 )
 from .adjustfontsizebehavior import AdjustFontsizeBehavior
-from .roundedrectbackground import RoundedRectBackground
+# from .roundedrectbackground import RoundedRectBackground
 from .rectanglebackground import RectangleBackground
