@@ -2,13 +2,13 @@
 
 armadillo:
   name: "Armadillo"
-  description: ""
+  description: "非常に硬い皮膚を持ち、敵に襲われると丸まって身を守る"
 bat:
   name: "こうもり"
-  description: ""
+  description: "超音波を用いて獲物を探す"
 bonobo:
   name: "Bonobo"
-  description: ""
+  description: "猿の一種。"
 buffalo:
   name: "Buffalo"
   description: ""
@@ -56,7 +56,7 @@ grizzly_bear:
   description: ""
 hallucigenia:
   name: "Hallucigenia"
-  description: ""
+  description: "約5億2,500万〜約5億500万年前に生息していた海の生物"
 hedgehog:
   name: "針鼠"
   description: ""

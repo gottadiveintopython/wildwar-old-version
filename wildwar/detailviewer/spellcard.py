@@ -61,8 +61,6 @@ class UnitCardDetailViewer(Factory.RelativeLayout):
         skill_names = [skill_dict[skill_id].name for skill_id in prototype.skill_id_list]
         if len(skill_names) == 0:
             skill_names.append(localize_str('無し'))
-        self.ids.id_label_detail.text = ' Tags:\n   {}\n Skills:\n   {}\n\n{}'.format(
-            '\n  '.join(translated_tags),
-            '\n  '.join(skill_names),
-            prototype.description)
+        self.ids.id_label_detail.text = ' Tags:\n   {}\n Skills:\n   {}'.format(
+            '\n  '.join(translated_tags), '\n  '.join(skill_names))
         replace_widget(self.ids.id_dummy, magnet or card)

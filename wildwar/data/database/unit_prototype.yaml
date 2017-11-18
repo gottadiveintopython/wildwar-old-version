@@ -6,6 +6,7 @@ armadillo:
 bat:
   cost: 1
   stats: [1, 0, 0]
+  tag_list: ["can_fly"]
 bonobo:
   cost: 1
   stats: [1, 0, 0]
@@ -33,9 +34,11 @@ elephant:
 falcon:
   cost: 1
   stats: [1, 0, 0]
+  tag_list: ["can_fly"]
 flying_squirrel:
   cost: 1
   stats: [1, 0, 0]
+  tag_list: ["can_fly"]
 frilled_lizard:
   cost: 1
   stats: [1, 0, 0]
