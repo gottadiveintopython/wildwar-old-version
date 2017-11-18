@@ -53,11 +53,11 @@ Builder.load_string(r"""
 <SpellCard>:
     Image:
         source: root.imagefile
-    AutoLabel:
-        pos_hint: {'x': 0, 'top': 1}
-        size_hint: 0.2, 0.2
-        bold: True
-        text: str(root.prototype.cost)
+    # AutoLabel:
+    #     pos_hint: {'x': 0, 'top': 1}
+    #     size_hint: 0.2, 0.2
+    #     bold: True
+    #     text: str(root.prototype.cost)
 
 <UnitCard>:
     Image:
