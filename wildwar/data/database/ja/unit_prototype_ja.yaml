@@ -1,21 +1,170 @@
 # -*- coding: utf-8 -*-
 
+armadillo:
+  name: "Armadillo"
+  description: ""
+bat:
+  name: "こうもり"
+  description: ""
+bonobo:
+  name: "Bonobo"
+  description: ""
+buffalo:
+  name: "Buffalo"
+  description: ""
 cat:
   name: "猫"
-bonobo:
-  name: "Bonobo(猿の一種)"
-horse:
-  name: "馬"
-serval:
-  name: "Serval(猫科)"
-python:
-  name: "錦蛇"
+  description: ""
+chameleon:
+  name: "Cameleon"
+  description: ""
+chimpanzee:
+  name: "Chinpamzee"
+  description: ""
+crocodile:
+  name: "鰐"
+  description: ""
+dairy_cattle:
+  name: "乳牛"
+  description: ""
+elephant:
+  name: "象"
+  description: ""
+falcon:
+  name: "隼"
+  description: ""
 flying_squirrel:
   name: "ももんが"
+  description: ""
+frilled_lizard:
+  name: "えりまきとかげ"
+  description: ""
+frog:
+  name: "蛙"
+  description: ""
+giraffee:
+  name: "きりん"
+  description: ""
+gorilla:
+  name: "Gorilla"
+  description: ""
+grey_heron:
+  name: "青鷺"
+  description: ""
+grizzly_bear:
+  name: "ひぐま"
+  description: ""
+hallucigenia:
+  name: "Hallucigenia"
+  description: ""
+hedgehog:
+  name: "針鼠"
+  description: ""
+hippopotamus:
+  name: "かば"
+  description: ""
+horse:
+  name: "馬"
+  description: ""
+human_female:
+  name: "人(雌)"
+  description: ""
 human_male:
   name: "人(雄)"
-raccoon:
-  name: "狸"
+  description: ""
+hyena:
+  name: "はいえな"
+  description: ""
+impala:
+  name: "いんぱら"
+  description: ""
 jaguar:
   name: "Jaguar"
-
+  description: ""
+killer_whale:
+  name: "しゃち"
+  description: ""
+lesser_panda:
+  name: "Lesser Panda"
+  description: ""
+lycaon:
+  name: "Lycaon"
+  description: ""
+mandrill:
+  name: "Mandrill"
+  description: ""
+narwhal:
+  name: "一角鯨"
+  description: ""
+newt:
+  name: "いもり"
+  description: ""
+ostrich:
+  name: "だちょう"
+  description: ""
+panda:
+  name: "Panda"
+  description: ""
+pig:
+  name: "豚"
+  description: ""
+platyrus:
+  name: "鴨の嘴"
+  description: ""
+polar_bear:
+  name: "北極熊"
+  description: ""
+porcupine:
+  name: "山嵐"
+  description: ""
+python:
+  name: "錦蛇"
+  description: ""
+raccoon:
+  name: "狸"
+  description: ""
+rat:
+  name: "鼠"
+  description: ""
+reindeer:
+  name: "となかい"
+  description: ""
+sea_otter:
+  name: "らっこ"
+  description: ""
+sea_turtle:
+  name: "海亀"
+  description: ""
+serval:
+  name: "Serval"
+  description: ""
+sheep:
+  name: "羊"
+  description: ""
+snail:
+  name: "かたつむり"
+  description: ""
+sperm_whale:
+  name: "まっこう鯨"
+  description: ""
+stoat:
+  name: "おこじょ"
+  description: ""
+swan:
+  name: "あひる"
+  description: ""
+tiger:
+  name: "虎"
+  description: ""
+walrus:
+  name: "せいうち"
+  description: ""
+weasel:
+  name: "いたち"
+  description: ""
+wild_boar:
+  name: "野猪"
+  description: ""
+zebra:
+  name: "しま馬"
+  description: ""

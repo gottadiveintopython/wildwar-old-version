@@ -1,32 +1,170 @@
 # -*- coding: utf-8 -*-
 
-# statsは[power, attack, defense]の順に記述する
-
+armadillo:
+  cost: 1
+  stats: [1, 0, 0]
+bat:
+  cost: 1
+  stats: [1, 0, 0]
+bonobo:
+  cost: 1
+  stats: [1, 0, 0]
+buffalo:
+  cost: 1
+  stats: [1, 0, 0]
 cat:
   cost: 1
-  stats: [1, 1, 0]
-bonobo:
-  cost: 2
-  stats: [1, 2, 1]
-horse:
-  cost: 3
-  stats: [3, 0, 0]
-  skill_id_list: ["dash"]
-serval:
-  cost: 4
-  stats: [2, 2, 0]
-python:
-  cost: 3
-  stats: [2, 1, 1]
+  stats: [1, 0, 0]
+chameleon:
+  cost: 1
+  stats: [1, 0, 0]
+chimpanzee:
+  cost: 1
+  stats: [1, 0, 0]
+crocodile:
+  cost: 1
+  stats: [1, 0, 0]
+dairy_cattle:
+  cost: 1
+  stats: [1, 0, 0]
+elephant:
+  cost: 1
+  stats: [1, 0, 0]
+falcon:
+  cost: 1
+  stats: [1, 0, 0]
 flying_squirrel:
   cost: 1
-  stats: [1, 1, 1]
+  stats: [1, 0, 0]
+frilled_lizard:
+  cost: 1
+  stats: [1, 0, 0]
+frog:
+  cost: 1
+  stats: [1, 0, 0]
+giraffee:
+  cost: 1
+  stats: [1, 0, 0]
+gorilla:
+  cost: 1
+  stats: [1, 0, 0]
+grey_heron:
+  cost: 1
+  stats: [1, 0, 0]
+grizzly_bear:
+  cost: 1
+  stats: [1, 0, 0]
+hallucigenia:
+  cost: 1
+  stats: [1, 0, 0]
+hedgehog:
+  cost: 1
+  stats: [1, 0, 0]
+hippopotamus:
+  cost: 1
+  stats: [1, 0, 0]
+horse:
+  cost: 1
+  stats: [1, 0, 0]
+human_female:
+  cost: 1
+  stats: [1, 0, 0]
 human_male:
-  cost: 0
+  cost: 1
+  stats: [1, 0, 0]
+hyena:
+  cost: 1
+  stats: [1, 0, 0]
+impala:
+  cost: 1
+  stats: [1, 0, 0]
+jaguar:
+  cost: 1
+  stats: [1, 0, 0]
+killer_whale:
+  cost: 1
+  stats: [1, 0, 0]
+lesser_panda:
+  cost: 1
+  stats: [1, 0, 0]
+lycaon:
+  cost: 1
+  stats: [1, 0, 0]
+mandrill:
+  cost: 1
+  stats: [1, 0, 0]
+narwhal:
+  cost: 1
+  stats: [1, 0, 0]
+newt:
+  cost: 1
+  stats: [1, 0, 0]
+ostrich:
+  cost: 1
+  stats: [1, 0, 0]
+panda:
+  cost: 1
+  stats: [1, 0, 0]
+pig:
+  cost: 1
+  stats: [1, 0, 0]
+platyrus:
+  cost: 1
+  stats: [1, 0, 0]
+polar_bear:
+  cost: 1
+  stats: [1, 0, 0]
+porcupine:
+  cost: 1
+  stats: [1, 0, 0]
+python:
+  cost: 1
   stats: [1, 0, 0]
 raccoon:
-  cost: 2
-  stats: [1, 0, 1]
-jaguar:
-  cost: 5
-  stats: [4, 4, 0]
+  cost: 1
+  stats: [1, 0, 0]
+rat:
+  cost: 1
+  stats: [1, 0, 0]
+reindeer:
+  cost: 1
+  stats: [1, 0, 0]
+sea_otter:
+  cost: 1
+  stats: [1, 0, 0]
+sea_turtle:
+  cost: 1
+  stats: [1, 0, 0]
+serval:
+  cost: 1
+  stats: [1, 0, 0]
+sheep:
+  cost: 1
+  stats: [1, 0, 0]
+snail:
+  cost: 1
+  stats: [1, 0, 0]
+sperm_whale:
+  cost: 1
+  stats: [1, 0, 0]
+stoat:
+  cost: 1
+  stats: [1, 0, 0]
+swan:
+  cost: 1
+  stats: [1, 0, 0]
+tiger:
+  cost: 1
+  stats: [1, 0, 0]
+walrus:
+  cost: 1
+  stats: [1, 0, 0]
+weasel:
+  cost: 1
+  stats: [1, 0, 0]
+wild_boar:
+  cost: 1
+  stats: [1, 0, 0]
+zebra:
+  cost: 1
+  stats: [1, 0, 0]

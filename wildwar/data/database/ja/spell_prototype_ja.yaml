@@ -1,5 +1,26 @@
 # -*- coding: utf-8 -*-
 
+blizzard:
+  name: "吹雪"
+  description: "低温耐性を持たない全てのUnitに4のdamage"
+grooming:
+  name: "毛づくろい"
+  description: "Unit一体の状態異常を治す"
 meteorite:
   name: "隕石衝突"
-  description: "盤上の全てのUnitを破壊する"
+  description: "盤上のUnitを全て破壊する"
+thunderbolt:
+  name: "雷"
+  description: "Unit一体を破壊する"
+threat:
+  name: "威嚇"
+  description: "指定したUnit一体は次の自分のTurnまで自分より基本値の低いUnitからは攻撃されない"
+tornado:
+  name: "竜巻"
+  description: "2x2マスの範囲にいるUnitに1damage。海洋生物には無効"
+trap:
+  name: "罠"
+  description: "Unit一体に1damageを与え、1turn動けなくする。"
+volcanic_eruption:
+  name: "火山噴火"
+  description: "高温耐性を持たない全てのUnitに4damage"

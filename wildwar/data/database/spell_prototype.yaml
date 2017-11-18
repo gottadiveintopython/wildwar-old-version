@@ -1,5 +1,26 @@
 # -*- coding: utf-8 -*-
 
+blizzard:
+  cost: 1
+  target: "all"
+grooming:
+  cost: 1
+  target: "all"
 meteorite:
-  cost: 3
+  cost: 1
+  target: "all"
+threat:
+  cost: 1
+  target: "all"
+thunderbolt:
+  cost: 1
+  target: "all"
+tornado:
+  cost: 1
+  target: "all"
+trap:
+  cost: 1
+  target: "all"
+volcanic_eruption:
+  cost: 1
   target: "all"
