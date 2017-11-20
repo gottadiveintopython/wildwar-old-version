@@ -45,16 +45,8 @@ Builder.load_string(r"""
             rgba: 1, 1, 1, 0.2
         Line:
             rectangle: self.x, self.y, self.width, self.height
-    canvas.after:
-        Color:
-            rgba: OVERLAY_COLOR_DICT[self.state]
-        Rectangle:
-            pos: self.pos
-            size: self.size
 
 <CardBattleBoardsParent@FloatLayout+StencilAll>:
-
-<CardLayer@DragRecognizerDashLine+Widget>:
 
 <CardBattleMain>:
     card_layer: id_card_layer
@@ -120,7 +112,7 @@ class GameState(Factory.EventDispatcher):
     is_myturn = BooleanProperty()
 
 
-class Cell(Factory.ButtonBehavior, Factory.FloatLayout):
+class Cell(Factory.FloatLayout):
 
     id = StringProperty()
 
@@ -232,6 +224,91 @@ class QueueSender:
         self.queue_instance.put(item=item)
 
 
+class CardLayer(DragRecognizerDashLine, Factory.Widget):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.register_event_type('on_operation_drag')
+        # Don't use self.__class__.__name__ instead of 'CardLayer.'
+        self.__ud_key = 'CardLayer.' + str(self.uid)
+
+    def on_drag_start(self, touch):
+        super().on_drag_start(touch)
+        child_from = None
+        for child in self.children:
+            if child.collide_point(*touch.opos):
+                child_from = child
+                child_from.state = 'down'
+                break
+
+        touch.ud[self.__ud_key] = {
+            'child_from': child_from,
+            'child_to': child_from,
+        }
+
+    def on_being_dragged(self, touch):
+        super().on_being_dragged(touch)
+        ud = touch.ud[self.__ud_key]
+
+        child_from = ud['child_from']
+        previous_child_to = ud['child_to']
+        current_child_to = None
+        for child in self.children:
+            if child.collide_point(*touch.pos):
+                current_child_to = child
+        ud['child_to'] = current_child_to
+
+        if current_child_to is previous_child_to:
+            pass
+        else:
+            condition1 = previous_child_to is not None
+            condition2 = previous_child_to is not child_from
+            if condition1 and condition2:
+                previous_child_to.state = 'normal'
+            if current_child_to is not None:
+                current_child_to.state = 'down'
+
+    def on_drag_finish(self, touch):
+        super().on_drag_finish(touch)
+        ud = touch.ud[self.__ud_key]
+
+        child_from = ud['child_from']
+        child_to = ud['child_to']
+
+        if child_from is not None:
+            child_from.state = 'normal'
+        if child_to is not None:
+            child_to.state = 'normal'
+
+        if child_from is None or child_to is None:
+            return
+        if child_from is child_to:
+            pass
+        else:
+            self.dispatch('on_operation_drag', child_from, child_to)
+
+    def on_operation_drag(self, child_from, child_to):
+        pass
+        # logger.debug(rf"on_operation_drag : {cell_from} to {cell_to}")
+        # if (
+        #     cell_from.is_not_empty() and
+        #     self.gamestate.current_player.klass is PlayerType.HUMAN and
+        #     self.gamestate.current_player is cell_from.card.player
+        # ):
+        #     if cell_to.is_empty():
+        #         self.send_command(
+        #             CommandType.MOVE, cell_from, cell_to
+        #         )
+        #     elif cell_from.card.player is cell_to.card.player:
+        #         self.send_command(
+        #             CommandType.SUPPORT, cell_from, cell_to
+        #         )
+        #     else:
+        #         self.send_command(
+        #             CommandType.ATTACK, cell_from, cell_to
+        #         )
+
+
 class CardBattleMain(Factory.RelativeLayout):
 
     card_layer = ObjectProperty()
@@ -250,6 +327,10 @@ class CardBattleMain(Factory.RelativeLayout):
         self.timer.bind(int_current_time=self.on_timer_tick)
         self._iso639 = iso639
         self._localize_str = lambda s: s  # この関数は後に実装する
+        self.card_layer.bind(on_operation_drag=self.on_operation_drag)
+
+    def on_operation_drag(self, child_from, child_to):
+        pass
 
     def on_timer_tick(self, timer, seconds):
         time_limit = timer.time_limit
@@ -399,7 +480,7 @@ class CardBattleMain(Factory.RelativeLayout):
         self.is_black = self.player_list[0].id == self.player_id  # 先手か否か
         self.board = BoardWidget(
             cols=params.board_size[0],
-            rows=params.board_size[1] + 2,
+            rows=params.board_size[1],
             size_hint=(1, 1.25, ),
             pos_hint={'center_y': 0.5, 'center_x': 0.5}
         )
@@ -515,128 +596,3 @@ class CardBattleMain(Factory.RelativeLayout):
         modalview.bind(on_dismiss=on_dismiss)
         bring_widget_to_front(card)
         modalview.open(self)
-
-    # def show_detail_of_a_card(self, cell):
-    #     modalview = Factory.ModalView(
-    #         auto_dismiss=True,
-    #         size_hint=(None, 0.9,),
-    #         width=self.height * 0.66
-    #     )
-    #     modalview.bind(height=(
-    #         lambda widget, value: setattr(widget, r'width', value * 0.66)
-    #     ))
-    #     cell_temp = Cell()
-    #     cell_temp.attach(cell.detach())
-    #     modalview.add_widget(cell_temp)
-    #     modalview.bind(
-    #         on_dismiss=lambda *args: cell.attach(cell_temp.detach())
-    #     )
-    #     modalview.open(self)
-
-# class CardBattleMain2(DragRecognizerDashLine):
-
-#     def on_drag_start(self, touch):
-#         super().on_drag_start(touch)
-#         cell_from = None
-#         for cell in self.board.children:
-#             if cell.collide_point(*touch.opos):
-#                 cell_from = cell
-#                 cell_from.state = r'down'
-
-#         ud_key = self._get_uid(prefix=r'CardBattleMain')  # _get_uidは親ClassのMethod
-#         touch.ud[ud_key] = {
-#             r'inst_list': inst_list,
-#             r'cell_from': cell_from,
-#             r'cell_to': cell_from,
-#         }
-
-#     def on_being_dragged(self, touch):
-#         super().on_being_dragged(touch)
-#         ud_key = self._get_uid(prefix=r'CardBattleMain')
-#         ud = touch.ud[ud_key]
-
-#         cell_from = ud[r'cell_from']
-#         previous_cell_to = ud[r'cell_to']
-#         current_cell_to = None
-#         for cell in self.board.children:
-#             if cell.collide_point(*touch.pos):
-#                 current_cell_to = cell
-#         ud[r'cell_to'] = current_cell_to
-
-#         if current_cell_to is previous_cell_to:
-#             pass
-#         else:
-#             condition1 = previous_cell_to is not None
-#             condition2 = previous_cell_to is not cell_from
-#             if condition1 and condition2:
-#                 previous_cell_to.state = r'normal'
-#             if current_cell_to is not None:
-#                 current_cell_to.state = r'down'
-
-#     def on_drag_finish(self, touch):
-#         super().on_drag_finish(touch)
-#         ud_key = self._get_uid(prefix=r'CardBattleMain')
-#         ud = touch.ud[ud_key]
-
-#         cell_from = ud[r'cell_from']
-#         cell_to = ud[r'cell_to']
-
-#         if cell_from is not None:
-#             cell_from.state = r'normal'
-#         if cell_to is not None:
-#             cell_to.state = r'normal'
-
-#         if cell_from is None or cell_to is None:
-#             return
-#         if cell_from is cell_to:
-#             pass
-#         else:
-#             self.on_operation_drag(cell_from, cell_to)
-
-#     def on_operation_click(self, cell):
-#         logger.debug(r'on_operation_click :' + cell.id)
-#         if cell.is_not_empty():
-#             self.show_detail_of_a_card(cell)
-
-#     def on_operation_drag(self, cell_from, cell_to):
-#         logger.debug(rf"on_operation_drag : {cell_from} to {cell_to}")
-#         if (
-#             cell_from.is_not_empty() and
-#             self.gamestate.current_player.klass is PlayerType.HUMAN and
-#             self.gamestate.current_player is cell_from.card.player
-#         ):
-#             if cell_to.is_empty():
-#                 self.send_command(
-#                     CommandType.MOVE, cell_from, cell_to
-#                 )
-#             elif cell_from.card.player is cell_to.card.player:
-#                 self.send_command(
-#                     CommandType.SUPPORT, cell_from, cell_to
-#                 )
-#             else:
-#                 self.send_command(
-#                     CommandType.ATTACK, cell_from, cell_to
-#                 )
-
-#     def show_detail_of_a_card(self, cell):
-#         modalview = Factory.ModalView(
-#             auto_dismiss=True,
-#             size_hint=(None, 0.9,),
-#             width=self.height * 0.66
-#         )
-#         modalview.bind(
-#             height=(
-#                 lambda widget, value: setattr(widget, r'width', value * 0.66)
-#             )
-#         )
-#         cell_temp = Cell()
-#         cell_temp.attach(cell.detach())
-#         modalview.add_widget(cell_temp)
-#         modalview.bind(
-#             on_dismiss=lambda *args: cell.attach(cell_temp.detach())
-#         )
-#         modalview.open(self)
-
-#     def send_command(self, klass, cell_from, cell_to):
-#         logger.debug(rf"send command : {klass} : {cell_from} to {cell_to}")
-

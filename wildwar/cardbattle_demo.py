@@ -33,7 +33,7 @@ def run_server_thread(**kwargs):
         database_dir=os.path.join(DATA_ROOT_DIR, 'database'),
         n_tefuda_init=4,
         max_tefuda=8,
-        board_size=(5, 5,),
+        board_size=(5, 7,),
         timeout=8,
         how_to_decide_player_order="random",
         func_create_deck=cardbattle_server.RandomDeckCreater(n_cards=10),
