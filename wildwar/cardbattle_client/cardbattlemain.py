@@ -37,7 +37,7 @@ from .turnendbutton import TurnEndButton
 Builder.load_string(r"""
 #:kivy 1.10.0
 
-#:set OVERLAY_COLOR_DICT { r'normal': [0, 0, 0, 0], r'down': [1, 1, 1, 0.15], }
+#:set OVERLAYCOLOR_DICT { r'normal': [0, 0, 0, 0], r'down': [1, 1, 1, 0.15], }
 
 <Cell>:
     canvas:
@@ -45,6 +45,12 @@ Builder.load_string(r"""
             rgba: 1, 1, 1, 0.2
         Line:
             rectangle: self.x, self.y, self.width, self.height
+    canvas.after:
+        Color:
+            rgba: OVERLAYCOLOR_DICT[self.state]
+        Rectangle:
+            pos: self.pos
+            size: self.size
 
 <CardBattleBoardsParent@FloatLayout+StencilAll>:
 
@@ -112,7 +118,7 @@ class GameState(Factory.EventDispatcher):
     is_myturn = BooleanProperty()
 
 
-class Cell(Factory.FloatLayout):
+class Cell(Factory.ButtonBehavior, Factory.FloatLayout):
 
     id = StringProperty()
 
@@ -226,6 +232,8 @@ class QueueSender:
 
 class CardLayer(DragRecognizerDashLine, Factory.Widget):
 
+    board = ObjectProperty()
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.register_event_type('on_operation_drag')
@@ -234,60 +242,80 @@ class CardLayer(DragRecognizerDashLine, Factory.Widget):
 
     def on_drag_start(self, touch):
         super().on_drag_start(touch)
-        child_from = None
+        widget_from = None
         for child in self.children:
             if child.collide_point(*touch.opos):
-                child_from = child
-                child_from.state = 'down'
+                widget_from = child
+                widget_from.state = 'down'
                 break
+        if widget_from is None:
+            touch.push()
+            touch.apply_transform_2d(self.to_window)
+            touch.apply_transform_2d(self.board.to_widget)
+            for child in self.board.children:
+                if child.collide_point(*touch.opos):
+                    widget_from = child
+                    widget_from.state = 'down'
+                    break
+            touch.pop()
 
         touch.ud[self.__ud_key] = {
-            'child_from': child_from,
-            'child_to': child_from,
+            'widget_from': widget_from,
+            'widget_to': widget_from,
         }
 
     def on_being_dragged(self, touch):
         super().on_being_dragged(touch)
         ud = touch.ud[self.__ud_key]
 
-        child_from = ud['child_from']
-        previous_child_to = ud['child_to']
-        current_child_to = None
+        widget_from = ud['widget_from']
+        previous_widget_to = ud['widget_to']
+        current_widget_to = None
         for child in self.children:
             if child.collide_point(*touch.pos):
-                current_child_to = child
-        ud['child_to'] = current_child_to
+                current_widget_to = child
+                break
+        if current_widget_to is None:
+            touch.push()
+            touch.apply_transform_2d(self.to_window)
+            touch.apply_transform_2d(self.board.to_widget)
+            for child in self.board.children:
+                if child.collide_point(*touch.pos):
+                    current_widget_to = child
+                    break
+            touch.pop()
+        ud['widget_to'] = current_widget_to
 
-        if current_child_to is previous_child_to:
+        if current_widget_to is previous_widget_to:
             pass
         else:
-            condition1 = previous_child_to is not None
-            condition2 = previous_child_to is not child_from
+            condition1 = previous_widget_to is not None
+            condition2 = previous_widget_to is not widget_from
             if condition1 and condition2:
-                previous_child_to.state = 'normal'
-            if current_child_to is not None:
-                current_child_to.state = 'down'
+                previous_widget_to.state = 'normal'
+            if current_widget_to is not None:
+                current_widget_to.state = 'down'
 
     def on_drag_finish(self, touch):
         super().on_drag_finish(touch)
         ud = touch.ud[self.__ud_key]
 
-        child_from = ud['child_from']
-        child_to = ud['child_to']
+        widget_from = ud['widget_from']
+        widget_to = ud['widget_to']
 
-        if child_from is not None:
-            child_from.state = 'normal'
-        if child_to is not None:
-            child_to.state = 'normal'
+        if widget_from is not None:
+            widget_from.state = 'normal'
+        if widget_to is not None:
+            widget_to.state = 'normal'
 
-        if child_from is None or child_to is None:
+        if widget_from is None or widget_to is None:
             return
-        if child_from is child_to:
+        if widget_from is widget_to:
             pass
         else:
-            self.dispatch('on_operation_drag', child_from, child_to)
+            self.dispatch('on_operation_drag', widget_from, widget_to)
 
-    def on_operation_drag(self, child_from, child_to):
+    def on_operation_drag(*args):
         pass
         # logger.debug(rf"on_operation_drag : {cell_from} to {cell_to}")
         # if (
@@ -329,7 +357,7 @@ class CardBattleMain(Factory.RelativeLayout):
         self._localize_str = lambda s: s  # この関数は後に実装する
         self.card_layer.bind(on_operation_drag=self.on_operation_drag)
 
-    def on_operation_drag(self, child_from, child_to):
+    def on_operation_drag(self, card_layer, child_from, child_to):
         pass
 
     def on_timer_tick(self, timer, seconds):
@@ -485,6 +513,7 @@ class CardBattleMain(Factory.RelativeLayout):
             pos_hint={'center_y': 0.5, 'center_x': 0.5}
         )
         self.ids.id_boards_parent.add_widget(self.board)
+        self.card_layer.board = self.board
         self.timer.time_limit = params.timeout
 
     def on_command_turn_begin(self, params):
