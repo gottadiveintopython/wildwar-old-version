@@ -39,6 +39,7 @@ Builder.load_string(r'''
         Label4CardDetailViewer:
             border_color: BORDER_COLOR
             background_color: BACKGROUND_COLOR
+            padding_x: 10
             id: id_label_detail
             font_size: self.width / 10
             text_size: self.width, None
@@ -59,7 +60,7 @@ class UnitPrototypeDetailViewer(Factory.RelativeLayout):
         skill_names = [skill_dict[skill_id].name for skill_id in prototype.skill_id_list]
         if len(skill_names) == 0:
             skill_names.append(localize_str('無し'))
-        self.ids.id_label_detail.text = ' {}:\n   {}\n {}:\n   {}\n\n{}'.format(
+        self.ids.id_label_detail.text = '{}:\n  {}\n{}:\n  {}\n\n{}'.format(
             localize_str('Tag'),
             '\n  '.join(translated_tags),
             localize_str('技能'),
