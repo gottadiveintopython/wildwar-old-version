@@ -3,7 +3,7 @@
 r"""
 """
 
-__all__ = ('UnitCardDetailViewer', )
+__all__ = ('UnitPrototypeDetailViewer', )
 
 import kivy
 kivy.require(r'1.10.0')
@@ -22,7 +22,7 @@ Builder.load_string(r'''
 <Label4CardDetailViewer@Label+RectangleBackground>:
 <AutoLabel4CardDetailViewer@AutoLabel+RectangleBackground>:
 
-<UnitCardDetailViewer>:
+<UnitPrototypeDetailViewer>:
     BoxLayout:
         spacing: 10
         BoxLayout:
@@ -50,7 +50,7 @@ def localize_str(s):
     return s
 
 
-class UnitCardDetailViewer(Factory.RelativeLayout):
+class UnitPrototypeDetailViewer(Factory.RelativeLayout):
 
     def __init__(self, *, card, magnet=None, tag_translation_dict, skill_dict, **kwargs):
         self.prototype = prototype = card.prototype

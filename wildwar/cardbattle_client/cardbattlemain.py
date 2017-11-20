@@ -26,7 +26,7 @@ from basicwidgets import (
     replace_widget, bring_widget_to_front, fadeout_widget, AutoLabel,
 )
 from custommodalview import CustomModalViewNoBackground
-from detailviewer import UnitCardDetailViewer, SpellPrototypeDetailViewer
+from detailviewer import UnitPrototypeDetailViewer, SpellPrototypeDetailViewer
 from notificater import Notificater
 from .cardbattleplayer import Player, CardBattlePlayer
 from .card import UnknownCard, UnitCard, SpellCard
@@ -491,7 +491,7 @@ class CardBattleMain(Factory.RelativeLayout):
             size_hint=(0.95, 0.6, ),
             pos_hint={'center_x': 0.5, 'center_y': 0.5, })
         if isinstance(card, UnitCard):
-            viewer = UnitCardDetailViewer(
+            viewer = UnitPrototypeDetailViewer(
                 card=card, magnet=magnet,
                 tag_translation_dict=self.tag_translation_dict,
                 skill_dict=self.skill_dict)
