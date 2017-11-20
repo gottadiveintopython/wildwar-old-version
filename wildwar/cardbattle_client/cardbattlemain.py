@@ -492,7 +492,9 @@ class CardBattleMain(Factory.RelativeLayout):
             pos_hint={'center_x': 0.5, 'center_y': 0.5, })
         if isinstance(card, UnitCard):
             viewer = UnitPrototypeDetailViewer(
-                card=card, magnet=magnet,
+                prototype=card.prototype,
+                widget=magnet,
+                localize_str=self._localize_str,
                 tag_translation_dict=self.tag_translation_dict,
                 skill_dict=self.skill_dict)
         elif isinstance(card, SpellCard):

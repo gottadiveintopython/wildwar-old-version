@@ -46,14 +46,12 @@ Builder.load_string(r'''
 ''')
 
 
-def localize_str(s):
-    return s
-
-
 class UnitPrototypeDetailViewer(Factory.RelativeLayout):
 
-    def __init__(self, *, card, magnet=None, tag_translation_dict, skill_dict, **kwargs):
-        self.prototype = prototype = card.prototype
+    def __init__(
+            self, *, prototype, widget=None, localize_str,
+            tag_translation_dict, skill_dict, **kwargs):
+        self.prototype = prototype
         super().__init__(**kwargs)
         translated_tags = [tag_translation_dict[tag] for tag in prototype.tag_list]
         if len(translated_tags) == 0:
@@ -61,8 +59,11 @@ class UnitPrototypeDetailViewer(Factory.RelativeLayout):
         skill_names = [skill_dict[skill_id].name for skill_id in prototype.skill_id_list]
         if len(skill_names) == 0:
             skill_names.append(localize_str('無し'))
-        self.ids.id_label_detail.text = ' Tags:\n   {}\n Skills:\n   {}\n\n{}'.format(
+        self.ids.id_label_detail.text = ' {}:\n   {}\n {}:\n   {}\n\n{}'.format(
+            localize_str('Tag'),
             '\n  '.join(translated_tags),
+            localize_str('技能'),
             '\n  '.join(skill_names),
             prototype.description)
-        replace_widget(self.ids.id_dummy, magnet or card)
+        if widget:
+            replace_widget(self.ids.id_dummy, widget)
