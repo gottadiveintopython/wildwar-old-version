@@ -3,7 +3,7 @@
 r"""
 """
 
-__all__ = ('SpellCardDetailViewer', )
+__all__ = ('SpellPrototypeDetailViewer', )
 
 import kivy
 kivy.require(r'1.10.0')
@@ -19,7 +19,7 @@ Builder.load_string(r'''
 #:set BACKGROUND_COLOR 0, 0, 0, 0.7
 #:set BORDER_COLOR 1, 1, 1, 0.2
 
-<SpellCardDetailViewer>:
+<SpellPrototypeDetailViewer>:
     BoxLayout:
         spacing: 10
         BoxLayout:
@@ -44,7 +44,7 @@ Builder.load_string(r'''
 ''')
 
 
-class SpellCardDetailViewer(Factory.RelativeLayout):
+class SpellPrototypeDetailViewer(Factory.RelativeLayout):
 
     def __init__(
             self, *, prototype, widget=None, localize_str,
