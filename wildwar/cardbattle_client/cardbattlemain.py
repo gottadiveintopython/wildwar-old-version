@@ -109,13 +109,6 @@ Builder.load_string(r"""
 """)
 
 
-def localize_str(s):
-    r'''未実装
-
-    国際化用のModuleを勉強した後に実装する'''
-    return s
-
-
 def copy_dictionary(dictionary, *, keys_exclude):
     return {
         key: value
@@ -256,6 +249,7 @@ class CardBattleMain(Factory.RelativeLayout):
         self.player_id = player_id
         self.timer.bind(int_current_time=self.on_timer_tick)
         self._iso639 = iso639
+        self._localize_str = lambda s: s  # この関数は後に実装する
 
     def on_timer_tick(self, timer, seconds):
         time_limit = timer.time_limit
@@ -267,7 +261,7 @@ class CardBattleMain(Factory.RelativeLayout):
             elif seconds == time_limit - 5:
                 timer.color = (1, 0, 0, 1, )
                 self.on_command_notification(params=SmartObject(
-                    message=localize_str('残り5秒'), type='warning'))
+                    message=self._localize_str('残り5秒'), type='warning'))
 
     def on_turnendbutton_press(self):
         self.send_command(type='turn_end', params=None)
@@ -419,8 +413,8 @@ class CardBattleMain(Factory.RelativeLayout):
         gamestate.nth_turn = params.nth_turn
         label = AutoLabel(
             text=(
-                localize_str('あなたの番') if is_myturn
-                else localize_str(' 相手の番 ')),
+                self._localize_str('あなたの番') if is_myturn
+                else self._localize_str(' 相手の番 ')),
             color=(0, 0, 0, 1),
             outline_color=(1, 1, 1, ),
             outline_width=3,
