@@ -326,7 +326,7 @@ class Server:
         # 通信の遅延や時計の精度を考慮して実際の制限時間は少し多めにする
         actual_timeout = self.timeout + 5
 
-        CLIENT_COMMANDS = 'unit spell cell_to_cell resign turn_end'.split()
+        CLIENT_COMMANDS = 'put_unit use_spell cell_to_cell resign turn_end'.split()
 
         # Main Loop
         for reciever in itertools.cycle(self.reciever_list):
@@ -400,3 +400,12 @@ class Server:
 
     def on_command_turn_end(self, *, nth_turn, params):
         raise TurnEnd()
+
+    def on_command_put_unit(self, *, nth_turn, params):
+        print('[S] on_command_put_unit', params)
+
+    def on_command_use_spell(self, *, nth_turn, params):
+        print('[S] on_command_use_spell', params)
+
+    def on_command_cell_to_cell(self, *, nth_turn, params):
+        print('[S] on_command_cell_to_cell', params)

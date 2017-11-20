@@ -357,8 +357,41 @@ class CardBattleMain(Factory.RelativeLayout):
         self._localize_str = lambda s: s  # この関数は後に実装する
         self.card_layer.bind(on_operation_drag=self.on_operation_drag)
 
-    def on_operation_drag(self, card_layer, child_from, child_to):
-        pass
+    def on_operation_drag(self, card_layer, widget_from, widget_to):
+        if not self.gamestate.is_myturn:
+            self.on_command_notification(params=SmartObject(
+                message=self._localize_str('今は相手の番です'),
+                type='disallowed'))
+            return
+        if isinstance(widget_to, Cell):
+            if isinstance(widget_from, UnitCard):
+                self.send_command(
+                    type='put_unit',
+                    params=SmartObject(
+                        card_id=widget_from.id,
+                        cell_to_id=widget_to.id))
+            elif isinstance(widget_from, SpellCard):
+                self.send_command(
+                    type='use_spell',
+                    params=SmartObject(
+                        card_id=widget_from.id,
+                        cell_to_id=widget_to.id))
+            elif isinstance(widget_from, Cell):
+                self.send_command(
+                    type='cell_to_cell',
+                    params=SmartObject(
+                        cell_from_id=widget_from.id,
+                        cell_to_id=widget_to.id))
+            else:
+                self.on_command_notification(params=SmartObject(
+                    message=self._localize_str('無効な操作です'),
+                    type='disallowed'))
+                logger.critical(
+                    '予期しないWidgetがDragによって選ばれました: ' +
+                    str(widget_from))
+        else:
+            self.on_command_notification(params=SmartObject(
+                message=self._localize_str('無効な操作です'), type='disallowed'))
 
     def on_timer_tick(self, timer, seconds):
         time_limit = timer.time_limit

@@ -17,8 +17,8 @@ widget.children[0]で得られるのは最後に加えたwidget
 -----------------------------------------------------------------------
 client -> server
     Command
-        unit  # Unit召喚
-        # spell  # Spell使用
+        put_unit  # Unit召喚
+        use_spell  # Spell使用
         cell_to_cell  # CellからCellへDrag(攻撃、補助、移動)
         resign  # 投了
         turn_end  # Turn終了
