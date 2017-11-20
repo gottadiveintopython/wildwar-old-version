@@ -321,9 +321,9 @@ class CardBattleMain(Factory.RelativeLayout):
         self.gamestate = GameState(
             nth_turn=0, is_myturn=False)
         super().__init__(**kwargs)
-        self.inqueue = queue.Queue() if inqueue is None else inqueue
-        self.outqueue = queue.Queue() if outqueue is None else outqueue
-        self.player_id = player_id
+        self._inqueue = queue.Queue() if inqueue is None else inqueue
+        self._outqueue = queue.Queue() if outqueue is None else outqueue
+        self._player_id = player_id
         self.timer.bind(int_current_time=self.on_timer_tick)
         self._iso639 = iso639
         self._localize_str = lambda s: s  # この関数は後に実装する
@@ -355,17 +355,17 @@ class CardBattleMain(Factory.RelativeLayout):
             params=params).so_to_json(indent=2)
         logger.debug('[C] CLIENT COMMAND')
         logger.debug(json_command)
-        self.outqueue.put(json_command)
+        self._outqueue.put(json_command)
 
     def get_reciever(self):
         return QueueReciever(
-            player_id=self.player_id,
-            queue_instance=self.outqueue)
+            player_id=self._player_id,
+            queue_instance=self._outqueue)
 
     def get_sender(self):
         return QueueSender(
-            player_id=self.player_id,
-            queue_instance=self.inqueue)
+            player_id=self._player_id,
+            queue_instance=self._inqueue)
 
     def wrap_in_magnet(self, card):
         magnet = MagnetAcrossLayout(
@@ -379,7 +379,7 @@ class CardBattleMain(Factory.RelativeLayout):
         Clock.schedule_interval(self.check_inqueue, 0.3)
 
     def check_inqueue(self, __):
-        inqueue = self.inqueue
+        inqueue = self._inqueue
         try:
             command = SmartObject.load_from_json(inqueue.get_nowait())
             command_handler = getattr(self, 'on_command_' + command.type, None)
@@ -470,14 +470,14 @@ class CardBattleMain(Factory.RelativeLayout):
             replace_widget(
                 old=self.ids[
                     'id_playerwidget_mine'
-                    if key == self.player_id
+                    if key == self._player_id
                     else 'id_playerwidget_opponent'
                 ],
                 new=playerwidget)
         # ----------------------------------------------------------------------
         #
         # ----------------------------------------------------------------------
-        self.is_black = self.player_list[0].id == self.player_id  # 先手か否か
+        self.is_black = self.player_list[0].id == self._player_id  # 先手か否か
         self.board = BoardWidget(
             cols=params.board_size[0],
             rows=params.board_size[1],
@@ -489,7 +489,7 @@ class CardBattleMain(Factory.RelativeLayout):
 
     def on_command_turn_begin(self, params):
         gamestate = self.gamestate
-        is_myturn = params.player_id == self.player_id
+        is_myturn = params.player_id == self._player_id
         gamestate.is_myturn = is_myturn
         gamestate.nth_turn = params.nth_turn
         label = AutoLabel(
@@ -523,21 +523,21 @@ class CardBattleMain(Factory.RelativeLayout):
         card_layer = self.card_layer
         card_id = params.card_id
         card_pos = (card_layer.right, card_layer.top - card_layer.height / 2, )
-        if params.drawer_id == self.player_id:
+        if params.drawer_id == self._player_id:
             prototype_id = self.card_dict[card_id].prototype_id
             prototype = self.prototype_dict[prototype_id]
             # print(prototype)
             if prototype.klass == 'UnitPrototype':
                 card = UnitCard(
                     prototype=prototype,
-                    background_color=self.player_dict[self.player_id].color,
+                    background_color=self.player_dict[self._player_id].color,
                     imagefile=self.imagefile_dict[prototype_id],
                     id=card_id,
                     pos=card_pos)
             elif prototype.klass == 'SpellPrototype':
                 card = SpellCard(
                     prototype=prototype,
-                    background_color=self.player_dict[self.player_id].color,
+                    background_color=self.player_dict[self._player_id].color,
                     imagefile=self.imagefile_dict[prototype_id],
                     id=card_id,
                     pos=card_pos)
