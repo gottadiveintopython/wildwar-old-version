@@ -44,13 +44,12 @@ Builder.load_string(r'''
 ''')
 
 
-def localize_str(s):
-    return s
-
-
 class SpellCardDetailViewer(Factory.RelativeLayout):
 
-    def __init__(self, *, card, magnet=None, tag_translation_dict, skill_dict, **kwargs):
-        self.prototype = card.prototype
+    def __init__(
+            self, *, prototype, widget=None, localize_str,
+            tag_translation_dict, skill_dict, **kwargs):
+        self.prototype = prototype
         super().__init__(**kwargs)
-        replace_widget(self.ids.id_dummy, magnet or card)
+        if widget:
+            replace_widget(self.ids.id_dummy, widget)
