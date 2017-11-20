@@ -160,7 +160,7 @@ class Cell(Factory.ButtonBehavior, Factory.FloatLayout):
 
 class BoardWidget(Factory.GridLayout):
 
-    def __init__(self, **kwargs):
+    def __init__(self, *, is_black, **kwargs):
         self.is_initialized = False
         kwargs.setdefault(r'cols', 5)
         kwargs.setdefault(r'rows', 7)
@@ -171,22 +171,31 @@ class BoardWidget(Factory.GridLayout):
         cols = kwargs['cols']
         rows = kwargs['rows']
 
-        for i in range(cols):
-            cell = Cell(id='opponent{}'.format(i))
-            self.add_widget(cell)
-        self.row_list = [
-            [
+        self.cell_list = cell_list = []
+        if is_black:
+            cell_list.extend(Cell(id='white.' + str(i)) for i in range(cols))
+            cell_list.extend(
                 Cell(id='{},{}'.format(col_index, row_index))
-                for col_index in range(cols)
-            ]
-            for row_index in range(rows - 2)
-        ]
-        self.cells = [cell for row in self.row_list for cell in row]
-        for cell in self.cells:
+                for row_index in range(rows - 2)
+                for col_index in range(cols))
+            cell_list.extend(
+                Cell(id='black.' + str(cols - i - 1))
+                for i in range(cols))
+        else:
+            cell_list.extend(Cell(id='black.' + str(i)) for i in range(cols))
+            cell_list.extend(
+                Cell(id='{},{}'.format(
+                    cols - col_index - 1,
+                    rows - row_index - 3))
+                for row_index in range(rows - 2)
+                for col_index in range(cols))
+            cell_list.extend(
+                Cell(id='white.' + str(cols - i - 1))
+                for i in range(cols))
+
+        for cell in cell_list:
             self.add_widget(cell)
-        for i in range(cols):
-            cell = Cell(id='mine{}'.format(i))
-            self.add_widget(cell)
+        self.cell_dict = {cell.id: cell for cell in cell_list}
 
         self.is_initialized = True
 
@@ -252,9 +261,9 @@ class CardLayer(DragRecognizerDashLine, Factory.Widget):
             touch.push()
             touch.apply_transform_2d(self.to_window)
             touch.apply_transform_2d(self.board.to_widget)
-            for child in self.board.children:
-                if child.collide_point(*touch.opos):
-                    widget_from = child
+            for cell in self.board.cell_list:
+                if cell.collide_point(*touch.opos):
+                    widget_from = cell
                     widget_from.state = 'down'
                     break
             touch.pop()
@@ -279,9 +288,9 @@ class CardLayer(DragRecognizerDashLine, Factory.Widget):
             touch.push()
             touch.apply_transform_2d(self.to_window)
             touch.apply_transform_2d(self.board.to_widget)
-            for child in self.board.children:
-                if child.collide_point(*touch.pos):
-                    current_widget_to = child
+            for cell in self.board.cell_list:
+                if cell.collide_point(*touch.pos):
+                    current_widget_to = cell
                     break
             touch.pop()
         ud['widget_to'] = current_widget_to
@@ -540,6 +549,7 @@ class CardBattleMain(Factory.RelativeLayout):
         # ----------------------------------------------------------------------
         self.is_black = self.player_list[0].id == self._player_id  # 先手か否か
         self.board = BoardWidget(
+            is_black=self.is_black,
             cols=params.board_size[0],
             rows=params.board_size[1],
             size_hint=(1, 1.25, ),
