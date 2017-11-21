@@ -103,6 +103,18 @@ def load_spell_prototype_from_file(filepath):
     }
 
 
+class GameState(SmartObject):
+
+    def __init__(self, **kwargs):
+        for key, value in {
+            'klass': 'GameState',
+            'nth_turn': None,
+            'current_player_id': None,
+        }.items():
+            kwargs.setdefault(key, value)
+        super().__init__(**kwargs)
+
+
 class CardFactory:
 
     def __init__(self):
@@ -223,6 +235,7 @@ class Server:
         self.max_tefuda = max_tefuda
         self.func_judge = (
             func_judge_default if func_judge is None else func_judge)
+        self.gamestate = GameState()
 
         # ----------------------------------------------------------------------
         # check arguments
@@ -321,8 +334,9 @@ class Server:
         spell_prototype_dict = self.spell_prototype_dict
         board_size = self.board_size
         player_list = self.player_list
+        gamestate = self.gamestate
 
-        nth_turn = 0
+        gamestate.nth_turn = 0
 
         # ----------------------------------------------------------------------
         # Game開始の合図
@@ -358,8 +372,10 @@ class Server:
 
         # Main Loop
         for reciever in itertools.cycle(self.reciever_list):
-            player = self.player_dict[reciever.player_id]
-            nth_turn += 1
+            current_player = self.player_dict[reciever.player_id]
+            gamestate.nth_turn += 1
+            nth_turn = gamestate.nth_turn
+            gamestate.current_player_id = current_player.id
             yield SmartObject(
                 klass='Command',
                 type='turn_begin',
