@@ -48,16 +48,37 @@ class Player(SmartObject):
             return card
 
 
-class Board(SmartObject):
+class Cell(SmartObject):
 
     def __init__(self, **kwargs):
         for key, value in {
-            'klass': 'Board',
-            'cells': [],
-            'size': (0, 0, ),
+            'klass': 'Cell',
+            'id': None,
+            'index': None,
+            'unit_instance_id': None,
         }.items():
             kwargs.setdefault(key, value)
         super().__init__(**kwargs)
+
+
+class Board(SmartObject):
+
+    def __init__(self, *, size):
+        cols, rows = size
+        cell_list = (
+            *(Cell(id='white.' + str(i)) for i in range(cols)),
+            *(Cell(id='{},{}'.format(row_index, col_index))
+                for row_index in range(rows - 2)
+                for col_index in range(cols)),
+            *(Cell(id='black.' + str(i)) for i in range(cols))
+        )
+        for index, cell in enumerate(cell_list):
+            cell.index = index
+        super().__init__(
+            klass='Board', size=size,
+            cell_list=cell_list, cell_dict=None)
+        self.cell_dict = {cell.id: cell for cell in cell_list}
+
 
 
 def load_unit_prototype_from_file(filepath):
@@ -205,6 +226,17 @@ class Server:
             func_judge_default if func_judge is None else func_judge)
 
         # ----------------------------------------------------------------------
+        # check arguments
+        # ----------------------------------------------------------------------
+        assert os.path.isdir(database_dir)
+        assert board_size[0] >= 3
+        assert board_size[1] >= 5
+        assert timeout > 0
+        assert how_to_decide_player_order in ('iteration', 'random', )
+        assert n_tefuda_init >= 0
+        assert max_tefuda >= 1
+
+        # ----------------------------------------------------------------------
         # Prototype
         # ----------------------------------------------------------------------
         unit_prototype_dict = load_unit_prototype_from_file(
@@ -254,10 +286,11 @@ class Server:
         # ----------------------------------------------------------------------
         # Board
         # ----------------------------------------------------------------------
-        self.board = Board(
-            all_cells=[None] * (board_size[0] * board_size[1]),
-            size=board_size
-        )
+        self.board = Board(size=board_size)
+        # for cell in self.board.cell_list:
+        #     print(cell.index, cell.id)
+        for cell in self.board.cell_dict.values():
+            print(cell.index, cell.id)
 
     def run(self):
         sender_list = self.sender_list
