@@ -178,11 +178,11 @@ class BoardWidget(Factory.GridLayout):
                 Cell(id='{},{}'.format(col_index, row_index))
                 for row_index in range(rows - 2)
                 for col_index in range(cols))
+            cell_list.extend(Cell(id='black.' + str(i)) for i in range(cols))
+        else:
             cell_list.extend(
                 Cell(id='black.' + str(cols - i - 1))
                 for i in range(cols))
-        else:
-            cell_list.extend(Cell(id='black.' + str(i)) for i in range(cols))
             cell_list.extend(
                 Cell(id='{},{}'.format(
                     cols - col_index - 1,
