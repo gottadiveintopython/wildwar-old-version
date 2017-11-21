@@ -80,7 +80,6 @@ class Board(SmartObject):
         self.cell_dict = {cell.id: cell for cell in cell_list}
 
 
-
 def load_unit_prototype_from_file(filepath):
     with open(filepath, 'rt', encoding='utf-8') as reader:
         dictionary = yaml.load(reader)
@@ -287,10 +286,6 @@ class Server:
         # Board
         # ----------------------------------------------------------------------
         self.board = Board(size=board_size)
-        # for cell in self.board.cell_list:
-        #     print(cell.index, cell.id)
-        for cell in self.board.cell_dict.values():
-            print(cell.index, cell.id)
 
     def run(self):
         sender_list = self.sender_list

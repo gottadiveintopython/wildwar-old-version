@@ -175,7 +175,7 @@ class BoardWidget(Factory.GridLayout):
         if is_black:
             cell_list.extend(Cell(id='white.' + str(i)) for i in range(cols))
             cell_list.extend(
-                Cell(id='{},{}'.format(col_index, row_index))
+                Cell(id='{},{}'.format(row_index, col_index))
                 for row_index in range(rows - 2)
                 for col_index in range(cols))
             cell_list.extend(Cell(id='black.' + str(i)) for i in range(cols))
@@ -185,8 +185,8 @@ class BoardWidget(Factory.GridLayout):
                 for i in range(cols))
             cell_list.extend(
                 Cell(id='{},{}'.format(
-                    cols - col_index - 1,
-                    rows - row_index - 3))
+                    rows - row_index - 3,
+                    cols - col_index - 1))
                 for row_index in range(rows - 2)
                 for col_index in range(cols))
             cell_list.extend(
