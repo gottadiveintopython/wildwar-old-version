@@ -395,9 +395,10 @@ class CardBattleMain(Factory.RelativeLayout):
                 self.on_command_notification(params=SmartObject(
                     message=self._localize_str('無効な操作です'),
                     type='disallowed'))
-                logger.critical(
-                    '予期しないWidgetがDragによって選ばれました: ' +
-                    str(widget_from))
+                if not isinstance(widget_from, UnknownCard):
+                    logger.critical(
+                        '予期しないWidgetがDragによって選ばれました: ' +
+                        str(widget_from))
         else:
             self.on_command_notification(params=SmartObject(
                 message=self._localize_str('無効な操作です'), type='disallowed'))
@@ -586,7 +587,7 @@ class CardBattleMain(Factory.RelativeLayout):
 
     def on_command_notification(self, params):
         self.notificater.add_notification(
-            text=params.message,
+            text=self._localize_str(params.message),
             icon_key=params.type,
             duration=3)
 
