@@ -369,7 +369,7 @@ class CardBattleMain(Factory.RelativeLayout):
     def on_operation_drag(self, card_layer, widget_from, widget_to):
         if not self.gamestate.is_myturn:
             self.on_command_notification(params=SmartObject(
-                message=self._localize_str('今は相手の番です'),
+                message=self._localize_str('今はあなたの番ではありません'),
                 type='disallowed'))
             return
         if isinstance(widget_to, Cell):
