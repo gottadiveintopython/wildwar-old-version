@@ -124,38 +124,38 @@ class Cell(Factory.ButtonBehavior, Factory.FloatLayout):
 
     def __init__(self, **kwargs):
         super(Cell, self).__init__(**kwargs)
-        self._card = None
+        self._unit = None
 
     def __str__(self, **kwargs):
         return self.id
 
     def is_empty(self):
-        return self._card is None
+        return self._unit is None
 
     def is_not_empty(self):
-        return self._card is not None
+        return self._unit is not None
 
     @property
-    def card(self):
-        return self._card
+    def unit(self):
+        return self._unit
 
-    def attach(self, card):
+    def attach(self, unit):
         if self.is_empty():
-            card.pos_hint = {r'x': 0, r'y': 0, }
-            card.size_hint = (1, 1,)
-            self.add_widget(card)
-            self._card = card
+            unit.pos_hint = {r'x': 0, r'y': 0, }
+            unit.size_hint = (1, 1,)
+            self.add_widget(unit)
+            self._unit = unit
         else:
             logger.error(rf"The cell '{self.id}' already has a unit.")
 
     def detach(self):
         if self.is_empty():
-            logger.error(rf"The cell '{self.id}' doesn't have any units.")
+            logger.error(rf"The cell '{self.id}' doesn't have unit.")
         else:
-            card = self._card
-            self.remove_widget(card)
-            self._card = None
-            return card
+            unit = self._unit
+            self.remove_widget(unit)
+            self._unit = None
+            return unit
 
 
 class BoardWidget(Factory.GridLayout):
