@@ -90,7 +90,7 @@ def _convert_lists_items_to_dict_recursively(list_obj):
     return [
         item.so_to_dict() if _is_smartobject(item) else (
             _convert_lists_items_to_dict_recursively(item)
-            if isinstance(item, (list, )) else item
+            if isinstance(item, (list, tuple, )) else item
         )
         for item in list_obj
     ]
@@ -101,7 +101,7 @@ def _convert_lists_items_to_smartobject_recursively(list_obj):
     return [
         SmartObject(**item) if isinstance(item, (dict, )) else (
             _convert_lists_items_to_smartobject_recursively(item)
-            if isinstance(item, (list, )) else item
+            if isinstance(item, (list, tuple, )) else item
         )
         for item in list_obj
     ]
@@ -156,7 +156,7 @@ class SmartObject(object):
             key:
             SmartObject(**value) if isinstance(value, (dict, )) else (
                 _convert_lists_items_to_smartobject_recursively(value)
-                if isinstance(value, (list, )) else value
+                if isinstance(value, (list, tuple, )) else value
             )
             for key, value in kwargs.items()
         })
@@ -176,7 +176,7 @@ class SmartObject(object):
             key:
             value.so_to_dict() if _is_smartobject(value) else (
                 _convert_lists_items_to_dict_recursively(value)
-                if isinstance(value, (list, )) else value
+                if isinstance(value, (list, tuple, )) else value
             )
             for key, value in self.__dict__.items()
         }
