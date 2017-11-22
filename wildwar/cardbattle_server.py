@@ -90,11 +90,11 @@ class Board(SmartObject):
     def __init__(self, *, size):
         cols, rows = size
         cell_list = (
-            *(Cell(id='white.' + str(i)) for i in range(cols)),
-            *(Cell(id='{},{}'.format(row_index, col_index))
+            *(Cell(id='w' + str(i)) for i in range(cols)),
+            *(Cell(id=(str(row_index) + str(col_index)))
                 for row_index in range(rows - 2)
                 for col_index in range(cols)),
-            *(Cell(id='black.' + str(i)) for i in range(cols))
+            *(Cell(id='b' + str(i)) for i in range(cols))
         )
         for index, cell in enumerate(cell_list):
             cell.index = index
@@ -273,8 +273,8 @@ class Server:
         # check arguments
         # ----------------------------------------------------------------------
         assert os.path.isdir(database_dir)
-        assert board_size[0] >= 3
-        assert board_size[1] >= 7
+        assert 3 <= board_size[0] <= 9
+        assert 7 <= board_size[1] <= 9
         assert timeout > 0
         assert how_to_decide_player_order in ('iteration', 'random', )
         assert n_tefuda_init >= 0
