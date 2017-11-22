@@ -37,7 +37,7 @@ from .turnendbutton import TurnEndButton
 Builder.load_string(r"""
 #:kivy 1.10.0
 
-#:set OVERLAYCOLOR_DICT { r'normal': [0, 0, 0, 0], r'down': [1, 1, 1, 0.15], }
+#:set OVERLAYCOLOR_DICT { 'normal': [0, 0, 0, 0], 'down': [1, 1, 1, 0.15], }
 
 <Cell>:
     canvas:

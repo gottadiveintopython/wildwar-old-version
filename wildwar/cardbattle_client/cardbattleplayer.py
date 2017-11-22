@@ -10,7 +10,7 @@ from kivy.factory import Factory
 from kivy.utils import get_color_from_hex
 # from kivy.factory import Factory
 from kivy.properties import (
-    NumericProperty, StringProperty, ListProperty,
+    NumericProperty, StringProperty, ListProperty, BooleanProperty
 )
 # from kivy.graphics import Color, Line
 from kivy.animation import Animation
@@ -80,6 +80,10 @@ class Player(Factory.EventDispatcher):
     n_cards_in_deck = NumericProperty()
     tefuda = ListProperty()
     color = ListProperty()
+    is_black = BooleanProperty()
+    honjin_prefix = StringProperty()
+    first_row_prefix = StringProperty()
+    second_row_prefix = StringProperty()
 
 
 class CardBattlePlayer(Factory.FloatLayout):

@@ -26,8 +26,12 @@ class Player(SmartObject):
             'id': '',
             'color': (0, 0, 0, 0,),
             'max_cost': 0,
+            'is_black': False,
             'tefuda': [],
             'deck': [],
+            'honjin_prefix': '',  # 本陣(敵Unitに入られたら負けになる領域)のCellのidの接頭辞
+            'first_row_prefix': '',  # 全ての自分のUnitが置ける領域のCellの接頭辞
+            'second_row_prefix': '',  # 一部の特殊な自分のUnitが置ける領域のCellの接頭辞
         }.items():
             kwargs.setdefault(key, value)
         super().__init__(**kwargs)
@@ -60,6 +64,26 @@ class Cell(SmartObject):
             kwargs.setdefault(key, value)
         super().__init__(**kwargs)
 
+    def is_empty(self):
+        return self.unit_instance_id is None
+
+    def is_not_empty(self):
+        return self.unit_instance_id is not None
+
+    def attach(self, unit_instance_id):
+        if self.is_empty():
+            self.unit_instance_id = unit_instance_id
+        else:
+            logger.error("The cell '{}' already has a unit.".format(self.id))
+
+    def detach(self):
+        if self.is_empty():
+            logger.error("The cell '{}' doesn't have unit.".format(self.id))
+        else:
+            previous_unit_instance_id = self.unit_instance_id
+            self.unit_instance_id = None
+            return previous_unit_instance_id
+
 
 class Board(SmartObject):
 
@@ -76,8 +100,16 @@ class Board(SmartObject):
             cell.index = index
         super().__init__(
             klass='Board', size=size,
-            cell_list=cell_list, cell_dict=None)
+            cell_list=cell_list, cell_dict=None,
+            center_row_prefix=(None if rows % 2 == 0 else rows // 2 + 1))
         self.cell_dict = {cell.id: cell for cell in cell_list}
+
+    def __str__(self):
+        return '\n  '.join(
+            ('Board:', *[
+                '{}: {}'.format(cell.id, cell.unit_instance_id)
+                for cell in self.cell_list]))
+
 
 
 def load_unit_prototype_from_file(filepath):
@@ -242,7 +274,7 @@ class Server:
         # ----------------------------------------------------------------------
         assert os.path.isdir(database_dir)
         assert board_size[0] >= 3
-        assert board_size[1] >= 5
+        assert board_size[1] >= 7
         assert timeout > 0
         assert how_to_decide_player_order in ('iteration', 'random', )
         assert n_tefuda_init >= 0
@@ -275,14 +307,15 @@ class Server:
         # Player
         # ----------------------------------------------------------------------
         self.reciever_list = reciever_list = list(recievers)
+        assert len(reciever_list) == 2
         if how_to_decide_player_order == 'iteration':
             pass
         elif how_to_decide_player_order == 'random':
             random.shuffle(reciever_list)
         else:
             raise ValueError('Unknown method to decide player order')
-        player_colors = ((0.4, 0, 0, 1, ), (0, 0.2, 0, 1, ),)
-        self.player_list = [
+        player_colors = ((0.4, 0, 0, 1, ), (0, 0.2, 0, 1, ), )
+        self.player_list = player_list = [
             Player(
                 id=reciever.player_id,
                 color=color,
@@ -293,12 +326,23 @@ class Server:
                     spell_prototype_dict=spell_prototype_dict))
             for reciever, color in zip(reciever_list, player_colors)
         ]
-        self.player_dict = {player.id: player for player in self.player_list}
+        self.player_dict = {player.id: player for player in player_list}
+        self.player_list[0].so_overwrite(
+            is_black=True,
+            honjin_prefix='b',
+            first_row_prefix=str(board_size[1] - 3),
+            second_row_prefix=str(board_size[1] - 4))
+        self.player_list[1].so_overwrite(
+            is_black=False,
+            honjin_prefix='w',
+            first_row_prefix='0',
+            second_row_prefix='1')
 
         # ----------------------------------------------------------------------
         # Board
         # ----------------------------------------------------------------------
         self.board = Board(size=board_size)
+        print(self.board)
 
     def run(self):
         sender_list = self.sender_list
@@ -384,7 +428,7 @@ class Server:
                     nth_turn=nth_turn,
                     player_id=reciever.player_id)
             )
-            yield from self.draw_card(player)
+            yield from self.draw_card(current_player)
             time_limit = time.time() + actual_timeout
             # print('time_limit:', time_limit)
             try:
@@ -410,9 +454,9 @@ class Server:
                         else:
                             command_handler = getattr(
                                 self, 'on_command_' + command.type)
-                            command_handler(
-                                nth_turn=nth_turn,
-                                params=command.params)
+                            r = command_handler(params=command.params)
+                            if r is not None:
+                                yield r
                         # elif command.type == 'turn_end':
                         #     raise TurnEnd()
                         # elif command.type == 'resign':
@@ -424,14 +468,7 @@ class Server:
                         raise TimeoutError()
 
             except TimeoutError:
-                yield SmartObject(
-                    klass='Command',
-                    type='notification',
-                    send_to=reciever.player_id,
-                    params=SmartObject(
-                        message="Time's up.",
-                        type='information'),
-                )
+                yield self.create_notification("時間切れです", 'information')
             except TurnEnd:
                 pass
             finally:
@@ -442,14 +479,69 @@ class Server:
                     params=SmartObject(nth_turn=nth_turn)
                 )
 
-    def on_command_turn_end(self, *, nth_turn, params):
+    def on_command_turn_end(self, *, params):
         raise TurnEnd()
 
-    def on_command_put_unit(self, *, nth_turn, params):
-        print('[S] on_command_put_unit', params)
+    def create_notification(self, message, type, *, send_to=None):
+        return SmartObject(
+            klass='Command',
+            type='notification',
+            send_to=(send_to or self.gamestate.current_player_id),
+            params=SmartObject(message=message, type=type)
+        )
 
-    def on_command_use_spell(self, *, nth_turn, params):
+    def on_command_put_unit(self, *, params):
+        r'''clientからput_unitコマンドが送られて来た時に呼ばれるMethod
+
+        paramsは外部からやってくるデータなので不正なデータが入っていないか厳重に確認
+        しなければならない。
+        '''
+        print('[S] on_command_put_unit', params)
+        card_id = getattr(params, 'card_id', None)
+        cell_to_id = getattr(params, 'cell_to_id', None)
+        # paramsが必要な属性を持っているか確認
+        if card_id is None or cell_to_id is None:
+            logger.debug('[S] on_command_put_unit: params is broken')
+            logger.debug(str(params))
+            return
+        #
+        gamestate = self.gamestate
+        current_player_id = gamestate.current_player_id
+        current_player = self.player_dict[current_player_id]
+        card = self.card_factory.dict.get(card_id)
+        # card_idの正当性を確認
+        if card is None:
+            logger.debug('[S] on_command_put_unit: Unknown card_id: ' + card_id)
+            return
+        # 自分の手札の物であるか確認
+        if card not in current_player.tefuda:
+            return self.create_notification(
+                'それはあなたのCardではありません', 'disallowed')
+        # UnitCardであるか確認
+        if card.prototype_id not in self.unit_prototype_dict:
+            return self.create_notification(
+                'それはUnitCardではありません', 'disallowed')
+        #
+        cell_to = self.board.cell_dict.get(cell_to_id)
+        # cell_to_idの正当性を確認
+        if cell_to is None:
+            logger.debug('[S] on_command_put_unit: Unknown cell_id: ' + cell_to_id)
+            return self.create_notification(
+                'その場所へは置けません', 'disallowed')
+        # Unitを置こうとしているCellに既にUnitがいないか確認
+        if cell_to.is_not_empty():
+            return self.create_notification(
+                'その場所へは置けません', 'disallowed')
+        # Unitを置こうとしているCellが自陣であるか確認
+        if cell_to_id[0] != current_player.first_row_prefix:
+            return self.create_notification(
+                'その場所へは置けません', 'disallowed')
+        # 有効な操作である事が確認できたのでUnitを置く
+
+
+
+    def on_command_use_spell(self, *, params):
         print('[S] on_command_use_spell', params)
 
-    def on_command_cell_to_cell(self, *, nth_turn, params):
+    def on_command_cell_to_cell(self, *, params):
         print('[S] on_command_cell_to_cell', params)
