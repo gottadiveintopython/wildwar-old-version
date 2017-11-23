@@ -262,7 +262,10 @@ class Server:
         func_judge  # 勝敗判定を行うcallable
         func_create_deck  # 山札を作るcallable
         '''
-        self.viewer = viewer
+        self.viewer = viewer or SmartObject(
+            klass='DummyViewer',
+            player_id='$dummy',
+            send=(lambda __: None))
         self.board_size = board_size
         self.timeout = timeout
         self.n_tefuda_init = n_tefuda_init
@@ -352,7 +355,7 @@ class Server:
         # print(self.board)
 
     def run(self):
-        communicator_list = self.communicator_list
+        communicator_list = (*self.communicator_list, self.viewer, )
         for command in self.corerun():
             json_command = command.so_to_json(indent=2)
             logger.debug('[S] SERVER COMMAND')
