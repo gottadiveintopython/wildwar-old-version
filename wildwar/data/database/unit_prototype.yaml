@@ -60,6 +60,7 @@ grizzly_bear:
 hallucigenia:
   cost: 1
   stats: [1, 0, 0]
+  tag_list: ["extinct"]
 hedgehog:
   cost: 1
   stats: [1, 0, 0]
@@ -69,10 +70,10 @@ hippopotamus:
 horse:
   cost: 1
   stats: [1, 0, 0]
-human_female:
+homo_sapiens_female:
   cost: 1
   stats: [1, 0, 0]
-human_male:
+homo_sapiens_male:
   cost: 1
   stats: [1, 0, 0]
 hyena:

@@ -66,11 +66,11 @@ hippopotamus:
 horse:
   name: "馬"
   description: ""
-human_female:
-  name: "人(雌)"
+homo_sapiens_female:
+  name: "Homo sapiens(雌)"
   description: ""
-human_male:
-  name: "人(雄)"
+homo_sapiens_male:
+  name: "Homo sapiens(雄)"
   description: ""
 hyena:
   name: "Hyena"
@@ -166,5 +166,5 @@ wild_boar:
   name: "野猪"
   description: ""
 zebra:
-  name: "しま馬"
+  name: "縞馬"
   description: ""
