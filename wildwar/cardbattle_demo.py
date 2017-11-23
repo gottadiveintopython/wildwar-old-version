@@ -34,7 +34,7 @@ def run_server_thread(**kwargs):
         n_tefuda_init=4,
         max_tefuda=8,
         board_size=(5, 7,),
-        timeout=8,
+        timeout=10,
         how_to_decide_player_order="random",
         func_create_deck=cardbattle_server.RandomDeckCreater(n_cards=10),
         **kwargs)
@@ -49,18 +49,24 @@ def run_server_thread(**kwargs):
 class DemoApp(App):
 
     def build(self):
+        from communicater import QueueCommunicator
+
+        PLAYER1_ID = 'DemoPlayer1'
+        PLAYER2_ID = 'DemoPlayer2'
+        s_to_p1, p1_to_s = \
+            QueueCommunicator.create_pair_of_communicators(player_id=PLAYER1_ID)
+        s_to_p2, p2_to_s = \
+            QueueCommunicator.create_pair_of_communicators(player_id=PLAYER2_ID)
         self.root = root = Factory.BoxLayout(spacing=30)
-        root.add_widget(CardBattleMain(player_id='DemoPlayer1', iso639='ja'))
-        root.add_widget(CardBattleMain(player_id='DemoPlayer2', iso639='ja'))
+        root.add_widget(CardBattleMain(communicator=p1_to_s, iso639='ja'))
+        root.add_widget(CardBattleMain(communicator=p2_to_s, iso639='ja'))
+        self.server_communicators = (s_to_p1, s_to_p2, )
         return root
 
     def on_start(self):
-        children = self.root.children
-        senders = (child.get_sender() for child in children)
-        recievers = (child.get_reciever() for child in children)
-        children[0].on_start()
-        children[1].on_start()
-        run_server_thread(senders=senders, recievers=recievers)
+        for child in self.root.children:
+            child.on_start()
+        run_server_thread(communicators=self.server_communicators)
 
 
 def _test():

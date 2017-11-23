@@ -212,31 +212,6 @@ class BoardWidget(Factory.GridLayout):
             logger.critical(r"Property 'rows' has changed after __init__().")
 
 
-class QueueReciever:
-
-    def __init__(self, *, player_id, queue_instance):
-        self.player_id = player_id
-        self.queue_instance = queue_instance
-
-    def recieve(self, timeout):
-        try:
-            return self.queue_instance.get(timeout=timeout)
-        except queue.Empty:
-            raise TimeoutError(
-                'Failed to get item from queue within {} seconds.'.format(
-                    timeout))
-
-
-class QueueSender:
-
-    def __init__(self, *, player_id, queue_instance):
-        self.player_id = player_id
-        self.queue_instance = queue_instance
-
-    def send(self, item):
-        self.queue_instance.put(item=item)
-
-
 class CardLayer(DragRecognizerDashLine, Factory.Widget):
 
     board = ObjectProperty()
@@ -352,13 +327,12 @@ class CardBattleMain(Factory.RelativeLayout):
     timer = ObjectProperty()
     # gamestate = ObjectProperty()
 
-    def __init__(self, *, player_id, iso639, inqueue=None, outqueue=None, **kwargs):
+    def __init__(self, *, communicator, iso639, **kwargs):
         self.gamestate = GameState(
             nth_turn=0, is_myturn=False)
         super().__init__(**kwargs)
-        self._inqueue = queue.Queue() if inqueue is None else inqueue
-        self._outqueue = queue.Queue() if outqueue is None else outqueue
-        self._player_id = player_id
+        self._communicator = communicator
+        self._player_id = communicator.player_id
         self.timer.bind(int_current_time=self.on_timer_tick)
         self._iso639 = iso639
         self._localize_str = lambda s: s  # この関数は後に実装する
@@ -424,17 +398,7 @@ class CardBattleMain(Factory.RelativeLayout):
             params=params).so_to_json(indent=2)
         logger.debug('[C] CLIENT COMMAND')
         logger.debug(json_command)
-        self._outqueue.put(json_command)
-
-    def get_reciever(self):
-        return QueueReciever(
-            player_id=self._player_id,
-            queue_instance=self._outqueue)
-
-    def get_sender(self):
-        return QueueSender(
-            player_id=self._player_id,
-            queue_instance=self._inqueue)
+        self._communicator.send(json_command)
 
     def wrap_in_magnet(self, card):
         magnet = MagnetAcrossLayout(
@@ -444,20 +408,19 @@ class CardBattleMain(Factory.RelativeLayout):
         return magnet
 
     def on_start(self):
-        # 受信Queueの監視を始める
-        Clock.schedule_interval(self.check_inqueue, 0.3)
+        # Serverからdataが届いていないか定期的に確認
+        Clock.schedule_interval(self.try_to_recieve_command, 0.3)
 
-    def check_inqueue(self, __):
-        inqueue = self._inqueue
-        try:
-            command = SmartObject.load_from_json(inqueue.get_nowait())
-            command_handler = getattr(self, 'on_command_' + command.type, None)
-            if command_handler:
-                command_handler(command.params)
-            else:
-                logger.critical('[C] Unknown command:' + command.type)
-        except queue.Empty as e:
-            pass
+    def try_to_recieve_command(self, __):
+        jsonstr = self._communicator.recieve_nowait()
+        if jsonstr is None:
+            return
+        command = SmartObject.load_from_json(jsonstr)
+        command_handler = getattr(self, 'on_command_' + command.type, None)
+        if command_handler:
+            command_handler(command.params)
+        else:
+            logger.critical('[C] Unknown command:' + command.type)
 
     @staticmethod
     def _merge_database(smartobject_dict, dict_dict):

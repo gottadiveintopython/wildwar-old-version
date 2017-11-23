@@ -24,6 +24,7 @@ class Player(SmartObject):
         for key, value in {
             'klass': 'Player',
             'id': '',
+            'index': None,
             'color': (0, 0, 0, 0,),
             'max_cost': 0,
             'is_black': False,
@@ -41,6 +42,7 @@ class Player(SmartObject):
         obj.so_update(n_tefuda=len(self.tefuda), n_cards_in_deck=len(self.deck))
         del obj.tefuda
         del obj.deck
+        del obj.index
         return obj
 
     def draw_card(self):
@@ -239,18 +241,18 @@ class Server:
 
     # def __init__(
     #         self, *,
-    #         senders, recievers,
+    #         communicators, viewer,
     #         database_dir, board_size, timeout, how_to_decide_player_order,
     #         n_tefuda_init, max_tefuda,
     #         func_judge=None, func_create_deck):
     def __init__(
-            self, *, senders, recievers, database_dir, board_size, timeout,
+            self, *, communicators, viewer=None, database_dir, board_size, timeout,
             how_to_decide_player_order, n_tefuda_init, max_tefuda,
             func_judge=None, func_create_deck):
         r'''引数解説
 
-        senders
-        recievers
+        communicators  # Playerと通信しあう窓口
+        viewer  # 観戦者へ情報を送るだけの窓口
         database_dir  # GameのDatabseであるunit_prototype.yamlがあるDirectory
         board_size  # (横のマス目の数, 縦のマス目の数, )
         timeout  # Turn毎の制限時間
@@ -260,7 +262,7 @@ class Server:
         func_judge  # 勝敗判定を行うcallable
         func_create_deck  # 山札を作るcallable
         '''
-        self.sender_list = list(senders)
+        self.viewer = viewer
         self.board_size = board_size
         self.timeout = timeout
         self.n_tefuda_init = n_tefuda_init
@@ -268,6 +270,8 @@ class Server:
         self.func_judge = (
             func_judge_default if func_judge is None else func_judge)
         self.gamestate = GameState()
+
+        N_PLAYERS = 2
 
         # ----------------------------------------------------------------------
         # check arguments
@@ -306,25 +310,28 @@ class Server:
         # ----------------------------------------------------------------------
         # Player
         # ----------------------------------------------------------------------
-        self.reciever_list = reciever_list = list(recievers)
-        assert len(reciever_list) == 2
+        self.communicator_list = communicator_list = list(communicators)
+        assert len(communicator_list) == N_PLAYERS
         if how_to_decide_player_order == 'iteration':
             pass
         elif how_to_decide_player_order == 'random':
-            random.shuffle(reciever_list)
+            random.shuffle(communicator_list)
         else:
             raise ValueError('Unknown method to decide player order')
         player_colors = ((0.4, 0, 0, 1, ), (0, 0.2, 0, 1, ), )
+        player_indices = range(N_PLAYERS)
         self.player_list = player_list = [
             Player(
-                id=reciever.player_id,
+                id=communicator.player_id,
+                index=index,
                 color=color,
                 deck=func_create_deck(
-                    player_id=reciever.player_id,
+                    player_id=communicator.player_id,
                     card_factory=card_factory,
                     unit_prototype_dict=unit_prototype_dict,
                     spell_prototype_dict=spell_prototype_dict))
-            for reciever, color in zip(reciever_list, player_colors)
+            for communicator, color, index in zip(
+                communicator_list, player_colors, player_indices)
         ]
         self.player_dict = {player.id: player for player in player_list}
         self.player_list[0].so_overwrite(
@@ -342,19 +349,19 @@ class Server:
         # Board
         # ----------------------------------------------------------------------
         self.board = Board(size=board_size)
-        print(self.board)
+        # print(self.board)
 
     def run(self):
-        sender_list = self.sender_list
+        communicator_list = self.communicator_list
         for command in self.corerun():
             json_command = command.so_to_json(indent=2)
             logger.debug('[S] SERVER COMMAND')
             logger.debug(json_command)
-            for sender in sender_list:
+            for communicator in communicator_list:
                 if (
                         command.send_to == '$all' or
-                        command.send_to == sender.player_id):
-                    sender.send(json_command)
+                        command.send_to == communicator.player_id):
+                    communicator.send(json_command)
 
     def draw_card(self, player):
         card = player.draw_card()
@@ -373,7 +380,6 @@ class Server:
             )
 
     def corerun(self):
-        prototype_dict = self.prototype_dict
         unit_prototype_dict = self.unit_prototype_dict
         spell_prototype_dict = self.spell_prototype_dict
         board_size = self.board_size
@@ -415,8 +421,8 @@ class Server:
         CLIENT_COMMANDS = 'put_unit use_spell cell_to_cell resign turn_end'.split()
 
         # Main Loop
-        for reciever in itertools.cycle(self.reciever_list):
-            current_player = self.player_dict[reciever.player_id]
+        for communicator in itertools.cycle(self.communicator_list):
+            current_player = self.player_dict[communicator.player_id]
             gamestate.nth_turn += 1
             nth_turn = gamestate.nth_turn
             gamestate.current_player_id = current_player.id
@@ -426,7 +432,7 @@ class Server:
                 send_to='$all',
                 params=SmartObject(
                     nth_turn=nth_turn,
-                    player_id=reciever.player_id)
+                    player_id=communicator.player_id)
             )
             yield from self.draw_card(current_player)
             time_limit = time.time() + actual_timeout
@@ -434,10 +440,10 @@ class Server:
             try:
                 while True:
                     current_time = time.time()
-                    print(time_limit - current_time)
+                    # print(time_limit - current_time)
                     if current_time < time_limit:
                         command = untrusted_json_to_smartobject(
-                            reciever.recieve(timeout=time_limit - current_time))
+                            communicator.recieve(timeout=time_limit - current_time))
                         if command is None:
                             continue
                         if command.nth_turn != nth_turn:
@@ -460,7 +466,7 @@ class Server:
                         # elif command.type == 'turn_end':
                         #     raise TurnEnd()
                         # elif command.type == 'resign':
-                        #     self.resigned(reciever.player_id)
+                        #     self.resigned(communicator.player_id)
                         #     return
                         # else:
                         #     pass
