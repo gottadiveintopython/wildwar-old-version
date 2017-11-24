@@ -142,6 +142,7 @@ class GameState(SmartObject):
         for key, value in {
             'klass': 'GameState',
             'nth_turn': None,
+            'current_player': None,
             'current_player_id': None,
         }.items():
             kwargs.setdefault(key, value)
@@ -427,6 +428,7 @@ class Server:
             current_player = self.player_dict[communicator.player_id]
             gamestate.nth_turn += 1
             nth_turn = gamestate.nth_turn
+            gamestate.current_player = current_player
             gamestate.current_player_id = current_player.id
             yield SmartObject(
                 klass='Command',
@@ -512,8 +514,7 @@ class Server:
             return
         #
         gamestate = self.gamestate
-        current_player_id = gamestate.current_player_id
-        current_player = self.player_dict[current_player_id]
+        current_player = gamestate.current_player
         card = self.card_factory.dict.get(card_id)
         # card_idの正当性を確認
         if card is None:
