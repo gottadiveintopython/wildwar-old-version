@@ -31,6 +31,8 @@ class MagnetAcrossLayout(Widget):
         if self._child is None:
             self._child = widget
             self._actual_parent.add_widget(widget)
+            if hasattr(widget, 'magnet'):
+                widget.magnet = self
         else:
             raise ValueError('MagnetAcrossLayout can have only one children')
 
@@ -38,6 +40,8 @@ class MagnetAcrossLayout(Widget):
         if self._child is widget:
             self._actual_parent.remove_widget(widget)
             self._child = None
+            if hasattr(widget, 'magnet'):
+                widget.magnet = None
         else:
             raise ValueError('Thats not my child.')
 
