@@ -540,17 +540,17 @@ class Server:
         if cell_to is None:
             logger.debug('[S] on_command_put_unit: Unknown cell_id: ' + cell_to_id)
             yield self.create_notification(
-                'その場所へは置けません', 'disallowed')
+                'そこへは置けません', 'disallowed')
             return
         # Unitを置こうとしているCellに既にUnitがいないか確認
         if cell_to.is_not_empty():
             yield self.create_notification(
-                'その場所へは置けません', 'disallowed')
+                'そこには既にUnitが居ます', 'disallowed')
             return
         # Unitを置こうとしているCellが自陣であるか確認
         if cell_to_id[0] != current_player.first_row_prefix:
             yield self.create_notification(
-                'その場所へは置けません', 'disallowed')
+                'そこは自陣ではありません', 'disallowed')
             return
 
         # ----------------------------------------------------------------------
