@@ -1,20 +1,3 @@
-------------------------------------------------------------------------
-問題点
-
-cardbattle_server.pyのcorerun()をgeneratorにしたのは失敗
-    ServerのMethodが複数のCommandを送れるようにする為には
-    yield from command_handler(...)
-    とできれば良いが、こうするとcommand_handler内でreturnによって処理を終わらせ
-    られなくなる。なのでcommand_handlerはNoneかlistを返す普通のMethod(非generator)
-    にし、呼び出した側で
-    r = command_handler(...)
-    if r is None:
-        pass
-    else:
-        for command in r:
-            略
-    としてやる必要がある
-
 --------------------------------------------------------------------------------
 UnitCardのインスタンス毎の情報
     属するCard種

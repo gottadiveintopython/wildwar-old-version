@@ -113,7 +113,6 @@ class Board(SmartObject):
                 for cell in self.cell_list]))
 
 
-
 def load_unit_prototype_from_file(filepath):
     with open(filepath, 'rt', encoding='utf-8') as reader:
         dictionary = yaml.load(reader)
@@ -463,9 +462,7 @@ class Server:
                         else:
                             command_handler = getattr(
                                 self, 'on_command_' + command.type)
-                            r = command_handler(params=command.params)
-                            if r is not None:
-                                yield r
+                            yield from command_handler(params=command.params)
                         # elif command.type == 'turn_end':
                         #     raise TurnEnd()
                         # elif command.type == 'resign':
@@ -524,33 +521,42 @@ class Server:
             return
         # 自分の手札の物であるか確認
         if card not in current_player.tefuda:
-            return self.create_notification(
+            yield self.create_notification(
                 'それはあなたのCardではありません', 'disallowed')
+            return
         # UnitCardであるか確認
         if card.prototype_id not in self.unit_prototype_dict:
-            return self.create_notification(
+            yield self.create_notification(
                 'それはUnitCardではありません', 'disallowed')
+            return
         #
         cell_to = self.board.cell_dict.get(cell_to_id)
         # cell_to_idの正当性を確認
         if cell_to is None:
             logger.debug('[S] on_command_put_unit: Unknown cell_id: ' + cell_to_id)
-            return self.create_notification(
+            yield self.create_notification(
                 'その場所へは置けません', 'disallowed')
+            return
         # Unitを置こうとしているCellに既にUnitがいないか確認
         if cell_to.is_not_empty():
-            return self.create_notification(
+            yield self.create_notification(
                 'その場所へは置けません', 'disallowed')
+            return
         # Unitを置こうとしているCellが自陣であるか確認
         if cell_to_id[0] != current_player.first_row_prefix:
-            return self.create_notification(
+            yield self.create_notification(
                 'その場所へは置けません', 'disallowed')
+            return
         # 有効な操作である事が確認できたのでUnitを置く
 
 
 
     def on_command_use_spell(self, *, params):
         print('[S] on_command_use_spell', params)
+        yield self.create_notification(
+            'その操作はまだ実装されていません', 'information')
 
     def on_command_cell_to_cell(self, *, params):
         print('[S] on_command_cell_to_cell', params)
+        yield self.create_notification(
+            'その操作はまだ実装されていません', 'information')
