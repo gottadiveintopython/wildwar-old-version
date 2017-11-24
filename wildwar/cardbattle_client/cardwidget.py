@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-__all__ = ('UnknownCard', 'SpellCard', 'UnitCard', )
+__all__ = ('UnknownCardWidget', 'SpellCardWidget', 'UnitCardWidget', )
 
 import kivy
 kivy.require(r'1.10.0')
@@ -19,7 +19,7 @@ Builder.load_string(r"""
 #:kivy 1.10.0
 #:set OVERLAY_COLOR_DICT { r'normal': [0, 0, 0, 0], r'down': [1, 1, 1, 0.15], }
 
-<UnknownCard>:
+<UnknownCardWidget>:
     canvas.before:
         Color:
             rgba: 0.3, 0.3, 0.3, 1
@@ -31,7 +31,7 @@ Builder.load_string(r"""
             size: self.width - 4, self.height - 4
             pos: 2, 2
 
-<SpellCard,UnitCard>:
+<SpellCardWidget,UnitCardWidget>:
     canvas.before:
         Color:
             rgba: 0.3, 0.3, 0.3, 1
@@ -50,7 +50,7 @@ Builder.load_string(r"""
             size: self.width, self.height
             pos: self.pos
 
-<SpellCard>:
+<SpellCardWidget>:
     Image:
         source: root.imagefile
     # AutoLabel:
@@ -59,7 +59,7 @@ Builder.load_string(r"""
     #     bold: True
     #     text: str(root.prototype.cost)
 
-<UnitCard>:
+<UnitCardWidget>:
     Image:
         source: root.imagefile
     AutoLabel:
@@ -86,18 +86,18 @@ Builder.load_string(r"""
 """)
 
 
-class UnknownCard(Factory.RelativeLayout):
+class UnknownCardWidget(Factory.RelativeLayout):
     pass
 
 
-class UnitCard(Factory.ButtonBehavior, Factory.RelativeLayout):
+class UnitCardWidget(Factory.ButtonBehavior, Factory.RelativeLayout):
     id = StringProperty()
     prototype = ObjectProperty()
     imagefile = StringProperty()
     background_color = ListProperty((0, 0, 0, 0, ))
 
 
-class SpellCard(Factory.ButtonBehavior, Factory.RelativeLayout):
+class SpellCardWidget(Factory.ButtonBehavior, Factory.RelativeLayout):
     id = StringProperty()
     prototype = ObjectProperty()
     imagefile = StringProperty()

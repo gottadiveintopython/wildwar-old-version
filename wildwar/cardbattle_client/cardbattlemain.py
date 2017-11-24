@@ -29,7 +29,7 @@ from custommodalview import CustomModalViewNoBackground
 from detailviewer import UnitPrototypeDetailViewer, SpellPrototypeDetailViewer
 from notificater import Notificater
 from .cardbattleplayer import Player, CardBattlePlayer
-from .cardwidget import UnknownCard, UnitCard, SpellCard
+from .cardwidget import UnknownCardWidget, UnitCardWidget, SpellCardWidget
 from .timer import Timer
 from .turnendbutton import TurnEndButton
 
@@ -345,13 +345,13 @@ class CardBattleMain(Factory.RelativeLayout):
                 type='disallowed'))
             return
         if isinstance(widget_to, Cell):
-            if isinstance(widget_from, UnitCard):
+            if isinstance(widget_from, UnitCardWidget):
                 self.send_command(
                     type='put_unit',
                     params=SmartObject(
                         card_id=widget_from.id,
                         cell_to_id=widget_to.id))
-            elif isinstance(widget_from, SpellCard):
+            elif isinstance(widget_from, SpellCardWidget):
                 self.send_command(
                     type='use_spell',
                     params=SmartObject(
@@ -367,7 +367,7 @@ class CardBattleMain(Factory.RelativeLayout):
                 self.on_command_notification(params=SmartObject(
                     message=self._localize_str('無効な操作です'),
                     type='disallowed'))
-                if not isinstance(widget_from, UnknownCard):
+                if not isinstance(widget_from, UnknownCardWidget):
                     logger.critical(
                         '予期しないWidgetがDragによって選ばれました: ' +
                         str(widget_from))
@@ -563,21 +563,21 @@ class CardBattleMain(Factory.RelativeLayout):
             prototype = self.prototype_dict[prototype_id]
             # print(prototype)
             if prototype.klass == 'UnitPrototype':
-                cardwidget = UnitCard(
+                cardwidget = UnitCardWidget(
                     prototype=prototype,
                     background_color=self.player_dict[self._player_id].color,
                     imagefile=self.imagefile_dict[prototype_id],
                     id=card_id,
                     pos=cardwidget_pos)
             elif prototype.klass == 'SpellPrototype':
-                cardwidget = SpellCard(
+                cardwidget = SpellCardWidget(
                     prototype=prototype,
                     background_color=self.player_dict[self._player_id].color,
                     imagefile=self.imagefile_dict[prototype_id],
                     id=card_id,
                     pos=cardwidget_pos)
         else:
-            cardwidget = UnknownCard(pos=cardwidget_pos)
+            cardwidget = UnknownCardWidget(pos=cardwidget_pos)
         self.cardwidget_dict[card_id] = cardwidget
         playerwidget = self.playerwidget_dict[params.drawer_id]
         magnet = self.wrap_in_magnet(cardwidget)
@@ -607,14 +607,14 @@ class CardBattleMain(Factory.RelativeLayout):
             auto_dismiss=True,
             size_hint=(0.95, 0.6, ),
             pos_hint={'center_x': 0.5, 'center_y': 0.5, })
-        if isinstance(card, UnitCard):
+        if isinstance(card, UnitCardWidget):
             viewer = UnitPrototypeDetailViewer(
                 prototype=card.prototype,
                 widget=magnet,
                 localize_str=self._localize_str,
                 tag_translation_dict=self.tag_translation_dict,
                 skill_dict=self.skill_dict)
-        elif isinstance(card, SpellCard):
+        elif isinstance(card, SpellCardWidget):
             viewer = SpellPrototypeDetailViewer(
                 prototype=card.prototype,
                 widget=magnet,
