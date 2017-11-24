@@ -55,7 +55,7 @@ Builder.load_string(r"""
 <CardBattleBoardsParent@FloatLayout+StencilAll>:
 
 <CardBattleMain>:
-    card_layer: id_card_layer
+    cardwidget_layer: id_cardwidget_layer
     popup_layer: id_popup_layer
     notificater: id_notificater
     timer: id_timer
@@ -96,7 +96,7 @@ Builder.load_string(r"""
             id: id_playerwidget_mine
             size_hint_y: 0.15
     CardLayer:
-        id: id_card_layer
+        id: id_cardwidget_layer
     FloatLayout:
         id: id_popup_layer
         Notificater:
@@ -321,7 +321,7 @@ class CardLayer(DragRecognizerDashLine, Factory.Widget):
 
 class CardBattleMain(Factory.RelativeLayout):
 
-    card_layer = ObjectProperty()
+    cardwidget_layer = ObjectProperty()
     popup_layer = ObjectProperty()
     notificater = ObjectProperty()
     timer = ObjectProperty()
@@ -336,9 +336,9 @@ class CardBattleMain(Factory.RelativeLayout):
         self.timer.bind(int_current_time=self.on_timer_tick)
         self._iso639 = iso639
         self._localize_str = lambda s: s  # この関数は後に実装する
-        self.card_layer.bind(on_operation_drag=self.on_operation_drag)
+        self.cardwidget_layer.bind(on_operation_drag=self.on_operation_drag)
 
-    def on_operation_drag(self, card_layer, widget_from, widget_to):
+    def on_operation_drag(self, cardwidget_layer, widget_from, widget_to):
         if not self.gamestate.is_myturn:
             self.on_command_notification(params=SmartObject(
                 message=self._localize_str('今はあなたの番ではありません'),
@@ -403,7 +403,7 @@ class CardBattleMain(Factory.RelativeLayout):
     def wrap_in_magnet(self, card):
         magnet = MagnetAcrossLayout(
             duration=0.5,
-            actual_parent=self.card_layer)
+            actual_parent=self.cardwidget_layer)
         magnet.add_widget(card)
         return magnet
 
@@ -482,6 +482,7 @@ class CardBattleMain(Factory.RelativeLayout):
             self.imagefile_dict = yaml.load(reader)
         # Cardの辞書
         self.card_dict = {}
+        self.cardwidget_dict = {}
 
         # ----------------------------------------------------------------------
         # Playerを初期化
@@ -518,7 +519,7 @@ class CardBattleMain(Factory.RelativeLayout):
             pos_hint={'center_y': 0.5, 'center_x': 0.5}
         )
         self.ids.id_boards_parent.add_widget(self.board)
-        self.card_layer.board = self.board
+        self.cardwidget_layer.board = self.board
         self.timer.time_limit = params.timeout
 
     def on_command_turn_begin(self, params):
@@ -554,32 +555,33 @@ class CardBattleMain(Factory.RelativeLayout):
 
     def on_command_draw(self, params):
         r'''drawは「描く」ではなく「(カードを)引く」の意'''
-        card_layer = self.card_layer
+        cardwidget_layer = self.cardwidget_layer
         card_id = params.card_id
-        card_pos = (card_layer.right, card_layer.top - card_layer.height / 2, )
+        cardwidget_pos = (cardwidget_layer.right, cardwidget_layer.top - cardwidget_layer.height / 2, )
         if params.drawer_id == self._player_id:
             prototype_id = self.card_dict[card_id].prototype_id
             prototype = self.prototype_dict[prototype_id]
             # print(prototype)
             if prototype.klass == 'UnitPrototype':
-                card = UnitCard(
+                cardwidget = UnitCard(
                     prototype=prototype,
                     background_color=self.player_dict[self._player_id].color,
                     imagefile=self.imagefile_dict[prototype_id],
                     id=card_id,
-                    pos=card_pos)
+                    pos=cardwidget_pos)
             elif prototype.klass == 'SpellPrototype':
-                card = SpellCard(
+                cardwidget = SpellCard(
                     prototype=prototype,
                     background_color=self.player_dict[self._player_id].color,
                     imagefile=self.imagefile_dict[prototype_id],
                     id=card_id,
-                    pos=card_pos)
+                    pos=cardwidget_pos)
         else:
-            card = UnknownCard(pos=card_pos)
+            cardwidget = UnknownCard(pos=cardwidget_pos)
+        self.cardwidget_dict[card_id] = cardwidget
         playerwidget = self.playerwidget_dict[params.drawer_id]
-        magnet = self.wrap_in_magnet(card)
-        card.bind(on_release=partial(self.show_detail_of_a_card, magnet=magnet))
+        magnet = self.wrap_in_magnet(cardwidget)
+        cardwidget.bind(on_release=partial(self.show_detail_of_a_card, magnet=magnet))
         playerwidget.ids.id_tefuda.add_widget(magnet)
         player = self.player_dict[params.drawer_id]
         player.n_cards_in_deck -= 1
