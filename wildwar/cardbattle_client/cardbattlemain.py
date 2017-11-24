@@ -101,7 +101,7 @@ Builder.load_string(r"""
         id: id_popup_layer
         Notificater:
             id: id_notificater
-            size_hint: 0.5, 0.3
+            size_hint: 0.7, 0.3
             pos_hint: {'center_x': 0.5, 'center_y': 0.5, }
             default_font_size: 20
 """)
