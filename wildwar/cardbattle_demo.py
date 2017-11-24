@@ -58,6 +58,17 @@ class DemoApp(App):
         s_to_p2, p2_to_s = \
             QueueCommunicator.create_pair_of_communicators(player_id=PLAYER2_ID)
         self.root = root = Factory.BoxLayout(spacing=30)
+
+        def on_touch_down(touch):
+            # touch.push()
+            # touch.apply_transform_2d(root.to_local)
+            for child in root.children:
+                if child.collide_point(*touch.pos):
+                    if child.on_touch_down(touch):
+                        return True
+            # touch.pop()
+        root.on_touch_down = on_touch_down
+
         root.add_widget(CardBattleMain(communicator=p1_to_s, iso639='ja'))
         root.add_widget(CardBattleMain(communicator=p2_to_s, iso639='ja'))
         self.server_communicators = (s_to_p1, s_to_p2, )
