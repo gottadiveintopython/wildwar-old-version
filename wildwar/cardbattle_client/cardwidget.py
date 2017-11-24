@@ -87,10 +87,11 @@ Builder.load_string(r"""
 
 
 class UnknownCardWidget(Factory.RelativeLayout):
-    pass
+    magnet = ObjectProperty(None, allownone=True)
 
 
 class UnitCardWidget(Factory.ButtonBehavior, Factory.RelativeLayout):
+    magnet = ObjectProperty(None, allownone=True)
     id = StringProperty()
     prototype = ObjectProperty()
     imagefile = StringProperty()
@@ -98,6 +99,7 @@ class UnitCardWidget(Factory.ButtonBehavior, Factory.RelativeLayout):
 
 
 class SpellCardWidget(Factory.ButtonBehavior, Factory.RelativeLayout):
+    magnet = ObjectProperty(None, allownone=True)
     id = StringProperty()
     prototype = ObjectProperty()
     imagefile = StringProperty()
