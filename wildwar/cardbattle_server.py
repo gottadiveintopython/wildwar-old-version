@@ -505,6 +505,10 @@ class Server:
         しなければならない。
         '''
         print('[S] on_command_put_unit', params)
+
+        # ----------------------------------------------------------------------
+        # まずはCommandが有効なものか確認
+        # ----------------------------------------------------------------------
         card_id = getattr(params, 'card_id', None)
         cell_to_id = getattr(params, 'cell_to_id', None)
         # paramsが必要な属性を持っているか確認
@@ -548,9 +552,35 @@ class Server:
             yield self.create_notification(
                 'その場所へは置けません', 'disallowed')
             return
-        # 有効な操作である事が確認できたのでUnitを置く
 
+        # ----------------------------------------------------------------------
+        # 有効なCommandである事が確認できたのでUnitを置く為の処理に入る
+        # ----------------------------------------------------------------------
 
+        # 手札の情報を持ち主以外にも送信
+        yield SmartObject(
+            klass='Command',
+            type='set_card_info',
+            send_to='$all',
+            params=SmartObject(card=card)
+        )
+        current_player_id = gamestate.current_player_id
+        unit_instance = self.unit_instance_factory.create(
+            prototype_id=card.prototype_id,
+            player_id=current_player_id)
+        # UnitInstance設置Commandを全員に送信
+        yield SmartObject(
+            klass='Command',
+            type='put_unit',
+            send_to='$all',
+            params=SmartObject(
+                unit_instance=unit_instance,
+                card_id=card_id,
+                cell_to_id=cell_to_id)
+        )
+        # 内部のDatabaseを更新
+        cell_to.attach(unit_instance)
+        current_player.tefuda.remove(card)
 
     def on_command_use_spell(self, *, params):
         print('[S] on_command_use_spell', params)
