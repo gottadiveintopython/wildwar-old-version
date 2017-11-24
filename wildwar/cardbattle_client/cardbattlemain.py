@@ -29,7 +29,7 @@ from custommodalview import CustomModalViewNoBackground
 from detailviewer import UnitPrototypeDetailViewer, SpellPrototypeDetailViewer
 from notificater import Notificater
 from .cardbattleplayer import Player, CardBattlePlayer
-from .card import UnknownCard, UnitCard, SpellCard
+from .cardwidget import UnknownCard, UnitCard, SpellCard
 from .timer import Timer
 from .turnendbutton import TurnEndButton
 
