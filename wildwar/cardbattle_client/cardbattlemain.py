@@ -522,6 +522,28 @@ class CardBattleMain(Factory.RelativeLayout):
         self.cardwidget_layer.board = self.board
         self.timer.time_limit = params.timeout
 
+    def create_cardwidget(self, *, card_id, player):
+        card = self.card_dict.get(card_id)
+        if card is None:
+            cardwidget = UnknownCardWidget()
+        else:
+            prototype_id = card.prototype_id
+            prototype = self.prototype_dict[prototype_id]
+            # print(prototype)
+            if prototype.klass == 'UnitPrototype':
+                cardwidget = UnitCardWidget(
+                    prototype=prototype,
+                    background_color=player.color,
+                    imagefile=self.imagefile_dict[prototype_id],
+                    id=card_id)
+            elif prototype.klass == 'SpellPrototype':
+                cardwidget = SpellCardWidget(
+                    prototype=prototype,
+                    background_color=player.color,
+                    imagefile=self.imagefile_dict[prototype_id],
+                    id=card_id)
+        return cardwidget
+
     def on_command_turn_begin(self, params):
         gamestate = self.gamestate
         is_myturn = params.player_id == self._player_id
@@ -555,37 +577,22 @@ class CardBattleMain(Factory.RelativeLayout):
 
     def on_command_draw(self, params):
         r'''drawは「描く」ではなく「(カードを)引く」の意'''
-        cardwidget_layer = self.cardwidget_layer
         card_id = params.card_id
-        cardwidget_pos = (cardwidget_layer.right, cardwidget_layer.top - cardwidget_layer.height / 2, )
-        if params.drawer_id == self._player_id:
-            prototype_id = self.card_dict[card_id].prototype_id
-            prototype = self.prototype_dict[prototype_id]
-            # print(prototype)
-            if prototype.klass == 'UnitPrototype':
-                cardwidget = UnitCardWidget(
-                    prototype=prototype,
-                    background_color=self.player_dict[self._player_id].color,
-                    imagefile=self.imagefile_dict[prototype_id],
-                    id=card_id,
-                    pos=cardwidget_pos)
-            elif prototype.klass == 'SpellPrototype':
-                cardwidget = SpellCardWidget(
-                    prototype=prototype,
-                    background_color=self.player_dict[self._player_id].color,
-                    imagefile=self.imagefile_dict[prototype_id],
-                    id=card_id,
-                    pos=cardwidget_pos)
-        else:
-            cardwidget = UnknownCardWidget(pos=cardwidget_pos)
+        player_id = params.drawer_id
+        player = self.player_dict[player_id]
+        cardwidget = self.create_cardwidget(card_id=card_id, player=player)
+        cardwidget_layer = self.cardwidget_layer
+        cardwidget.pos = (
+            cardwidget_layer.right,
+            cardwidget_layer.top - cardwidget_layer.height / 2, )
+
         self.cardwidget_dict[card_id] = cardwidget
-        playerwidget = self.playerwidget_dict[params.drawer_id]
+        playerwidget = self.playerwidget_dict[player_id]
         magnet = self.wrap_in_magnet(cardwidget)
         cardwidget.bind(on_release=partial(self.show_detail_of_a_card, magnet=magnet))
         playerwidget.ids.id_tefuda.add_widget(magnet)
-        player = self.player_dict[params.drawer_id]
         player.n_cards_in_deck -= 1
-        player.tefuda.append(params.card_id)
+        player.tefuda.append(card_id)
         # logger.debug(params.drawer_id)
         # logger.debug(str(playerstate.pos))
         # logger.debug(str(playerstate.size))
