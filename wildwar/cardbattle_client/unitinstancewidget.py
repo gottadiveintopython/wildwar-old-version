@@ -17,6 +17,7 @@ from basicwidgets import AutoLabel
 
 Builder.load_string(r"""
 #:kivy 1.10.0
+#:set OVERLAY_COLOR_DICT { r'normal': [0, 0, 0, 0], r'down': [1, 1, 1, 0.15], }
 
 <UnitInstanceWidget>:
     canvas.before:
@@ -25,6 +26,12 @@ Builder.load_string(r"""
         Rectangle:
             size: self.size
             pos: 0, 0
+    canvas.after:
+        Color:
+            rgba: OVERLAY_COLOR_DICT[self.state]
+        RoundedRectangle:
+            size: self.size
+            pos: self.pos
     Image:
         source: root.imagefile
     AutoLabel:
@@ -56,7 +63,7 @@ Builder.load_string(r"""
 """)
 
 
-class UnitInstanceWidget(Factory.RelativeLayout):
+class UnitInstanceWidget(Factory.ButtonBehavior, Factory.RelativeLayout):
     magnet = ObjectProperty(None, allownone=True)
     id = StringProperty()
     unitinstance = ObjectProperty()

@@ -381,6 +381,12 @@ class CardBattleMain(Factory.RelativeLayout):
                     params=SmartObject(
                         cell_from_id=widget_from.id,
                         cell_to_id=widget_to.id))
+            elif isinstance(widget_from, UnitInstanceWidget):
+                self.send_command(
+                    type='cell_to_cell',
+                    params=SmartObject(
+                        cell_from_id=widget_from.magnet.parent.id,
+                        cell_to_id=widget_to.id))
             else:
                 self.on_command_notification(params=SmartObject(
                     message=self._localize_str('無効な操作です'),
