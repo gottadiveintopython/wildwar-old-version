@@ -61,20 +61,20 @@ class Cell(SmartObject):
             'klass': 'Cell',
             'id': None,
             'index': None,
-            'unit_instance_id': None,
+            'unitinstance_id': None,
         }.items():
             kwargs.setdefault(key, value)
         super().__init__(**kwargs)
 
     def is_empty(self):
-        return self.unit_instance_id is None
+        return self.unitinstance_id is None
 
     def is_not_empty(self):
-        return self.unit_instance_id is not None
+        return self.unitinstance_id is not None
 
-    def attach(self, unit_instance_id):
+    def attach(self, unitinstance_id):
         if self.is_empty():
-            self.unit_instance_id = unit_instance_id
+            self.unitinstance_id = unitinstance_id
         else:
             logger.error("The cell '{}' already has a unit.".format(self.id))
 
@@ -82,9 +82,9 @@ class Cell(SmartObject):
         if self.is_empty():
             logger.error("The cell '{}' doesn't have unit.".format(self.id))
         else:
-            previous_unit_instance_id = self.unit_instance_id
-            self.unit_instance_id = None
-            return previous_unit_instance_id
+            previous_unitinstance_id = self.unitinstance_id
+            self.unitinstance_id = None
+            return previous_unitinstance_id
 
 
 class Board(SmartObject):
@@ -109,7 +109,7 @@ class Board(SmartObject):
     def __str__(self):
         return '\n  '.join(
             ('Board:', *[
-                '{}: {}'.format(cell.id, cell.unit_instance_id)
+                '{}: {}'.format(cell.id, cell.unitinstance_id)
                 for cell in self.cell_list]))
 
 
@@ -308,7 +308,7 @@ class Server:
         # Factory
         # ----------------------------------------------------------------------
         self.card_factory = card_factory = CardFactory()
-        self.unit_instance_factory = UnitInstanceFactory(unit_prototype_dict)
+        self.unitinstance_factory = UnitInstanceFactory(unit_prototype_dict)
 
         # ----------------------------------------------------------------------
         # Player
@@ -565,7 +565,7 @@ class Server:
             params=SmartObject(card=card)
         )
         current_player_id = gamestate.current_player_id
-        unit_instance = self.unit_instance_factory.create(
+        unitinstance = self.unitinstance_factory.create(
             prototype_id=card.prototype_id,
             player_id=current_player_id)
         # UnitInstance設置Commandを全員に送信
@@ -574,12 +574,12 @@ class Server:
             type='put_unit',
             send_to='$all',
             params=SmartObject(
-                unit_instance=unit_instance,
+                unitinstance=unitinstance,
                 card_id=card_id,
                 cell_to_id=cell_to_id)
         )
         # 内部のDatabaseを更新
-        cell_to.attach(unit_instance)
+        cell_to.attach(unitinstance)
         current_player.tefuda.remove(card)
 
     def on_command_use_spell(self, *, params):

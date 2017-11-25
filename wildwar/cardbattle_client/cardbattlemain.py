@@ -30,6 +30,7 @@ from detailviewer import UnitPrototypeDetailViewer, SpellPrototypeDetailViewer
 from notificater import Notificater
 from .cardbattleplayer import Player, CardBattlePlayer
 from .cardwidget import UnknownCardWidget, UnitCardWidget, SpellCardWidget
+from .unitinstancewidget import UnitInstanceWidget
 from .timer import Timer
 from .turnendbutton import TurnEndButton
 
@@ -116,6 +117,23 @@ def copy_dictionary(dictionary, *, keys_exclude):
 class GameState(Factory.EventDispatcher):
     nth_turn = NumericProperty()
     is_myturn = BooleanProperty()
+
+
+class UnitInstance(Factory.EventDispatcher):
+    klass = StringProperty()
+    id = StringProperty()
+    prototype_id = StringProperty()
+    player_id = StringProperty()
+    n_turns_until_movable = NumericProperty()
+    skill_id_list = ListProperty()
+    tag_list = ListProperty()
+    cost = NumericProperty()
+    o_power = NumericProperty()
+    o_attack = NumericProperty()
+    o_defense = NumericProperty()
+    power = NumericProperty()
+    attack = NumericProperty()
+    defense = NumericProperty()
 
 
 class Cell(Factory.ButtonBehavior, Factory.FloatLayout):
@@ -483,6 +501,9 @@ class CardBattleMain(Factory.RelativeLayout):
         # Cardの辞書
         self.card_dict = {}
         self.cardwidget_dict = {}
+        # Unitinstanceの辞書
+        self.unitinstance_dict = {}
+        self.unitinstancewidget_dict = {}
 
         # ----------------------------------------------------------------------
         # Playerを初期化
@@ -596,6 +617,56 @@ class CardBattleMain(Factory.RelativeLayout):
         # logger.debug(params.drawer_id)
         # logger.debug(str(playerstate.pos))
         # logger.debug(str(playerstate.size))
+
+    @staticmethod
+    def create_unitinstance(*, player, prototype):
+        return UnitInstance(**prototype.__dict__, )
+
+    def on_command_put_unit(self, params):
+        card_id = params.card_id
+        cell_to_id = params.cell_to_id
+        # unitinstance = params.unitinstance
+        # player_id = unitinstance.player_id
+        # player = self.player_dict[player_id]
+        # card = self.card_dict[card_id]
+        cardwidget = self.cardwidget_dict[card_id]
+        # CardWidgetをUnitInstanceWidgetに置き換える
+        # unitinstance = UnitInstance(**params.unitinstance.__dict__)
+        # unitinstance_widget = UnitInstanceWidget()
+        # if isinstance(cardwidget, (UnknownCardWidget, )):
+        #     new_cardwidget = self.create_cardwidget(
+        #         card_id=card_id, player=player)
+        #     new_cardwidget.pos = cardwidget.pos
+        #     new_cardwidget.size = cardwidget.size
+        #     magnet = cardwidget.magnet
+        #     magnet.remove_widget(cardwidget)
+        #     magnet.add_widget(new_cardwidget)
+        #     self.cardwidget_dict[card_id] = new_cardwidget
+        #     cardwidget = new_cardwidget
+        # else:
+        #     bring_widget_to_front(cardwidget)
+        # #
+        # magnet = cardwidget.magnet
+        # if self._player_id == player_id:
+        #     magnet.parent.remove_widget(magnet)
+        #     self.board.cell_dict[cell_to_id].attach(magnet)
+        # else:
+        #     modalview = CustomModalViewNoBackground(
+        #         attach_to=self,
+        #         auto_dismiss=False,
+        #         size_hint=(0.6, 0.6, ),
+        #         pos_hint={'center_x': 0.5, 'center_y': 0.5, })
+
+        #     def on_open(modalview):
+        #         magnet.parent.remove_widget(magnet)
+        #         modalview.add_widget(magnet)
+        #         Clock.schedule_once(lambda __: modalview.dismiss(), 0.8)
+
+        #     def on_dismiss(modalview):
+        #         modalview.remove_widget(magnet)
+        #         self.board.cell_dict[cell_to_id].attach(magnet)
+        #     modalview.bind(on_open=on_open, on_dismiss=on_dismiss)
+        #     modalview.open()
 
     def on_command_set_card_info(self, params):
         self.card_dict[params.card.id] = params.card
