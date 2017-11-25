@@ -19,8 +19,8 @@ Builder.load_string(r'''
 #:set BORDER_WIDTH 2
 #:set BACKGROUND_COLOR 0, 0, 0, 0.7
 #:set BORDER_COLOR 1, 1, 1, 0.2
-<Label4CardDetailViewer@Label+RectangleBackground>:
-<AutoLabel4CardDetailViewer@AutoLabel+RectangleBackground>:
+<Label4DetailViewer@Label+RectangleBackground>:
+<AutoLabel4DetailViewer@AutoLabel+RectangleBackground>:
 
 <UnitPrototypeDetailViewer>:
     BoxLayout:
@@ -29,14 +29,14 @@ Builder.load_string(r'''
             size_hint_x: 1.2
             orientation: 'vertical'
             spacing: 10
-            AutoLabel4CardDetailViewer:
+            AutoLabel4DetailViewer:
                 border_color: BORDER_COLOR
                 background_color: BACKGROUND_COLOR
                 size_hint_y: 0.2
                 text: root.prototype.name
             Widget
                 id: id_dummy
-        Label4CardDetailViewer:
+        Label4DetailViewer:
             border_color: BORDER_COLOR
             background_color: BACKGROUND_COLOR
             padding_x: 10

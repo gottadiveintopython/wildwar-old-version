@@ -26,14 +26,14 @@ Builder.load_string(r'''
             size_hint_x: 1.2
             orientation: 'vertical'
             spacing: 10
-            AutoLabel4CardDetailViewer:
+            AutoLabel4DetailViewer:
                 border_color: BORDER_COLOR
                 background_color: BACKGROUND_COLOR
                 size_hint_y: 0.2
                 text: root.prototype.name
             Widget
                 id: id_dummy
-        Label4CardDetailViewer:
+        Label4DetailViewer:
             border_color: BORDER_COLOR
             background_color: BACKGROUND_COLOR
             padding_x: 10
