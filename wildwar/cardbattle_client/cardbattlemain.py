@@ -26,7 +26,9 @@ from basicwidgets import (
     replace_widget, bring_widget_to_front, fadeout_widget, AutoLabel,
 )
 from custommodalview import CustomModalViewNoBackground
-from detailviewer import UnitPrototypeDetailViewer, SpellPrototypeDetailViewer
+from detailviewer import (
+    UnitPrototypeDetailViewer, SpellPrototypeDetailViewer,
+    UnitInstanceDetailViewer, )
 from notificater import Notificater
 from .cardbattleplayer import Player, CardBattlePlayer
 from .cardwidget import UnknownCardWidget, UnitCardWidget, SpellCardWidget
@@ -653,6 +655,9 @@ class CardBattleMain(Factory.RelativeLayout):
         magnet.add_widget(unitinstance_widget)
         del self.cardwidget_dict[card_id]
         del self.card_dict[card_id]
+        # Touchした時に詳細が見れるようにする
+        unitinstance_widget.bind(on_release=partial(
+            self.show_detail_of_a_instance, magnet=magnet))
         # 操作したのが自分なら単純な親の付け替え
         if self._player_id == player_id:
             magnet.parent.remove_widget(magnet)
@@ -717,4 +722,29 @@ class CardBattleMain(Factory.RelativeLayout):
             tefuda_layout.add_widget(magnet)
         modalview.bind(on_dismiss=on_dismiss)
         bring_widget_to_front(card)
+        modalview.open(self)
+
+    def show_detail_of_a_instance(self, unitinstance_widget, *, magnet):
+        cell = magnet.parent
+        cell.detach()
+        unitinstance = unitinstance_widget.unitinstance
+        modalview = CustomModalViewNoBackground(
+            attach_to=self,
+            auto_dismiss=True,
+            size_hint=(0.95, 0.6, ),
+            pos_hint={'center_x': 0.5, 'center_y': 0.5, })
+        viewer = UnitInstanceDetailViewer(
+            unitinstance=unitinstance,
+            prototype=self.prototype_dict[unitinstance.prototype_id],
+            widget=magnet,
+            localize_str=self._localize_str,
+            tag_translation_dict=self.tag_translation_dict,
+            skill_dict=self.skill_dict)
+        modalview.add_widget(viewer)
+
+        def on_dismiss(*args):
+            magnet.parent.remove_widget(magnet)
+            cell.attach(magnet)
+        modalview.bind(on_dismiss=on_dismiss)
+        bring_widget_to_front(unitinstance_widget)
         modalview.open(self)
