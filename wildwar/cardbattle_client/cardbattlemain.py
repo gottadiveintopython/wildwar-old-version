@@ -503,7 +503,7 @@ class CardBattleMain(Factory.RelativeLayout):
         self.cardwidget_dict = {}
         # Unitinstanceの辞書
         self.unitinstance_dict = {}
-        self.unitinstancewidget_dict = {}
+        self.unitinstance_widget_dict = {}
 
         # ----------------------------------------------------------------------
         # Playerを初期化
@@ -625,48 +625,50 @@ class CardBattleMain(Factory.RelativeLayout):
     def on_command_put_unit(self, params):
         card_id = params.card_id
         cell_to_id = params.cell_to_id
-        # unitinstance = params.unitinstance
-        # player_id = unitinstance.player_id
-        # player = self.player_dict[player_id]
-        # card = self.card_dict[card_id]
+        unitinstance = params.unitinstance
+        player_id = unitinstance.player_id
+        player = self.player_dict[player_id]
         cardwidget = self.cardwidget_dict[card_id]
+        # UnitInstanceとUnitInstanceWidgetを生成
+        unitinstance = UnitInstance(**params.unitinstance.__dict__)
+        unitinstance_id = unitinstance.id
+        unitinstance_widget = UnitInstanceWidget(
+            unitinstance=unitinstance,
+            id=unitinstance_id,
+            imagefile=self.imagefile_dict[unitinstance.prototype_id],
+            background_color=player.color)
+        self.unitinstance_dict[unitinstance_id] = unitinstance
+        self.unitinstance_widget_dict[unitinstance_id] = unitinstance_widget
         # CardWidgetをUnitInstanceWidgetに置き換える
-        # unitinstance = UnitInstance(**params.unitinstance.__dict__)
-        # unitinstance_widget = UnitInstanceWidget()
-        # if isinstance(cardwidget, (UnknownCardWidget, )):
-        #     new_cardwidget = self.create_cardwidget(
-        #         card_id=card_id, player=player)
-        #     new_cardwidget.pos = cardwidget.pos
-        #     new_cardwidget.size = cardwidget.size
-        #     magnet = cardwidget.magnet
-        #     magnet.remove_widget(cardwidget)
-        #     magnet.add_widget(new_cardwidget)
-        #     self.cardwidget_dict[card_id] = new_cardwidget
-        #     cardwidget = new_cardwidget
-        # else:
-        #     bring_widget_to_front(cardwidget)
-        # #
-        # magnet = cardwidget.magnet
-        # if self._player_id == player_id:
-        #     magnet.parent.remove_widget(magnet)
-        #     self.board.cell_dict[cell_to_id].attach(magnet)
-        # else:
-        #     modalview = CustomModalViewNoBackground(
-        #         attach_to=self,
-        #         auto_dismiss=False,
-        #         size_hint=(0.6, 0.6, ),
-        #         pos_hint={'center_x': 0.5, 'center_y': 0.5, })
+        unitinstance_widget.pos = cardwidget.pos
+        unitinstance_widget.size = cardwidget.size
+        magnet = cardwidget.magnet
+        magnet.remove_widget(cardwidget)
+        magnet.add_widget(unitinstance_widget)
+        del self.cardwidget_dict[card_id]
+        del self.card_dict[card_id]
+        # 操作したのが自分なら単純な親の付け替え
+        if self._player_id == player_id:
+            magnet.parent.remove_widget(magnet)
+            self.board.cell_dict[cell_to_id].attach(magnet)
+        # 操作したのが自分でないならunitinstance_widgetを一旦中央に拡大表示
+        else:
+            modalview = CustomModalViewNoBackground(
+                attach_to=self,
+                auto_dismiss=False,
+                size_hint=(0.6, 0.6, ),
+                pos_hint={'center_x': 0.5, 'center_y': 0.5, })
 
-        #     def on_open(modalview):
-        #         magnet.parent.remove_widget(magnet)
-        #         modalview.add_widget(magnet)
-        #         Clock.schedule_once(lambda __: modalview.dismiss(), 0.8)
+            def on_open(modalview):
+                magnet.parent.remove_widget(magnet)
+                modalview.add_widget(magnet)
+                Clock.schedule_once(lambda __: modalview.dismiss(), 0.8)
 
-        #     def on_dismiss(modalview):
-        #         modalview.remove_widget(magnet)
-        #         self.board.cell_dict[cell_to_id].attach(magnet)
-        #     modalview.bind(on_open=on_open, on_dismiss=on_dismiss)
-        #     modalview.open()
+            def on_dismiss(modalview):
+                modalview.remove_widget(magnet)
+                self.board.cell_dict[cell_to_id].attach(magnet)
+            modalview.bind(on_open=on_open, on_dismiss=on_dismiss)
+            modalview.open()
 
     def on_command_set_card_info(self, params):
         self.card_dict[params.card.id] = params.card
