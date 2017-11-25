@@ -1,4 +1,4 @@
 # -*- coding: utf-8 -*-
 
-from .unitcard import UnitPrototypeDetailViewer
-from .spellcard import SpellPrototypeDetailViewer
+from .unitprototype import UnitPrototypeDetailViewer
+from .spellprototype import SpellPrototypeDetailViewer
