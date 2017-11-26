@@ -679,25 +679,25 @@ class CardBattleMain(Factory.RelativeLayout):
     #     if cell.is_not_empty():
     #         self.show_detail_of_a_card(cell)
 
-    def show_detail_of_a_card(self, card, *, magnet):
-        tefuda_layout = magnet.parent
-        tefuda_layout.remove_widget(magnet)
+    def show_detail_of_a_card(self, cardwidget, *, magnet):
+        original_parent = magnet.parent
+        original_parent.remove_widget(magnet)
         # modalview = ModalViewWithoutBackground(
         modalview = CustomModalViewNoBackground(
             attach_to=self,
             auto_dismiss=True,
             size_hint=(0.95, 0.6, ),
             pos_hint={'center_x': 0.5, 'center_y': 0.5, })
-        if isinstance(card, UnitCardWidget):
+        if isinstance(cardwidget, UnitCardWidget):
             viewer = UnitPrototypeDetailViewer(
-                prototype=card.prototype,
+                prototype=cardwidget.prototype,
                 widget=magnet,
                 localize_str=self._localize_str,
                 tag_translation_dict=self.tag_translation_dict,
                 skill_dict=self.skill_dict)
-        elif isinstance(card, SpellCardWidget):
+        elif isinstance(cardwidget, SpellCardWidget):
             viewer = SpellPrototypeDetailViewer(
-                prototype=card.prototype,
+                prototype=cardwidget.prototype,
                 widget=magnet,
                 localize_str=self._localize_str,
                 tag_translation_dict=self.tag_translation_dict,
@@ -707,11 +707,11 @@ class CardBattleMain(Factory.RelativeLayout):
         modalview.add_widget(viewer)
 
         def on_dismiss(*args):
-            bring_widget_to_front(card)
+            bring_widget_to_front(cardwidget)
             magnet.parent.remove_widget(magnet)
-            tefuda_layout.add_widget(magnet)
+            original_parent.add_widget(magnet)
         modalview.bind(on_dismiss=on_dismiss)
-        bring_widget_to_front(card)
+        bring_widget_to_front(cardwidget)
         modalview.open(self)
 
     def show_detail_of_a_instance(self, unitinstance_widget, *, magnet):
