@@ -421,7 +421,7 @@ class Server:
         # 通信の遅延や時計の精度を考慮して実際の制限時間は少し多めにする
         actual_timeout = self.timeout + 5
 
-        CLIENT_COMMANDS = 'use_unitcard use_spellcard cell_to_cell resign turn_end'.split()
+        CLIENT_COMMANDS = 'cell_to_cell use_unitcard use_spellcard cell_to_cell resign turn_end'.split()
 
         # Main Loop
         for communicator in itertools.cycle(self.communicator_list):
@@ -598,6 +598,99 @@ class Server:
             'Spellはまだ実装されていません', 'information')
 
     def on_command_cell_to_cell(self, *, params):
+        r'''clientからcell_to_cellコマンドが送られて来た時に呼ばれるMethod'''
         print('[S] on_command_cell_to_cell', params)
+
+        # ----------------------------------------------------------------------
+        # Commandが有効なものか確認
+        # ----------------------------------------------------------------------
+
+        # paramsが必要な属性を持っているか確認
+        cell_from_id = getattr(params, 'cell_from_id', None)
+        cell_to_id = getattr(params, 'cell_to_id', None)
+        if cell_from_id is None or cell_to_id is None:
+            logger.debug('[S] on_command_cell_to_cell: params is broken')
+            logger.debug(str(params))
+            return
+
+        # cell_from_id, cell_to_idの正当性を確認
+        cell_from = self.board.cell_dict.get(cell_from_id)
+        cell_to = self.board.cell_dict.get(cell_to_id)
+        if cell_to is None or cell_from is None:
+            logger.debug(
+                '[S] on_command_cell_to_cell:\n'
+                '    cell_from_id: {}\n'
+                '    cell_to_id:  {}'.format(cell_from_id, cell_to_id))
+            yield self.create_notification(
+                '無効な操作です', 'disallowed')
+            return
+
+        # Drag元が空なら何もしない
+        if cell_from.is_empty():
+            return
+
+        # Drag元にあるUnitが操作しているPlayerの物であるか確認
+        gamestate = self.gamestate
+        current_player = gamestate.current_player
+        unitinstance_from = cell_from.unitinstance
+        if unitinstance_from.player_id != current_player.id:
+            yield self.create_notification(
+                'それはあなたのUnitではありません', 'disallowed')
+            return
+
+        # Drag元のUnitが行動可能であるか確認
+        if unitinstance_from.n_turns_until_movable > 0:
+            yield self.create_notification(
+                'そのUnitは行動不可能です', 'disallowed')
+            return
+
+        # Unitの移動可能範囲内か確認
+        x_from = int(cell_from_id[1])
+        x_to = int(cell_to_id[1])
+        y_from = (
+            -1 if cell_from_id[0] == 'w' else (
+                self.board_size[1] - 2 if cell_from_id[0] == 'b'
+                else int(cell_from_id[0])))
+        y_to = (
+            -1 if cell_to_id[0] == 'w' else (
+                self.board_size[1] - 2 if cell_to_id[0] == 'b'
+                else int(cell_to_id[0])))
+        x_distance = abs(x_from - x_to)
+        y_distance = abs(y_from - y_to)
+        # print(
+        #     '[S] operation_drag from ({}, {}) to ({}, {})\n'
+        #     '    distance == ({}, {})'.format(
+        #         x_from, y_from, x_to, y_to, x_distance, y_distance))
+        DEFAULT_MOVEMENT = 1
+        if (x_distance + y_distance) > DEFAULT_MOVEMENT:
+            yield self.create_notification(
+                'その場所へは動けません', 'disallowed')
+            return
+
+        # Drag先にUnitが居なければ「移動」
+        if cell_to.is_empty():
+            yield from self.do_command_move(cell_from=cell_from, cell_to=cell_to)
+            return
+        # 居る場合は「攻撃」もしくは「支援」
+        else:
+            unitinstance_to = cell_to.unitinstance
+            # Drag先にあるUnitも操作しているPlayerの物なので「支援」
+            if unitinstance_to.player_id == current_player.id:
+                yield from self.do_command_support(cell_from=cell_from, cell_to=cell_to)
+                return
+            # Drag先にあるUnitが操作しているPlayerの物では無いので「攻撃」
+            else:
+                yield from self.do_command_attack(cell_from=cell_from, cell_to=cell_to)
+                return
+
+    def do_command_move(self, *, cell_from, cell_to):
         yield self.create_notification(
-            'その操作はまだ実装されていません', 'information')
+            "'移動'はまだ実装していません", 'information')
+
+    def do_command_support(self, *, cell_from, cell_to):
+        yield self.create_notification(
+            "'支援'はまだ実装していません", 'information')
+
+    def do_command_attack(self, *, cell_from, cell_to):
+        yield self.create_notification(
+            "'攻撃'はまだ実装していません", 'information')
