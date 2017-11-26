@@ -421,7 +421,7 @@ class Server:
         # 通信の遅延や時計の精度を考慮して実際の制限時間は少し多めにする
         actual_timeout = self.timeout + 5
 
-        CLIENT_COMMANDS = 'put_unit use_spell cell_to_cell resign turn_end'.split()
+        CLIENT_COMMANDS = 'use_unitcard use_spellcard cell_to_cell resign turn_end'.split()
 
         # Main Loop
         for communicator in itertools.cycle(self.communicator_list):
@@ -508,13 +508,13 @@ class Server:
             params=SmartObject(message=message, type=type)
         )
 
-    def on_command_put_unit(self, *, params):
-        r'''clientからput_unitコマンドが送られて来た時に呼ばれるMethod
+    def on_command_use_unitcard(self, *, params):
+        r'''clientからuse_unitcardコマンドが送られて来た時に呼ばれるMethod
 
         paramsは外部からやってくるデータなので不正なデータが入っていないか厳重に確認
         しなければならない。
         '''
-        print('[S] on_command_put_unit', params)
+        print('[S] on_command_use_unitcard', params)
 
         # ----------------------------------------------------------------------
         # まずはCommandが有効なものか確認
@@ -523,7 +523,7 @@ class Server:
         cell_to_id = getattr(params, 'cell_to_id', None)
         # paramsが必要な属性を持っているか確認
         if card_id is None or cell_to_id is None:
-            logger.debug('[S] on_command_put_unit: params is broken')
+            logger.debug('[S] on_command_use_unitcard: params is broken')
             logger.debug(str(params))
             return
         #
@@ -532,7 +532,7 @@ class Server:
         card = self.card_factory.dict.get(card_id)
         # card_idの正当性を確認
         if card is None:
-            logger.debug('[S] on_command_put_unit: Unknown card_id: ' + card_id)
+            logger.debug('[S] on_command_use_unitcard: Unknown card_id: ' + card_id)
             return
         # 自分の手札の物であるか確認
         if card not in current_player.tefuda:
@@ -548,7 +548,7 @@ class Server:
         cell_to = self.board.cell_dict.get(cell_to_id)
         # cell_to_idの正当性を確認
         if cell_to is None:
-            logger.debug('[S] on_command_put_unit: Unknown cell_id: ' + cell_to_id)
+            logger.debug('[S] on_command_use_unitcard: Unknown cell_id: ' + cell_to_id)
             yield self.create_notification(
                 'そこへは置けません', 'disallowed')
             return
@@ -581,7 +581,7 @@ class Server:
         # UnitInstance設置Commandを全員に送信
         yield SmartObject(
             klass='Command',
-            type='put_unit',
+            type='use_unitcard',
             send_to='$all',
             params=SmartObject(
                 unitinstance=unitinstance,
@@ -592,10 +592,10 @@ class Server:
         cell_to.attach(unitinstance)
         current_player.tefuda.remove(card)
 
-    def on_command_use_spell(self, *, params):
-        print('[S] on_command_use_spell', params)
+    def on_command_use_spellcard(self, *, params):
+        print('[S] on_command_use_spellcard', params)
         yield self.create_notification(
-            'その操作はまだ実装されていません', 'information')
+            'Spellはまだ実装されていません', 'information')
 
     def on_command_cell_to_cell(self, *, params):
         print('[S] on_command_cell_to_cell', params)

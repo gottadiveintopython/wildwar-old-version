@@ -354,13 +354,13 @@ class CardBattleMain(Factory.RelativeLayout):
         if isinstance(widget_to, Cell):
             if isinstance(widget_from, UnitCardWidget):
                 self.send_command(
-                    type='put_unit',
+                    type='use_unitcard',
                     params=SmartObject(
                         card_id=widget_from.id,
                         cell_to_id=widget_to.id))
             elif isinstance(widget_from, SpellCardWidget):
                 self.send_command(
-                    type='use_spell',
+                    type='use_spellcard',
                     params=SmartObject(
                         card_id=widget_from.id,
                         cell_to_id=widget_to.id))
@@ -622,7 +622,7 @@ class CardBattleMain(Factory.RelativeLayout):
     def create_unitinstance(*, player, prototype):
         return UnitInstance(**prototype.__dict__, )
 
-    def on_command_put_unit(self, params):
+    def on_command_use_unitcard(self, params):
         card_id = params.card_id
         cell_to_id = params.cell_to_id
         unitinstance = params.unitinstance
