@@ -645,24 +645,12 @@ class Server:
             return
 
         # Unitの移動可能範囲内か確認
-        x_from = int(cell_from_id[1])
-        x_to = int(cell_to_id[1])
-        y_from = (
-            -1 if cell_from_id[0] == 'w' else (
-                self.board_size[1] - 2 if cell_from_id[0] == 'b'
-                else int(cell_from_id[0])))
-        y_to = (
-            -1 if cell_to_id[0] == 'w' else (
-                self.board_size[1] - 2 if cell_to_id[0] == 'b'
-                else int(cell_to_id[0])))
-        x_distance = abs(x_from - x_to)
-        y_distance = abs(y_from - y_to)
-        # print(
-        #     '[S] operation_drag from ({}, {}) to ({}, {})\n'
-        #     '    distance == ({}, {})'.format(
-        #         x_from, y_from, x_to, y_to, x_distance, y_distance))
-        DEFAULT_MOVEMENT = 1
-        if (x_distance + y_distance) > DEFAULT_MOVEMENT:
+        vector = _calculate_vector(
+            cell_from=cell_from, cell_to=cell_to, cols=self.board_size[0])
+        movement = _calculate_movement(vector)
+        # print('vector:', vector, '    移動量:', movement)
+        MAX_MOVEMENT = 1
+        if movement > MAX_MOVEMENT:
             yield self.create_notification(
                 'その場所へは動けません', 'disallowed')
             return
@@ -694,3 +682,20 @@ class Server:
     def do_command_attack(self, *, cell_from, cell_to):
         yield self.create_notification(
             "'攻撃'はまだ実装していません", 'information')
+
+
+def _calculate_vector(*, cell_from, cell_to, cols):
+    r'''cell_fromからcell_toへの移動量を求める。
+
+    戻り値はtuple(x軸の移動量, y軸の移動量, )で、単位はCellの個数、右がxの正方向、
+    下がyの正方向になっている。'''
+    index_from = cell_from.index
+    index_to = cell_to.index
+    pos_from = (index_from % cols, index_from // cols, )
+    pos_to = (index_to % cols, index_to // cols, )
+    return (pos_to[0] - pos_from[0], pos_to[1] - pos_from[1], )
+
+
+def _calculate_movement(vector):
+    r'''vectorから移動量の絶対値を求める'''
+    return abs(vector[0]) + abs(vector[1])
