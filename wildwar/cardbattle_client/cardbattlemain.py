@@ -2,9 +2,6 @@
 
 __all__ = ('CardBattleMain', )
 
-from functools import partial
-import queue
-
 import yaml
 import kivy
 kivy.require(r'1.10.0')
@@ -608,7 +605,7 @@ class CardBattleMain(Factory.RelativeLayout):
         self.cardwidget_dict[card_id] = cardwidget
         playerwidget = self.playerwidget_dict[player_id]
         magnet = self.wrap_in_magnet(cardwidget)
-        cardwidget.bind(on_release=partial(self.show_detail_of_a_card, magnet=magnet))
+        cardwidget.bind(on_release=self.show_detail_of_a_card)
         playerwidget.ids.id_tefuda.add_widget(magnet)
         player.n_cards_in_deck -= 1
         player.tefuda.append(card_id)
@@ -646,8 +643,7 @@ class CardBattleMain(Factory.RelativeLayout):
         del self.cardwidget_dict[card_id]
         del self.card_dict[card_id]
         # Touchした時に詳細が見れるようにする
-        unitinstance_widget.bind(on_release=partial(
-            self.show_detail_of_a_instance, magnet=magnet))
+        unitinstance_widget.bind(on_release=self.show_detail_of_a_instance)
         # 操作したのが自分なら単純な親の付け替え
         if self._player_id == player_id:
             magnet.parent.remove_widget(magnet)
@@ -679,7 +675,8 @@ class CardBattleMain(Factory.RelativeLayout):
     #     if cell.is_not_empty():
     #         self.show_detail_of_a_card(cell)
 
-    def show_detail_of_a_card(self, cardwidget, *, magnet):
+    def show_detail_of_a_card(self, cardwidget):
+        magnet = cardwidget.magnet
         original_parent = magnet.parent
         original_parent.remove_widget(magnet)
         # modalview = ModalViewWithoutBackground(
@@ -714,7 +711,8 @@ class CardBattleMain(Factory.RelativeLayout):
         bring_widget_to_front(cardwidget)
         modalview.open(self)
 
-    def show_detail_of_a_instance(self, unitinstance_widget, *, magnet):
+    def show_detail_of_a_instance(self, unitinstance_widget):
+        magnet = unitinstance_widget.magnet
         cell = magnet.parent
         cell.remove_widget(magnet)
         unitinstance = unitinstance_widget.unitinstance
