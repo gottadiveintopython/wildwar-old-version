@@ -142,40 +142,30 @@ class Cell(Factory.ButtonBehavior, Factory.FloatLayout):
 
     id = StringProperty()
 
-    def __init__(self, **kwargs):
-        super(Cell, self).__init__(**kwargs)
-        self._unit = None
-
     def __str__(self, **kwargs):
         return self.id
 
     def is_empty(self):
-        return self._unit is None
+        return len(self.children) == 0
 
     def is_not_empty(self):
-        return self._unit is not None
+        return len(self.children) != 0
 
-    @property
-    def unit(self):
-        return self._unit
-
-    def attach(self, unit):
+    def add_widget(self, widget, *args, **kwargs):
         if self.is_empty():
-            unit.pos_hint = {r'x': 0, r'y': 0, }
-            unit.size_hint = (1, 1,)
-            self.add_widget(unit)
-            self._unit = unit
+            widget.pos_hint = {r'x': 0, r'y': 0, }
+            widget.size_hint = (1, 1,)
+            return super().add_widget(widget, *args, **kwargs)
         else:
-            logger.error(rf"The cell '{self.id}' already has a unit.")
+            logger.error("[C] The cell '{}' already has a unit.".format(self.id))
 
-    def detach(self):
+    def remove_widget(self, widget, *args, **kwargs):
         if self.is_empty():
-            logger.error(rf"The cell '{self.id}' doesn't have unit.")
+            logger.error("[C] The cell '{}' doesn't have unit.".format(self.id))
+        elif self.children[0] is widget:
+            return super().remove_widget(widget, *args, **kwargs)
         else:
-            unit = self._unit
-            self.remove_widget(unit)
-            self._unit = None
-            return unit
+            logger.error("[C] That's not my child: " + str(widget))
 
 
 class BoardWidget(Factory.GridLayout):
@@ -661,7 +651,7 @@ class CardBattleMain(Factory.RelativeLayout):
         # 操作したのが自分なら単純な親の付け替え
         if self._player_id == player_id:
             magnet.parent.remove_widget(magnet)
-            self.board.cell_dict[cell_to_id].attach(magnet)
+            self.board.cell_dict[cell_to_id].add_widget(magnet)
         # 操作したのが自分でないならunitinstance_widgetを一旦中央に拡大表示
         else:
             modalview = CustomModalViewNoBackground(
@@ -677,7 +667,7 @@ class CardBattleMain(Factory.RelativeLayout):
 
             def on_dismiss(modalview):
                 modalview.remove_widget(magnet)
-                self.board.cell_dict[cell_to_id].attach(magnet)
+                self.board.cell_dict[cell_to_id].add_widget(magnet)
             modalview.bind(on_open=on_open, on_dismiss=on_dismiss)
             modalview.open()
 
@@ -726,7 +716,7 @@ class CardBattleMain(Factory.RelativeLayout):
 
     def show_detail_of_a_instance(self, unitinstance_widget, *, magnet):
         cell = magnet.parent
-        cell.detach()
+        cell.remove_widget(magnet)
         unitinstance = unitinstance_widget.unitinstance
         modalview = CustomModalViewNoBackground(
             attach_to=self,
@@ -744,7 +734,7 @@ class CardBattleMain(Factory.RelativeLayout):
 
         def on_dismiss(*args):
             magnet.parent.remove_widget(magnet)
-            cell.attach(magnet)
+            cell.add_widget(magnet)
         modalview.bind(on_dismiss=on_dismiss)
         bring_widget_to_front(unitinstance_widget)
         modalview.open(self)
