@@ -66,6 +66,7 @@ Builder.load_string(r"""
 
 class UnitInstanceWidget(Factory.ButtonBehavior, Factory.RelativeLayout):
     magnet = ObjectProperty(None, allownone=True)
+    klass = StringProperty('UnitInstanceWidget')
     id = StringProperty()
     unitinstance = ObjectProperty()
     imagefile = StringProperty()
