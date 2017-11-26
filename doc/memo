@@ -31,6 +31,7 @@ server -> client
         draw
         set_card_info
         unit
+        reduce_n_turns_until_movable
         # spell
         attack
         support

@@ -585,6 +585,11 @@ class CardBattleMain(Factory.RelativeLayout):
         self.gamestate.is_myturn = False
         self.timer.stop()
 
+    def on_command_reduce_n_turns_until_movable(self, params):
+        for unitinstance in self.unitinstance_dict.values():
+            if unitinstance.n_turns_until_movable > 0:
+                unitinstance.n_turns_until_movable -= 1
+
     def on_command_notification(self, params):
         self.notificater.add_notification(
             text=self._localize_str(params.message),

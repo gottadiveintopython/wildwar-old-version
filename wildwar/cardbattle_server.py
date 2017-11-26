@@ -61,20 +61,20 @@ class Cell(SmartObject):
             'klass': 'Cell',
             'id': None,
             'index': None,
-            'unitinstance_id': None,
+            'unitinstance': None,
         }.items():
             kwargs.setdefault(key, value)
         super().__init__(**kwargs)
 
     def is_empty(self):
-        return self.unitinstance_id is None
+        return self.unitinstance is None
 
     def is_not_empty(self):
-        return self.unitinstance_id is not None
+        return self.unitinstance is not None
 
-    def attach(self, unitinstance_id):
+    def attach(self, unitinstance):
         if self.is_empty():
-            self.unitinstance_id = unitinstance_id
+            self.unitinstance = unitinstance
         else:
             logger.error("The cell '{}' already has a unit.".format(self.id))
 
@@ -82,9 +82,9 @@ class Cell(SmartObject):
         if self.is_empty():
             logger.error("The cell '{}' doesn't have unit.".format(self.id))
         else:
-            previous_unitinstance_id = self.unitinstance_id
-            self.unitinstance_id = None
-            return previous_unitinstance_id
+            previous_unitinstance = self.unitinstance
+            self.unitinstance = None
+            return previous_unitinstance
 
 
 class Board(SmartObject):
@@ -430,6 +430,16 @@ class Server:
             nth_turn = gamestate.nth_turn
             gamestate.current_player = current_player
             gamestate.current_player_id = current_player.id
+            # Turn開始の前処理
+            for unitinstance in self.unitinstance_factory.dict.values():
+                if unitinstance.n_turns_until_movable > 0:
+                    unitinstance.n_turns_until_movable -= 1
+            yield SmartObject(
+                klass='Command',
+                type='reduce_n_turns_until_movable',
+                send_to='$all',
+                params=None)
+            # Turn開始
             yield SmartObject(
                 klass='Command',
                 type='turn_begin',

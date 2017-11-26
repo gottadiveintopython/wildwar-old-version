@@ -43,7 +43,8 @@ Builder.load_string(r"""
         pos_hint: {'right': 1, 'top': 1, }
         size_hint: None, None
         size: self.texture_size
-        source: '' if root.unitinstance.n_turns_until_movable == 0 else 'icon_lock.png'
+        source: 'icon_lock.png'
+        opacity: 0 if root.unitinstance.n_turns_until_movable == 0 else 1
     BoxLayout:
         size_hint: 1, 0.2
         AutoLabel:
