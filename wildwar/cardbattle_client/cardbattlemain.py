@@ -352,42 +352,47 @@ class CardBattleMain(Factory.RelativeLayout):
                 message=self._localize_str('今はあなたの番ではありません'),
                 type='disallowed'))
             return
-        if widget_to.klass == 'Cell':
-            if widget_from.klass == 'UnitCardWidget':
+        elif widget_from.klass == 'UnitInstanceWidget':
+            cell_from_id = widget_from.magnet.parent.id
+            if widget_to.klass == 'Cell':
+                cell_to = widget_to
+            elif widget_to.klass == 'UnitInstanceWidget':
+                cell_to = widget_to.magnet.parent
+            else:
+                cell_to = None
+            if cell_to:
+                self.send_command(
+                    type='cell_to_cell',
+                    params=SmartObject(
+                        cell_from_id=cell_from_id,
+                        cell_to_id=cell_to.id))
+                return
+        elif widget_from.klass == 'UnitCardWidget':
+            if widget_to.klass == 'Cell':
                 self.send_command(
                     type='use_unitcard',
                     params=SmartObject(
                         card_id=widget_from.id,
                         cell_to_id=widget_to.id))
-            elif widget_from.klass == 'SpellCardWidget':
+                return
+        elif widget_from.klass == 'SpellCardWidget':
+            if widget_to.klass == 'Cell':
+                cell_to = widget_to
+            elif widget_to.klass == 'UnitInstanceWidget':
+                cell_to = widget_to.magnet.parent
+            else:
+                cell_to = None
+            if cell_to:
                 self.send_command(
                     type='use_spellcard',
                     params=SmartObject(
                         card_id=widget_from.id,
-                        cell_to_id=widget_to.id))
-            elif widget_from.klass == 'Cell':
-                self.send_command(
-                    type='cell_to_cell',
-                    params=SmartObject(
-                        cell_from_id=widget_from.id,
-                        cell_to_id=widget_to.id))
-            elif widget_from.klass == 'UnitInstanceWidget':
-                self.send_command(
-                    type='cell_to_cell',
-                    params=SmartObject(
-                        cell_from_id=widget_from.magnet.parent.id,
-                        cell_to_id=widget_to.id))
-            else:
-                self.on_command_notification(params=SmartObject(
-                    message=self._localize_str('無効な操作です'),
-                    type='disallowed'))
-                if widget_from.klass != 'UnknownCardWidget':
-                    logger.critical(
-                        '予期しないWidgetがDragによって選ばれました: ' +
-                        str(widget_from))
-        else:
-            self.on_command_notification(params=SmartObject(
-                message=self._localize_str('無効な操作です'), type='disallowed'))
+                        cell_to_id=cell_to.id))
+                return
+        elif widget_from.klass == 'Cell':
+            return
+        self.on_command_notification(params=SmartObject(
+            message=self._localize_str('無効な操作です'), type='disallowed'))
 
     def on_timer_tick(self, timer, seconds):
         time_limit = timer.time_limit
