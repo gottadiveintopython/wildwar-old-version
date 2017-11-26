@@ -713,8 +713,8 @@ class CardBattleMain(Factory.RelativeLayout):
 
     def show_detail_of_a_instance(self, unitinstance_widget):
         magnet = unitinstance_widget.magnet
-        cell = magnet.parent
-        cell.remove_widget(magnet)
+        original_parent = magnet.parent
+        original_parent.remove_widget(magnet)
         unitinstance = unitinstance_widget.unitinstance
         modalview = CustomModalViewNoBackground(
             attach_to=self,
@@ -732,7 +732,7 @@ class CardBattleMain(Factory.RelativeLayout):
 
         def on_dismiss(*args):
             magnet.parent.remove_widget(magnet)
-            cell.add_widget(magnet)
+            original_parent.add_widget(magnet)
         modalview.bind(on_dismiss=on_dismiss)
         bring_widget_to_front(unitinstance_widget)
         modalview.open(self)
