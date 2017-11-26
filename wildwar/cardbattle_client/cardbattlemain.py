@@ -138,6 +138,7 @@ class UnitInstance(Factory.EventDispatcher):
 class Cell(Factory.ButtonBehavior, Factory.FloatLayout):
 
     id = StringProperty()
+    klass = StringProperty('Cell')
 
     def __str__(self, **kwargs):
         return self.id
@@ -351,26 +352,26 @@ class CardBattleMain(Factory.RelativeLayout):
                 message=self._localize_str('今はあなたの番ではありません'),
                 type='disallowed'))
             return
-        if isinstance(widget_to, Cell):
-            if isinstance(widget_from, UnitCardWidget):
+        if widget_to.klass == 'Cell':
+            if widget_from.klass == 'UnitCardWidget':
                 self.send_command(
                     type='use_unitcard',
                     params=SmartObject(
                         card_id=widget_from.id,
                         cell_to_id=widget_to.id))
-            elif isinstance(widget_from, SpellCardWidget):
+            elif widget_from.klass == 'SpellCardWidget':
                 self.send_command(
                     type='use_spellcard',
                     params=SmartObject(
                         card_id=widget_from.id,
                         cell_to_id=widget_to.id))
-            elif isinstance(widget_from, Cell):
+            elif widget_from.klass == 'Cell':
                 self.send_command(
                     type='cell_to_cell',
                     params=SmartObject(
                         cell_from_id=widget_from.id,
                         cell_to_id=widget_to.id))
-            elif isinstance(widget_from, UnitInstanceWidget):
+            elif widget_from.klass == 'UnitInstanceWidget':
                 self.send_command(
                     type='cell_to_cell',
                     params=SmartObject(
@@ -380,7 +381,7 @@ class CardBattleMain(Factory.RelativeLayout):
                 self.on_command_notification(params=SmartObject(
                     message=self._localize_str('無効な操作です'),
                     type='disallowed'))
-                if not isinstance(widget_from, UnknownCardWidget):
+                if widget_from.klass != 'UnknownCardWidget':
                     logger.critical(
                         '予期しないWidgetがDragによって選ばれました: ' +
                         str(widget_from))
@@ -690,14 +691,14 @@ class CardBattleMain(Factory.RelativeLayout):
             auto_dismiss=True,
             size_hint=(0.95, 0.6, ),
             pos_hint={'center_x': 0.5, 'center_y': 0.5, })
-        if isinstance(cardwidget, UnitCardWidget):
+        if cardwidget.klass == 'UnitCardWidget':
             viewer = UnitPrototypeDetailViewer(
                 prototype=cardwidget.prototype,
                 widget=magnet,
                 localize_str=self._localize_str,
                 tag_translation_dict=self.tag_translation_dict,
                 skill_dict=self.skill_dict)
-        elif isinstance(cardwidget, SpellCardWidget):
+        elif cardwidget.klass == 'SpellCardWidget':
             viewer = SpellPrototypeDetailViewer(
                 prototype=cardwidget.prototype,
                 widget=magnet,
