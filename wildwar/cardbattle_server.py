@@ -672,8 +672,16 @@ class Server:
                 return
 
     def do_command_move(self, *, cell_from, cell_to):
-        yield self.create_notification(
-            "'移動'はまだ実装していません", 'information')
+        unitinstance = cell_from.unitinstance
+        yield SmartObject(
+            klass='Command',
+            type='move',
+            send_to='$all',
+            params=SmartObject(
+                unitinstance_from_id=unitinstance.id,
+                cell_to_id=cell_to.id))
+        unitinstance.n_turns_until_movable += 1
+        cell_to.attach(cell_from.detach())
 
     def do_command_support(self, *, cell_from, cell_to):
         yield self.create_notification(

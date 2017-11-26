@@ -624,6 +624,18 @@ class CardBattleMain(Factory.RelativeLayout):
         # logger.debug(str(playerstate.pos))
         # logger.debug(str(playerstate.size))
 
+    def on_command_move(self, params):
+        unitinstance_from_id = params.unitinstance_from_id
+        unitinstance_from = self.unitinstance_dict[unitinstance_from_id]
+        unitinstance_widget_from = \
+            self.unitinstance_widget_dict[unitinstance_from_id]
+        cell_to = self.board.cell_dict[params.cell_to_id]
+        unitinstance_from.n_turns_until_movable += 1
+        magnet = unitinstance_widget_from.magnet
+        cell_from = magnet.parent
+        cell_from.remove_widget(magnet)
+        cell_to.add_widget(magnet)
+
     @staticmethod
     def create_unitinstance(*, player, prototype):
         return UnitInstance(**prototype.__dict__, )
