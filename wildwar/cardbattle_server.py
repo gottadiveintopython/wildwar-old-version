@@ -681,8 +681,45 @@ class Server:
             "'支援'はまだ実装していません", 'information')
 
     def do_command_attack(self, *, cell_from, cell_to):
-        yield self.create_notification(
-            "'攻撃'はまだ実装していません", 'information')
+        attacker = cell_from.unitinstance
+        defender = cell_to.unitinstance
+        attacker.power += attacker.attack
+        attacker.attack = 0
+        defender.power += defender.defense
+        defender.defense = 0
+        if attacker.power == defender.power:
+            cell_from.detach()
+            cell_to.detach()
+            yield SmartObject(
+                klass='Command',
+                type='attack',
+                send_to='$all',
+                params=SmartObject(
+                    attacker_id=attacker.id,
+                    defender_id=defender.id,
+                    dead_id='$both'))
+        elif attacker.power < defender.power:
+            cell_from.detach()
+            defender.power -= attacker.power
+            yield SmartObject(
+                klass='Command',
+                type='attack',
+                send_to='$all',
+                params=SmartObject(
+                    attacker_id=attacker.id,
+                    defender_id=defender.id,
+                    dead_id=attacker.id))
+        else:
+            cell_to.detach()
+            attacker.power -= defender.power
+            yield SmartObject(
+                klass='Command',
+                type='attack',
+                send_to='$all',
+                params=SmartObject(
+                    attacker_id=attacker.id,
+                    defender_id=defender.id,
+                    dead_id=defender.id))
 
 
 def _calculate_vector(*, cell_from, cell_to, cols):

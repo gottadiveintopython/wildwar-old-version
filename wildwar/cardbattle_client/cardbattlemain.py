@@ -117,6 +117,9 @@ class GameState(Factory.EventDispatcher):
     nth_turn = NumericProperty()
     is_myturn = BooleanProperty()
 
+class UIOptions(Factory.EventDispatcher):
+    skip_attack_animation = BooleanProperty()
+
 
 class UnitInstance(Factory.EventDispatcher):
     klass = StringProperty()
@@ -338,6 +341,8 @@ class CardBattleMain(Factory.RelativeLayout):
     def __init__(self, *, communicator, iso639, **kwargs):
         self.gamestate = GameState(
             nth_turn=0, is_myturn=False)
+        self.uioptions = UIOptions(
+            skip_attack_animation=True)
         super().__init__(**kwargs)
         self._communicator = communicator
         self._player_id = communicator.player_id
@@ -634,6 +639,27 @@ class CardBattleMain(Factory.RelativeLayout):
         cell_from = magnet.parent
         cell_from.remove_widget(magnet)
         cell_to.add_widget(magnet)
+
+    def on_command_attack(self, params):
+        attacker_id = params.attacker_id
+        defender_id = params.defender_id
+        dead_id = params.dead_id
+        attacker = self.unitinstance_dict[attacker_id]
+        defender = self.unitinstance_dict[defender_id]
+        attacker_widget = self.unitinstance_widget_dict[attacker_id]
+        defender_widget = self.unitinstance_widget_dict[defender_id]
+        if self.uioptions.skip_attack_animation:
+            if dead_id == '$both':
+                attacker.attcack = 0
+                attacker.power = 0
+                defender.defense = 0
+                defender.power = 0
+                attacker_magnet = attacker_widget.magnet
+                attacker_magnet.parent.remove_widget(attacker_magnet)
+                attacker_widget.parent.remove_widget(attacker_widget)
+                defender_magnet = defender_widget.magnet
+                defender_magnet.parent.remove_widget(defender_magnet)
+                defender_widget.parent.remove_widget(defender_widget)
 
     @staticmethod
     def create_unitinstance(*, player, prototype):
