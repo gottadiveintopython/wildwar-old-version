@@ -421,8 +421,6 @@ class Server:
         # 通信の遅延や時計の精度を考慮して実際の制限時間は少し多めにする
         actual_timeout = self.timeout + 5
 
-        CLIENT_COMMANDS = 'cell_to_cell use_unitcard use_spellcard cell_to_cell resign turn_end'.split()
-
         # Main Loop
         for communicator in itertools.cycle(self.communicator_list):
             current_player = self.player_dict[communicator.player_id]
@@ -462,13 +460,13 @@ class Server:
                             logger.debug(str(command))
                             continue
                         # logger.debug(command)
-                        if command.type not in CLIENT_COMMANDS:
+                        command_handler = getattr(
+                            self, 'on_command_' + command.type, None)
+                        if command_handler is None:
                             logger.debug(
                                 r"[S] Unknown command '{}'".format(command.type))
                             continue
                         else:
-                            command_handler = getattr(
-                                self, 'on_command_' + command.type)
                             yield from command_handler(params=command.params)
                         # elif command.type == 'turn_end':
                         #     raise TurnEnd()
