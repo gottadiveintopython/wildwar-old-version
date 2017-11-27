@@ -8,6 +8,9 @@ UnitInstanceWidgetの詳細を見ている時にそのUnitInstanceWidgetの移�
 と該当のCellが空なためErrorになる。又もし将来Replay機能を付けて全ての手札が全開で詳
 細を見れるようにした場合、UnitCardWidgetとSpellCardWidgetでも同様の問題が起こる。
 
+3. CardBattleMain.try_to_recieve_command()はClock.schedule_interval()で定期的呼ぶ
+のではなく前の呼び出しで始めたAnimationが終わるのを待ってから、次の呼び出しをすべき。
+
 --------------------------------------------------------------------------------
 UnitCardのインスタンス毎の情報
     属するCard種
