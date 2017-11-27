@@ -22,7 +22,7 @@ from magnetacrosslayout import MagnetAcrossLayout
 from basicwidgets import (
     replace_widget, bring_widget_to_front, fadeout_widget, AutoLabel,
 )
-from custommodalview import CustomModalViewNoBackground
+from custommodalview import CustomModalView, CustomModalViewNoBackground
 from detailviewer import (
     UnitPrototypeDetailViewer, SpellPrototypeDetailViewer,
     UnitInstanceDetailViewer, )
@@ -699,11 +699,7 @@ class CardBattleMain(Factory.RelativeLayout):
     #         self.show_detail_of_a_card(cell)
 
     def show_detail_of_a_card(self, cardwidget):
-        magnet = cardwidget.magnet
-        original_parent = magnet.parent
-        original_parent.remove_widget(magnet)
-        # modalview = ModalViewWithoutBackground(
-        modalview = CustomModalViewNoBackground(
+        modalview = CustomModalView(
             attach_to=self,
             auto_dismiss=True,
             size_hint=(0.95, 0.6, ),
@@ -711,35 +707,31 @@ class CardBattleMain(Factory.RelativeLayout):
         if cardwidget.klass == 'UnitCardWidget':
             viewer = UnitPrototypeDetailViewer(
                 prototype=cardwidget.prototype,
-                widget=magnet,
+                widget=UnitCardWidget(
+                    prototype=cardwidget.prototype,
+                    imagefile=cardwidget.imagefile,
+                    background_color=cardwidget.background_color),
                 localize_str=self._localize_str,
                 tag_translation_dict=self.tag_translation_dict,
                 skill_dict=self.skill_dict)
         elif cardwidget.klass == 'SpellCardWidget':
             viewer = SpellPrototypeDetailViewer(
                 prototype=cardwidget.prototype,
-                widget=magnet,
+                widget=SpellCardWidget(
+                    prototype=cardwidget.prototype,
+                    imagefile=cardwidget.imagefile,
+                    background_color=cardwidget.background_color),
                 localize_str=self._localize_str,
                 tag_translation_dict=self.tag_translation_dict,
                 skill_dict=self.skill_dict)
         else:
-            viewer = magnet
+            viewer = None
         modalview.add_widget(viewer)
-
-        def on_dismiss(*args):
-            bring_widget_to_front(cardwidget)
-            magnet.parent.remove_widget(magnet)
-            original_parent.add_widget(magnet)
-        modalview.bind(on_dismiss=on_dismiss)
-        bring_widget_to_front(cardwidget)
         modalview.open(self)
 
     def show_detail_of_a_instance(self, unitinstance_widget):
-        magnet = unitinstance_widget.magnet
-        original_parent = magnet.parent
-        original_parent.remove_widget(magnet)
         unitinstance = unitinstance_widget.unitinstance
-        modalview = CustomModalViewNoBackground(
+        modalview = CustomModalView(
             attach_to=self,
             auto_dismiss=True,
             size_hint=(0.95, 0.6, ),
@@ -747,15 +739,12 @@ class CardBattleMain(Factory.RelativeLayout):
         viewer = UnitInstanceDetailViewer(
             unitinstance=unitinstance,
             prototype=self.prototype_dict[unitinstance.prototype_id],
-            widget=magnet,
+            widget=UnitInstanceWidget(
+                unitinstance=unitinstance,
+                imagefile=unitinstance_widget.imagefile,
+                background_color=unitinstance_widget.background_color),
             localize_str=self._localize_str,
             tag_translation_dict=self.tag_translation_dict,
             skill_dict=self.skill_dict)
         modalview.add_widget(viewer)
-
-        def on_dismiss(*args):
-            magnet.parent.remove_widget(magnet)
-            original_parent.add_widget(magnet)
-        modalview.bind(on_dismiss=on_dismiss)
-        bring_widget_to_front(unitinstance_widget)
         modalview.open(self)
