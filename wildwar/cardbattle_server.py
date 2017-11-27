@@ -434,11 +434,6 @@ class Server:
             for unitinstance in self.unitinstance_factory.dict.values():
                 if unitinstance.n_turns_until_movable > 0:
                     unitinstance.n_turns_until_movable -= 1
-            yield SmartObject(
-                klass='Command',
-                type='reduce_n_turns_until_movable',
-                send_to='$all',
-                params=None)
             # Turn開始
             yield SmartObject(
                 klass='Command',

@@ -567,6 +567,10 @@ class CardBattleMain(Factory.RelativeLayout):
         return cardwidget
 
     def on_command_turn_begin(self, params):
+        # 全Unitの行動可能になるまでのTurn数を減らす
+        for unitinstance in self.unitinstance_dict.values():
+            if unitinstance.n_turns_until_movable > 0:
+                unitinstance.n_turns_until_movable -= 1
         gamestate = self.gamestate
         is_myturn = params.player_id == self._player_id
         gamestate.is_myturn = is_myturn
@@ -590,11 +594,6 @@ class CardBattleMain(Factory.RelativeLayout):
             logger.critical("[C] 'nth_turn' mismatched on 'on_command_turn_end'.")
         self.gamestate.is_myturn = False
         self.timer.stop()
-
-    def on_command_reduce_n_turns_until_movable(self, params):
-        for unitinstance in self.unitinstance_dict.values():
-            if unitinstance.n_turns_until_movable > 0:
-                unitinstance.n_turns_until_movable -= 1
 
     def on_command_notification(self, params):
         self.notificater.add_notification(
