@@ -748,7 +748,6 @@ class CardBattleMain(Factory.RelativeLayout):
     #     if cell.is_not_empty():
     #         self.show_detail_of_a_card(cell)
 
-    @doesnt_need_to_wait_for_the_animation_to_complete
     def show_detail_of_a_card(self, cardwidget):
         modalview = CustomModalView(
             attach_to=self,
@@ -780,7 +779,6 @@ class CardBattleMain(Factory.RelativeLayout):
         modalview.add_widget(viewer)
         modalview.open(self)
 
-    @doesnt_need_to_wait_for_the_animation_to_complete
     def show_detail_of_a_instance(self, unitinstance_widget):
         unitinstance = unitinstance_widget.unitinstance
         modalview = CustomModalView(
