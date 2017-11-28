@@ -2,6 +2,8 @@
 
 __all__ = ('CardBattleMain', )
 
+import functools
+
 import yaml
 import kivy
 kivy.require(r'1.10.0')
@@ -116,6 +118,7 @@ def copy_dictionary(dictionary, *, keys_exclude):
 class GameState(Factory.EventDispatcher):
     nth_turn = NumericProperty()
     is_myturn = BooleanProperty()
+
 
 class UIOptions(Factory.EventDispatcher):
     skip_attack_animation = BooleanProperty()
@@ -350,6 +353,8 @@ class CardBattleMain(Factory.RelativeLayout):
         self._iso639 = iso639
         self._localize_str = lambda s: s  # この関数は後に実装する
         self.cardwidget_layer.bind(on_operation_drag=self.on_operation_drag)
+        self._command_recieving_trigger = Clock.create_trigger(
+            self._try_to_recieve_command, 0.3)
 
     def on_operation_drag(self, cardwidget_layer, widget_from, widget_to):
         if not self.gamestate.is_myturn:
@@ -432,12 +437,12 @@ class CardBattleMain(Factory.RelativeLayout):
         return magnet
 
     def on_start(self):
-        # Serverからdataが届いていないか定期的に確認
-        Clock.schedule_interval(self.try_to_recieve_command, 0.3)
+        self._command_recieving_trigger()
 
-    def try_to_recieve_command(self, __):
+    def _try_to_recieve_command(self, __):
         jsonstr = self._communicator.recieve_nowait()
         if jsonstr is None:
+            self._command_recieving_trigger()
             return
         command = SmartObject.load_from_json(jsonstr)
         command_handler = getattr(self, 'on_command_' + command.type, None)
@@ -458,6 +463,16 @@ class CardBattleMain(Factory.RelativeLayout):
             for key in keys
         }
 
+    def doesnt_need_to_wait_for_the_animation_to_complete(command_handler):
+        @functools.wraps(command_handler)
+        def wrapper(self, *args, **kwargs):
+            try:
+                return command_handler(self, *args, **kwargs)
+            finally:
+                self._command_recieving_trigger()
+        return wrapper
+
+    @doesnt_need_to_wait_for_the_animation_to_complete
     def on_command_game_begin(self, params):
         if hasattr(self, '_on_command_game_begin_called'):
             logger.critical("[C] Don't call on_command_game_begin multiple times.")
@@ -571,6 +586,7 @@ class CardBattleMain(Factory.RelativeLayout):
                     id=card_id)
         return cardwidget
 
+    @doesnt_need_to_wait_for_the_animation_to_complete
     def on_command_turn_begin(self, params):
         # 全Unitの行動可能になるまでのTurn数を減らす
         for unitinstance in self.unitinstance_dict.values():
@@ -587,12 +603,15 @@ class CardBattleMain(Factory.RelativeLayout):
             color=(0, 0, 0, 1),
             outline_color=(1, 1, 1, ),
             outline_width=3,
+            pos_hint={'center_x': .5, 'center_y': .5, },
+            size_hint=(.6, .1, ),
         )
         self.popup_layer.add_widget(label)
         fadeout_widget(label)
         self.timer.color = (1, 1, 1, 1, )
         self.timer.start()
 
+    @doesnt_need_to_wait_for_the_animation_to_complete
     def on_command_turn_end(self, params):
         gamestate = self.gamestate
         if gamestate.nth_turn != params.nth_turn:
@@ -600,12 +619,14 @@ class CardBattleMain(Factory.RelativeLayout):
         self.gamestate.is_myturn = False
         self.timer.stop()
 
+    @doesnt_need_to_wait_for_the_animation_to_complete
     def on_command_notification(self, params):
         self.notificater.add_notification(
             text=self._localize_str(params.message),
             icon_key=params.type,
             duration=3)
 
+    @doesnt_need_to_wait_for_the_animation_to_complete
     def on_command_draw(self, params):
         r'''drawは「描く」ではなく「(カードを)引く」の意'''
         card_id = params.card_id
@@ -639,6 +660,7 @@ class CardBattleMain(Factory.RelativeLayout):
         cell_from = magnet.parent
         cell_from.remove_widget(magnet)
         cell_to.add_widget(magnet)
+        self._command_recieving_trigger()
 
     def on_command_attack(self, params):
         attacker_id = params.attacker_id
@@ -696,12 +718,13 @@ class CardBattleMain(Factory.RelativeLayout):
         if self._player_id == player_id:
             magnet.parent.remove_widget(magnet)
             self.board.cell_dict[cell_to_id].add_widget(magnet)
+            self._command_recieving_trigger()
         # 操作したのが自分でないならunitinstance_widgetを一旦中央に拡大表示
         else:
             modalview = CustomModalViewNoBackground(
                 attach_to=self,
                 auto_dismiss=False,
-                size_hint=(0.6, 0.6, ),
+                size_hint=(0.4, 0.4, ),
                 pos_hint={'center_x': 0.5, 'center_y': 0.5, })
 
             def on_open(modalview):
@@ -712,9 +735,11 @@ class CardBattleMain(Factory.RelativeLayout):
             def on_dismiss(modalview):
                 modalview.remove_widget(magnet)
                 self.board.cell_dict[cell_to_id].add_widget(magnet)
+                self._command_recieving_trigger()
             modalview.bind(on_open=on_open, on_dismiss=on_dismiss)
             modalview.open()
 
+    @doesnt_need_to_wait_for_the_animation_to_complete
     def on_command_set_card_info(self, params):
         self.card_dict[params.card.id] = params.card
 
@@ -723,6 +748,7 @@ class CardBattleMain(Factory.RelativeLayout):
     #     if cell.is_not_empty():
     #         self.show_detail_of_a_card(cell)
 
+    @doesnt_need_to_wait_for_the_animation_to_complete
     def show_detail_of_a_card(self, cardwidget):
         modalview = CustomModalView(
             attach_to=self,
@@ -754,6 +780,7 @@ class CardBattleMain(Factory.RelativeLayout):
         modalview.add_widget(viewer)
         modalview.open(self)
 
+    @doesnt_need_to_wait_for_the_animation_to_complete
     def show_detail_of_a_instance(self, unitinstance_widget):
         unitinstance = unitinstance_widget.unitinstance
         modalview = CustomModalView(
