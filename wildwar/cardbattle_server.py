@@ -553,7 +553,7 @@ class Server:
         # Unitを置こうとしているCellが自陣であるか確認
         if cell_to_id[0] != current_player.first_row_prefix:
             yield self.create_notification(
-                'そこは自陣ではありません', 'disallowed')
+                'そこには置けません', 'disallowed')
             return
 
         # ----------------------------------------------------------------------
