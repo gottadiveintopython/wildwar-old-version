@@ -12,13 +12,15 @@ from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.graphics.transformation import Matrix
 
-from stencilviewex import StencilViewEx
-try:
-    from .gradientfill import GradientFill
-    from .gradientpolygon import GradientPolygon
-except ImportError:
+if __name__ == '__main__':
     from gradientfill import GradientFill
     from gradientpolygon import GradientPolygon
+    import sys
+    sys.path.append('..')
+else:
+    from .gradientfill import GradientFill
+    from .gradientpolygon import GradientPolygon
+from stencilviewex import StencilViewEx
 
 
 def play_arrow_animation(
@@ -89,22 +91,23 @@ def _test():
     from kivy.lang import Builder
 
     root = Builder.load_string(r'''
-FloatLayout:
-    Widget:
-        id: target
-        size_hint: 0.6, 0.6
-        pos_hint: {'center_x': 0.5, 'center_y': 0.5, }
-        canvas:
-            Rectangle:
-                pos: 98, 198
-                size: 3, 3
+BoxLayout:
+    RelativeLayout:
+        id: left_pane
+    RelativeLayout:
+        id: right_pane
     ''')
 
     def on_touch_down(widget, touch):
         play_arrow_animation(
-            parent=widget,
+            parent=widget.ids.left_pane,
             root_pos=(100, 200, ),
-            head_pos=touch.pos,
+            head_pos=(200, 100, ),
+            anim_duration=2)
+        play_arrow_animation(
+            parent=widget.ids.right_pane,
+            root_pos=(100, 200, ),
+            head_pos=(200, 100, ),
             anim_duration=2)
 
     root.bind(on_touch_down=on_touch_down)
