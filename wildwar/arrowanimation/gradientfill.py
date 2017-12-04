@@ -36,7 +36,7 @@ class GradientFill(Factory.Widget):
     hexcolors = ListProperty()
     r'''Gradationに使う色のlist
 
-    例: 赤緑白のGradation  ['ff0000', '00ff00', 'ffffff', ]
+    例: 赤緑白のGradation  ['ff0000ff', '00ff00ff', 'ffffffff', ]
     '''
 
     texture = ObjectProperty()
@@ -53,7 +53,7 @@ class GradientFill(Factory.Widget):
         self._update_xy_trigger = \
             Clock.create_trigger(self._update_xy, -1)
         kwargs.setdefault('n_repeating', 1)
-        kwargs.setdefault('hexcolors', ('ff0000', '00ff00', '0000ff', ))
+        kwargs.setdefault('hexcolors', ('ff0000ff', '00ff00ff', '0000ffff', ))
         super().__init__(**kwargs)
 
     def on_pos(self, __, value):
@@ -79,10 +79,10 @@ class GradientFill(Factory.Widget):
         vertices[14:16] = (value, 1, )
 
     def on_hexcolors(self, __, hexcolors):
-        texture = Texture.create(size=(len(hexcolors), 1, ), colorfmt='rgb')
+        texture = Texture.create(size=(len(hexcolors), 1, ), colorfmt='rgba')
         texture.wrap = 'repeat'
         buf = b''.join(bytes.fromhex(hexcolor) for hexcolor in hexcolors)
-        texture.blit_buffer(buf, colorfmt='rgb', bufferfmt='ubyte')
+        texture.blit_buffer(buf, colorfmt='rgba', bufferfmt='ubyte')
         self.texture = texture
 
     def start_animation(self, timeout=0):
@@ -111,7 +111,7 @@ BoxLayout:
     GradientFill:
         size_hint_y: 0.9
         id: id_gradientrectangle
-        hexcolors: 'dd0000', '00dd00', '000000'
+        hexcolors: 'dd0000ff', '00dd00ff', '000000ff'
         n_repeating: int(id_spinner.text)
     BoxLayout:
         size_hint_y: 0.1

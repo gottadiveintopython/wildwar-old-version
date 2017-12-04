@@ -25,7 +25,7 @@ from stencilviewex import StencilViewEx
 
 def play_arrow_animation(
         *, parent, root_pos, head_pos, anim_duration=1,
-        hexcolors=('ffffff', '008800', '0000ff', ), on_complete=None):
+        hexcolors=('ffffffff', '008800ff', '0000ffff', ), on_complete=None):
     r'''parent上のroot_posからhead_posにかけて矢印が伸びるAnimationを表示する
 
     :Parameters:
@@ -38,7 +38,7 @@ def play_arrow_animation(
         `anim_duration`: int, defaults to 1.
             Animation全体の長さ。この値の半分の時間をかけて矢印はhead_posへ到達し、
             残りの時間はグラデーションのAnimationのみを行う。
-        `hexcolors`: tuple, defaults to ('ffffff', '008800', '0000ff', ).
+        `hexcolors`: tuple, defaults to ('ffffffff', '008800ff', '0000ffff', ).
             矢印を塗りつぶすグラデーションの色
         `on_complete`: callable, defaults to None.
             Animationが完了した時に呼ばれるcallable
