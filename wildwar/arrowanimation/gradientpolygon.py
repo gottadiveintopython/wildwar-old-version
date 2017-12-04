@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from kivy.config import Config
-Config.set('modules', 'inspector', '')
+# from kivy.config import Config
+# Config.set('modules', 'inspector', '')
 
-from kivy.app import runTouchApp
-from kivy.lang import Builder
+# from kivy.app import runTouchApp
+# from kivy.lang import Builder
 from kivy.factory import Factory
 
 
