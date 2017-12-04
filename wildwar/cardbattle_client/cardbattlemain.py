@@ -34,6 +34,7 @@ from .cardwidget import UnknownCardWidget, UnitCardWidget, SpellCardWidget
 from .unitinstancewidget import UnitInstanceWidget
 from .timer import Timer
 from .turnendbutton import TurnEndButton
+from arrowanimation import play_arrow_animation
 
 
 Builder.load_string(r"""
@@ -670,18 +671,35 @@ class CardBattleMain(Factory.RelativeLayout):
         defender = self.unitinstance_dict[defender_id]
         attacker_widget = self.unitinstance_widget_dict[attacker_id]
         defender_widget = self.unitinstance_widget_dict[defender_id]
-        if self.uioptions.skip_attack_animation:
-            if dead_id == '$both':
-                attacker.attcack = 0
-                attacker.power = 0
-                defender.defense = 0
-                defender.power = 0
-                attacker_magnet = attacker_widget.magnet
-                attacker_magnet.parent.remove_widget(attacker_magnet)
-                attacker_widget.parent.remove_widget(attacker_widget)
-                defender_magnet = defender_widget.magnet
-                defender_magnet.parent.remove_widget(defender_magnet)
-                defender_widget.parent.remove_widget(defender_widget)
+
+        def on_animation_complete():
+            if self.uioptions.skip_attack_animation:
+                if dead_id == '$both':
+                    attacker.attcack = 0
+                    attacker.power = 0
+                    defender.defense = 0
+                    defender.power = 0
+                    attacker_magnet = attacker_widget.magnet
+                    attacker_magnet.parent.remove_widget(attacker_magnet)
+                    attacker_widget.parent.remove_widget(attacker_widget)
+                    defender_magnet = defender_widget.magnet
+                    defender_magnet.parent.remove_widget(defender_magnet)
+                    defender_widget.parent.remove_widget(defender_widget)
+            self._command_recieving_trigger()
+
+        cardwidget_layer = self.cardwidget_layer
+        play_arrow_animation(
+            parent=self,
+            root_pos=cardwidget_layer.to_parent(*attacker_widget.center),
+            head_pos=cardwidget_layer.to_parent(*defender_widget.center),
+            hexcolors=('dd0000ff', '00dd00ff', ),
+            on_complete=on_animation_complete)
+        # from kivy.graphics import Line, Color
+        # with self.canvas:
+        #     Color(1, 1, 1, 1, )
+        #     Line(
+        #         points=(*attacker_widget.center, *defender_widget.center, ),
+        #         width=2)
 
     @staticmethod
     def create_unitinstance(*, player, prototype):
