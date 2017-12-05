@@ -588,6 +588,13 @@ class CardBattleMain(Factory.RelativeLayout):
         return cardwidget
 
     @doesnt_need_to_wait_for_the_animation_to_complete
+    def on_command_reset_stats(self, params):
+        for uniti in self.unitinstance_dict.values():
+            uniti.power = uniti.o_power
+            uniti.attack = uniti.o_attack
+            uniti.defense = uniti.o_defense
+
+    @doesnt_need_to_wait_for_the_animation_to_complete
     def on_command_reduce_n_turns_until_movable_by(self, params):
         def internal(uniti):
             if uniti.n_turns_until_movable > n:

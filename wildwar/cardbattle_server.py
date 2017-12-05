@@ -438,6 +438,7 @@ class Server:
             gamestate.current_player = current_player
             gamestate.current_player_id = current_player.id
             # Turn開始の前処理
+            yield from self.reset_stats()
             yield from self.reduce_n_turns_until_movable_by(
                 n=1, target_id='$all')
 
@@ -498,6 +499,18 @@ class Server:
                     send_to='$all',
                     params=SO(nth_turn=nth_turn)
                 )
+
+    def reset_stats(self):
+        for uniti in self.unitinstance_factory.dict.values():
+            uniti.so_overwrite(
+                power=uniti.o_power,
+                attack=uniti.o_attack,
+                defense=uniti.o_defense)
+        yield SO(
+            klass='Command',
+            type='reset_stats',
+            send_to='$all',
+            params=None)
 
     def reduce_n_turns_until_movable_by(self, *, n, target_id):
         def internal(uniti):
