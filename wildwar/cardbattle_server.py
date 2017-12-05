@@ -10,7 +10,7 @@ import itertools
 import yaml
 
 import setup_logging
-from smartobject import SmartObject
+from smartobject import SmartObject as SO
 logger = setup_logging.get_logger(__name__)
 
 
@@ -18,7 +18,7 @@ class TurnEnd(Exception):
     pass
 
 
-class Player(SmartObject):
+class Player(SO):
 
     def __init__(self, **kwargs):
         for key, value in {
@@ -54,7 +54,7 @@ class Player(SmartObject):
             return card
 
 
-class Cell(SmartObject):
+class Cell(SO):
 
     def __init__(self, **kwargs):
         for key, value in {
@@ -87,7 +87,7 @@ class Cell(SmartObject):
             return previous_unitinstance
 
 
-class Board(SmartObject):
+class Board(SO):
 
     def __init__(self, *, size):
         cols, rows = size
@@ -122,7 +122,7 @@ def load_unit_prototype_from_file(filepath):
         prototype.setdefault('skill_id_list', [])
         prototype.setdefault('tag_list', [])
     return {
-        key: SmartObject(klass='UnitPrototype', id=key, **value)
+        key: SO(klass='UnitPrototype', id=key, **value)
         for key, value in dictionary.items()
     }
 
@@ -131,12 +131,12 @@ def load_spell_prototype_from_file(filepath):
     with open(filepath, 'rt', encoding='utf-8') as reader:
         dictionary = yaml.load(reader)
     return {
-        key: SmartObject(klass='SpellPrototype', id=key, **value)
+        key: SO(klass='SpellPrototype', id=key, **value)
         for key, value in dictionary.items()
     }
 
 
-class GameState(SmartObject):
+class GameState(SO):
 
     def __init__(self, **kwargs):
         for key, value in {
@@ -156,7 +156,7 @@ class CardFactory:
         self.dict = {}
 
     def create(self, *, prototype_id):
-        card = SmartObject(
+        card = SO(
             klass='Card',
             id=r'{:04}'.format(self.n_created),
             prototype_id=prototype_id
@@ -187,7 +187,7 @@ class UnitInstanceFactory:
             o_defense=kwargs['defense'],
         )
         self.n_created += 1
-        obj = SmartObject(**kwargs)
+        obj = SO(**kwargs)
         self.dict[obj.id] = obj
         return obj
 
@@ -217,16 +217,16 @@ class RandomDeckCreater:
 
 
 def func_judge_default(**kwargs):
-    return SmartObject(is_settled=False)
+    return SO(is_settled=False)
 
 
 def untrusted_json_to_smartobject(json_str):
     try:
-        obj = SmartObject.load_from_json(json_str)
+        obj = SO.load_from_json(json_str)
         if (
             obj.klass == 'Command' and
             isinstance(obj.type, str) and
-            (obj.params is None or isinstance(obj.params, SmartObject)) and
+            (obj.params is None or isinstance(obj.params, SO)) and
             isinstance(obj.nth_turn, int)
         ):
             return obj
@@ -262,7 +262,7 @@ class Server:
         func_judge  # 勝敗判定を行うcallable
         func_create_deck  # 山札を作るcallable
         '''
-        self.viewer = viewer or SmartObject(
+        self.viewer = viewer or SO(
             klass='DummyViewer',
             player_id='$dummy',
             send=(lambda __: None))
@@ -378,17 +378,17 @@ class Server:
     def draw_card(self, player):
         card = player.draw_card()
         if card is not None:
-            yield SmartObject(
+            yield SO(
                 klass='Command',
                 type='set_card_info',
                 send_to=player.id,
-                params=SmartObject(card=card)
+                params=SO(card=card)
             )
-            yield SmartObject(
+            yield SO(
                 klass='Command',
                 type='draw',
                 send_to='$all',
-                params=SmartObject(drawer_id=player.id, card_id=card.id)
+                params=SO(drawer_id=player.id, card_id=card.id)
             )
 
     def corerun(self):
@@ -403,11 +403,11 @@ class Server:
         # ----------------------------------------------------------------------
         # Game開始の合図
         # ----------------------------------------------------------------------
-        yield SmartObject(
+        yield SO(
             klass='Command',
             type='game_begin',
             send_to='$all',
-            params=SmartObject(
+            params=SO(
                 unit_prototype_dict=unit_prototype_dict,
                 spell_prototype_dict=spell_prototype_dict,
                 timeout=self.timeout,
@@ -442,11 +442,11 @@ class Server:
                 n=1, target_id='$all')
 
             # Turn開始
-            yield SmartObject(
+            yield SO(
                 klass='Command',
                 type='turn_begin',
                 send_to='$all',
-                params=SmartObject(
+                params=SO(
                     nth_turn=nth_turn,
                     player_id=communicator.player_id)
             )
@@ -492,11 +492,11 @@ class Server:
             except TurnEnd:
                 pass
             finally:
-                yield SmartObject(
+                yield SO(
                     klass='Command',
                     type='turn_end',
                     send_to='$all',
-                    params=SmartObject(nth_turn=nth_turn)
+                    params=SO(nth_turn=nth_turn)
                 )
 
     def reduce_n_turns_until_movable_by(self, *, n, target_id):
@@ -505,21 +505,21 @@ class Server:
                 unitinstance.n_turns_until_movable -= n
             else:
                 unitinstance.n_turns_until_movable = 0
-        yield SmartObject(
+        yield SO(
             klass='Command',
             type='reduce_n_turns_until_movable_by',
             send_to='$all',
-            params=SmartObject(n=n, target_id=target_id))
+            params=SO(n=n, target_id=target_id))
 
     def on_command_turn_end(self, *, params):
         raise TurnEnd()
 
     def create_notification(self, message, type, *, send_to=None):
-        return SmartObject(
+        return SO(
             klass='Command',
             type='notification',
             send_to=(send_to or self.gamestate.current_player_id),
-            params=SmartObject(message=message, type=type)
+            params=SO(message=message, type=type)
         )
 
     def on_command_use_unitcard(self, *, params):
@@ -582,22 +582,22 @@ class Server:
         # ----------------------------------------------------------------------
 
         # 手札の情報を持ち主以外にも送信
-        yield SmartObject(
+        yield SO(
             klass='Command',
             type='set_card_info',
             send_to='$all',
-            params=SmartObject(card=card)
+            params=SO(card=card)
         )
         current_player_id = gamestate.current_player_id
         unitinstance = self.unitinstance_factory.create(
             prototype_id=card.prototype_id,
             player_id=current_player_id)
         # UnitInstance設置Commandを全員に送信
-        yield SmartObject(
+        yield SO(
             klass='Command',
             type='use_unitcard',
             send_to='$all',
-            params=SmartObject(
+            params=SO(
                 unitinstance=unitinstance,
                 card_id=card_id,
                 cell_to_id=cell_to_id)
@@ -694,11 +694,11 @@ class Server:
             return
         #
         unitinstance = cell_from.unitinstance
-        yield SmartObject(
+        yield SO(
             klass='Command',
             type='move',
             send_to='$all',
-            params=SmartObject(
+            params=SO(
                 unitinstance_from_id=unitinstance.id,
                 cell_to_id=cell_to.id))
         unitinstance.n_turns_until_movable += 1
@@ -724,22 +724,22 @@ class Server:
             cell_to.detach()
             del uniti_dict[a_id]
             del uniti_dict[d_id]
-            yield SmartObject(
+            yield SO(
                 klass='Command',
                 type='attack',
                 send_to='$all',
-                params=SmartObject(
+                params=SO(
                     attacker_id=a_id,
                     defender_id=d_id,
                     dead_id='$both'))
         elif a.power < d.power:
             cell_from.detach()
             del uniti_dict[a_id]
-            yield SmartObject(
+            yield SO(
                 klass='Command',
                 type='attack',
                 send_to='$all',
-                params=SmartObject(
+                params=SO(
                     attacker_id=a_id,
                     defender_id=d_id,
                     dead_id=a_id))
@@ -748,11 +748,11 @@ class Server:
             cell_to.attach(cell_from.detach())
             del uniti_dict[d_id]
             a.n_turns_until_movable += 1
-            yield SmartObject(
+            yield SO(
                 klass='Command',
                 type='attack',
                 send_to='$all',
-                params=SmartObject(
+                params=SO(
                     attacker_id=a_id,
                     defender_id=d_id,
                     dead_id=d_id))
