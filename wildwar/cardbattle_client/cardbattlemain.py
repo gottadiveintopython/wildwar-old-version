@@ -589,20 +589,18 @@ class CardBattleMain(Factory.RelativeLayout):
 
     @doesnt_need_to_wait_for_the_animation_to_complete
     def on_command_reduce_n_turns_until_movable_by(self, params):
-        n = params.n
-        target_id = params.target_id
-        if target_id == '$all':
-            for uniti in self.unitinstance_dict.values():
-                if uniti.n_turns_until_movable > n:
-                    uniti.n_turns_until_movable -= n
-                else:
-                    uniti.n_turns_until_movable = 0
-        else:
-            uniti = self.unitinstance_dict[target_id]
+        def internal(uniti):
             if uniti.n_turns_until_movable > n:
                 uniti.n_turns_until_movable -= n
             else:
                 uniti.n_turns_until_movable = 0
+        n = params.n
+        target_id = params.target_id
+        if target_id == '$all':
+            for uniti in self.unitinstance_dict.values():
+                internal(uniti)
+        else:
+            internal(self.unitinstance_dict[target_id])
 
     @doesnt_need_to_wait_for_the_animation_to_complete
     def on_command_turn_begin(self, params):
