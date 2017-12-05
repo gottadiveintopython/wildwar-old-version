@@ -500,11 +500,16 @@ class Server:
                 )
 
     def reduce_n_turns_until_movable_by(self, *, n, target_id):
-        for unitinstance in self.unitinstance_factory.dict.values():
-            if unitinstance.n_turns_until_movable > n:
-                unitinstance.n_turns_until_movable -= n
+        def internal(uniti):
+            if uniti.n_turns_until_movable > n:
+                uniti.n_turns_until_movable -= n
             else:
-                unitinstance.n_turns_until_movable = 0
+                uniti.n_turns_until_movable = 0
+        if target_id == '$all':
+            for uniti in self.unitinstance_factory.dict.values():
+                internal(uniti)
+        else:
+            internal(self.unitinstance_factory.dict[target_id])
         yield SO(
             klass='Command',
             type='reduce_n_turns_until_movable_by',
