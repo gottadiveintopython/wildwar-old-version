@@ -438,9 +438,8 @@ class Server:
             gamestate.current_player = current_player
             gamestate.current_player_id = current_player.id
             # Turn開始の前処理
-            for unitinstance in self.unitinstance_factory.dict.values():
-                if unitinstance.n_turns_until_movable > 0:
-                    unitinstance.n_turns_until_movable -= 1
+            yield from self.reduce_n_turns_until_movable_by(
+                n=1, target_id='$all')
 
             # Turn開始
             yield SmartObject(
@@ -499,6 +498,18 @@ class Server:
                     send_to='$all',
                     params=SmartObject(nth_turn=nth_turn)
                 )
+
+    def reduce_n_turns_until_movable_by(self, *, n, target_id):
+        for unitinstance in self.unitinstance_factory.dict.values():
+            if unitinstance.n_turns_until_movable > n:
+                unitinstance.n_turns_until_movable -= n
+            else:
+                unitinstance.n_turns_until_movable = 0
+        yield SmartObject(
+            klass='Command',
+            type='reduce_n_turns_until_movable_by',
+            send_to='$all',
+            params=SmartObject(n=n, target_id=target_id))
 
     def on_command_turn_end(self, *, params):
         raise TurnEnd()

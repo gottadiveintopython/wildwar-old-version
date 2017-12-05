@@ -588,11 +588,24 @@ class CardBattleMain(Factory.RelativeLayout):
         return cardwidget
 
     @doesnt_need_to_wait_for_the_animation_to_complete
+    def on_command_reduce_n_turns_until_movable_by(self, params):
+        n = params.n
+        target_id = params.target_id
+        if target_id == '$all':
+            for uniti in self.unitinstance_dict.values():
+                if uniti.n_turns_until_movable > n:
+                    uniti.n_turns_until_movable -= n
+                else:
+                    uniti.n_turns_until_movable = 0
+        else:
+            uniti = self.unitinstance_dict[target_id]
+            if uniti.n_turns_until_movable > n:
+                uniti.n_turns_until_movable -= n
+            else:
+                uniti.n_turns_until_movable = 0
+
+    @doesnt_need_to_wait_for_the_animation_to_complete
     def on_command_turn_begin(self, params):
-        # 全Unitの行動可能になるまでのTurn数を減らす
-        for unitinstance in self.unitinstance_dict.values():
-            if unitinstance.n_turns_until_movable > 0:
-                unitinstance.n_turns_until_movable -= 1
         gamestate = self.gamestate
         is_myturn = params.player_id == self._player_id
         gamestate.is_myturn = is_myturn
