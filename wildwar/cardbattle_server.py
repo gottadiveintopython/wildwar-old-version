@@ -697,13 +697,14 @@ class Server:
             "'支援'はまだ実装していません", 'information')
 
     def do_command_attack(self, *, cell_from, cell_to):
-        attacker = cell_from.unitinstance
-        defender = cell_to.unitinstance
-        attacker.power += attacker.attack
-        attacker.attack = 0
-        defender.power += defender.defense
-        defender.defense = 0
-        if attacker.power == defender.power:
+        a = cell_from.unitinstance
+        d = cell_to.unitinstance
+        a.power += a.attack
+        a.attack = 0
+        d.power += d.defense
+        d.defense = 0
+        a.power, d.power = a.power - d.power, d.power - a.power
+        if a.power == d.power:
             cell_from.detach()
             cell_to.detach()
             yield SmartObject(
@@ -711,31 +712,30 @@ class Server:
                 type='attack',
                 send_to='$all',
                 params=SmartObject(
-                    attacker_id=attacker.id,
-                    defender_id=defender.id,
+                    attacker_id=a.id,
+                    defender_id=d.id,
                     dead_id='$both'))
-        elif attacker.power < defender.power:
+        elif a.power < d.power:
             cell_from.detach()
-            defender.power -= attacker.power
             yield SmartObject(
                 klass='Command',
                 type='attack',
                 send_to='$all',
                 params=SmartObject(
-                    attacker_id=attacker.id,
-                    defender_id=defender.id,
-                    dead_id=attacker.id))
+                    attacker_id=a.id,
+                    defender_id=d.id,
+                    dead_id=a.id))
         else:
             cell_to.detach()
-            attacker.power -= defender.power
+            cell_to.attach(cell_from.detach())
             yield SmartObject(
                 klass='Command',
                 type='attack',
                 send_to='$all',
                 params=SmartObject(
-                    attacker_id=attacker.id,
-                    defender_id=defender.id,
-                    dead_id=defender.id))
+                    attacker_id=a.id,
+                    defender_id=d.id,
+                    dead_id=d.id))
 
 
 def _calculate_vector(*, cell_from, cell_to, cols):
