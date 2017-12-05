@@ -665,6 +665,13 @@ class Server:
                 return
 
     def do_command_move(self, *, cell_from, cell_to):
+        # 自軍の本陣へは動けない
+        player = self.player_dict[cell_from.unitinstance.player_id]
+        if player.honjin_prefix == cell_to.id[0]:
+            yield self.create_notification(
+                'その場所へは動けません', 'disallowed')
+            return
+        #
         unitinstance = cell_from.unitinstance
         yield SmartObject(
             klass='Command',
