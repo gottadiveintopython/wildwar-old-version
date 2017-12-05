@@ -18,6 +18,19 @@ class TurnEnd(Exception):
     pass
 
 
+class Command(SO):
+
+    def __init__(self, **kwargs):
+        for key, value in {
+            'klass': 'Command',
+            'type': None,
+            'send_to': '$all',
+            'params': None,
+        }.items():
+            kwargs.setdefault(key, value)
+        super().__init__(**kwargs)
+
+
 class Player(SO):
 
     def __init__(self, **kwargs):
@@ -378,18 +391,13 @@ class Server:
     def draw_card(self, player):
         card = player.draw_card()
         if card is not None:
-            yield SO(
-                klass='Command',
+            yield Command(
                 type='set_card_info',
                 send_to=player.id,
-                params=SO(card=card)
-            )
-            yield SO(
-                klass='Command',
+                params=SO(card=card))
+            yield Command(
                 type='draw',
-                send_to='$all',
-                params=SO(drawer_id=player.id, card_id=card.id)
-            )
+                params=SO(drawer_id=player.id, card_id=card.id))
 
     def corerun(self):
         unit_prototype_dict = self.unit_prototype_dict
@@ -403,10 +411,8 @@ class Server:
         # ----------------------------------------------------------------------
         # Game開始の合図
         # ----------------------------------------------------------------------
-        yield SO(
-            klass='Command',
+        yield Command(
             type='game_begin',
-            send_to='$all',
             params=SO(
                 unit_prototype_dict=unit_prototype_dict,
                 spell_prototype_dict=spell_prototype_dict,
@@ -443,10 +449,8 @@ class Server:
                 n=1, target_id='$all')
 
             # Turn開始
-            yield SO(
-                klass='Command',
+            yield Command(
                 type='turn_begin',
-                send_to='$all',
                 params=SO(
                     nth_turn=nth_turn,
                     player_id=communicator.player_id)
@@ -493,12 +497,7 @@ class Server:
             except TurnEnd:
                 pass
             finally:
-                yield SO(
-                    klass='Command',
-                    type='turn_end',
-                    send_to='$all',
-                    params=SO(nth_turn=nth_turn)
-                )
+                yield Command(type='turn_end', params=SO(nth_turn=nth_turn))
 
     def reset_stats(self):
         for uniti in self.unitinstance_factory.dict.values():
@@ -506,11 +505,7 @@ class Server:
                 power=uniti.o_power,
                 attack=uniti.o_attack,
                 defense=uniti.o_defense)
-        yield SO(
-            klass='Command',
-            type='reset_stats',
-            send_to='$all',
-            params=None)
+        yield Command(type='reset_stats')
 
     def reduce_n_turns_until_movable_by(self, *, n, target_id):
         def internal(uniti):
@@ -523,22 +518,18 @@ class Server:
                 internal(uniti)
         else:
             internal(self.unitinstance_factory.dict[target_id])
-        yield SO(
-            klass='Command',
+        yield Command(
             type='reduce_n_turns_until_movable_by',
-            send_to='$all',
             params=SO(n=n, target_id=target_id))
 
     def on_command_turn_end(self, *, params):
         raise TurnEnd()
 
     def create_notification(self, message, type, *, send_to=None):
-        return SO(
-            klass='Command',
+        return Command(
             type='notification',
             send_to=(send_to or self.gamestate.current_player_id),
-            params=SO(message=message, type=type)
-        )
+            params=SO(message=message, type=type))
 
     def on_command_use_unitcard(self, *, params):
         r'''clientからuse_unitcardコマンドが送られて来た時に呼ばれるMethod
@@ -600,26 +591,19 @@ class Server:
         # ----------------------------------------------------------------------
 
         # 手札の情報を持ち主以外にも送信
-        yield SO(
-            klass='Command',
-            type='set_card_info',
-            send_to='$all',
-            params=SO(card=card)
-        )
+        yield Command(type='set_card_info', params=SO(card=card))
+        #
         current_player_id = gamestate.current_player_id
         unitinstance = self.unitinstance_factory.create(
             prototype_id=card.prototype_id,
             player_id=current_player_id)
         # UnitInstance設置Commandを全員に送信
-        yield SO(
-            klass='Command',
+        yield Command(
             type='use_unitcard',
-            send_to='$all',
             params=SO(
                 unitinstance=unitinstance,
                 card_id=card_id,
-                cell_to_id=cell_to_id)
-        )
+                cell_to_id=cell_to_id))
         # 内部のDatabaseを更新
         cell_to.attach(unitinstance)
         current_player.tefuda.remove(card)
@@ -712,10 +696,8 @@ class Server:
             return
         #
         unitinstance = cell_from.unitinstance
-        yield SO(
-            klass='Command',
+        yield Command(
             type='move',
-            send_to='$all',
             params=SO(
                 unitinstance_from_id=unitinstance.id,
                 cell_to_id=cell_to.id))
@@ -742,38 +724,23 @@ class Server:
             cell_to.detach()
             del uniti_dict[a_id]
             del uniti_dict[d_id]
-            yield SO(
-                klass='Command',
+            yield Command(
                 type='attack',
-                send_to='$all',
-                params=SO(
-                    attacker_id=a_id,
-                    defender_id=d_id,
-                    dead_id='$both'))
+                params=SO(attacker_id=a_id, defender_id=d_id, dead_id='$both'))
         elif a.power < d.power:
             cell_from.detach()
             del uniti_dict[a_id]
-            yield SO(
-                klass='Command',
+            yield Command(
                 type='attack',
-                send_to='$all',
-                params=SO(
-                    attacker_id=a_id,
-                    defender_id=d_id,
-                    dead_id=a_id))
+                params=SO(attacker_id=a_id, defender_id=d_id, dead_id=a_id))
         else:
             cell_to.detach()
             cell_to.attach(cell_from.detach())
             del uniti_dict[d_id]
             a.n_turns_until_movable += 1
-            yield SO(
-                klass='Command',
+            yield Command(
                 type='attack',
-                send_to='$all',
-                params=SO(
-                    attacker_id=a_id,
-                    defender_id=d_id,
-                    dead_id=d_id))
+                params=SO(attacker_id=a_id, defender_id=d_id, dead_id=d_id))
 
 
 def _calculate_vector(*, cell_from, cell_to, cols):
