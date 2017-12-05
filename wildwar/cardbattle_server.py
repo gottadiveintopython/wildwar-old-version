@@ -441,6 +441,7 @@ class Server:
             for unitinstance in self.unitinstance_factory.dict.values():
                 if unitinstance.n_turns_until_movable > 0:
                     unitinstance.n_turns_until_movable -= 1
+
             # Turn開始
             yield SmartObject(
                 klass='Command',
@@ -699,6 +700,9 @@ class Server:
     def do_command_attack(self, *, cell_from, cell_to):
         a = cell_from.unitinstance
         d = cell_to.unitinstance
+        a_id = a.id
+        d_id = d.id
+        uniti_dict = self.unitinstance_factory.dict
         a.power += a.attack
         a.attack = 0
         d.power += d.defense
@@ -707,35 +711,39 @@ class Server:
         if a.power == d.power:
             cell_from.detach()
             cell_to.detach()
+            del uniti_dict[a_id]
+            del uniti_dict[d_id]
             yield SmartObject(
                 klass='Command',
                 type='attack',
                 send_to='$all',
                 params=SmartObject(
-                    attacker_id=a.id,
-                    defender_id=d.id,
+                    attacker_id=a_id,
+                    defender_id=d_id,
                     dead_id='$both'))
         elif a.power < d.power:
             cell_from.detach()
+            del uniti_dict[a_id]
             yield SmartObject(
                 klass='Command',
                 type='attack',
                 send_to='$all',
                 params=SmartObject(
-                    attacker_id=a.id,
-                    defender_id=d.id,
-                    dead_id=a.id))
+                    attacker_id=a_id,
+                    defender_id=d_id,
+                    dead_id=a_id))
         else:
             cell_to.detach()
             cell_to.attach(cell_from.detach())
+            del uniti_dict[d_id]
             yield SmartObject(
                 klass='Command',
                 type='attack',
                 send_to='$all',
                 params=SmartObject(
-                    attacker_id=a.id,
-                    defender_id=d.id,
-                    dead_id=d.id))
+                    attacker_id=a_id,
+                    defender_id=d_id,
+                    dead_id=d_id))
 
 
 def _calculate_vector(*, cell_from, cell_to, cols):
