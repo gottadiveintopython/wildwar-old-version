@@ -736,6 +736,7 @@ class Server:
             cell_to.detach()
             cell_to.attach(cell_from.detach())
             del uniti_dict[d_id]
+            a.n_turns_until_movable += 1
             yield SmartObject(
                 klass='Command',
                 type='attack',

@@ -700,7 +700,7 @@ class CardBattleMain(Factory.RelativeLayout):
                 del uniti_wid_dict[d_id]
                 a_mag.parent.remove_widget(a_mag)
                 d_cell.add_widget(a_mag)
-
+                a.n_turns_until_movable += 1
 
         def on_animation_complete():
             if self.uioptions.skip_attack_animation:
