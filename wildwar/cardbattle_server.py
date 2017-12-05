@@ -293,6 +293,15 @@ class Server:
         unit_prototype_dict = load_unit_prototype_from_file(
             os.path.join(database_dir, 'unit_prototype.yaml')
         )
+        # test用に適当にStatsを振る
+        vlist = list(range(1, 4))
+        for prototype in unit_prototype_dict.values():
+            prototype.so_overwrite(
+                cost=random.choice(vlist),
+                power=random.choice(vlist),
+                defense=random.choice(vlist),
+                attack=random.choice(vlist),)
+        #
         spell_prototype_dict = load_spell_prototype_from_file(
             os.path.join(database_dir, 'spell_prototype.yaml')
         )
