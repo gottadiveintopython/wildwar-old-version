@@ -664,34 +664,54 @@ class CardBattleMain(Factory.RelativeLayout):
         self._command_recieving_trigger()
 
     def on_command_attack(self, params):
-        attacker_id = params.attacker_id
-        defender_id = params.defender_id
+        a_id = params.attacker_id
+        d_id = params.defender_id
         dead_id = params.dead_id
-        attacker = self.unitinstance_dict[attacker_id]
-        defender = self.unitinstance_dict[defender_id]
-        attacker_widget = self.unitinstance_widget_dict[attacker_id]
-        defender_widget = self.unitinstance_widget_dict[defender_id]
+        uniti_wid_dict = self.unitinstance_widget_dict
+        uniti_dict = self.unitinstance_dict
+        a = uniti_dict[a_id]
+        d = uniti_dict[d_id]
+        a_wid = uniti_wid_dict[a_id]
+        d_wid = uniti_wid_dict[d_id]
+        a_mag = a_wid.magnet
+        d_mag = d_wid.magnet
+
+        def internal():
+            a.power += a.attack
+            a.attack = 0
+            d.power += d.defense
+            d.defense = 0
+            a.power, d.power = a.power - d.power, d.power - a.power
+            if dead_id == '$both':
+                a_mag.parent.remove_widget(a_mag)
+                a_mag.remove_widget(a_wid)
+                d_mag.parent.remove_widget(d_mag)
+                d_mag.remove_widget(d_wid)
+                del uniti_wid_dict[a_id]
+                del uniti_wid_dict[d_id]
+            elif dead_id == a_id:
+                a_mag.parent.remove_widget(a_mag)
+                a_mag.remove_widget(a_wid)
+                del uniti_wid_dict[a_id]
+            elif dead_id == d_id:
+                d_cell = d_mag.parent
+                d_cell.remove_widget(d_mag)
+                d_mag.remove_widget(d_wid)
+                del uniti_wid_dict[d_id]
+                a_mag.parent.remove_widget(a_mag)
+                d_cell.add_widget(a_mag)
+
 
         def on_animation_complete():
             if self.uioptions.skip_attack_animation:
-                if dead_id == '$both':
-                    attacker.attcack = 0
-                    attacker.power = 0
-                    defender.defense = 0
-                    defender.power = 0
-                    attacker_magnet = attacker_widget.magnet
-                    attacker_magnet.parent.remove_widget(attacker_magnet)
-                    attacker_widget.parent.remove_widget(attacker_widget)
-                    defender_magnet = defender_widget.magnet
-                    defender_magnet.parent.remove_widget(defender_magnet)
-                    defender_widget.parent.remove_widget(defender_widget)
+                internal()
             self._command_recieving_trigger()
 
         cardwidget_layer = self.cardwidget_layer
         play_arrow_animation(
             parent=self,
-            root_pos=cardwidget_layer.to_parent(*attacker_widget.center),
-            head_pos=cardwidget_layer.to_parent(*defender_widget.center),
+            root_pos=cardwidget_layer.to_parent(*a_wid.center),
+            head_pos=cardwidget_layer.to_parent(*d_wid.center),
             hexcolors=('dd0000ff', '00dd00ff', ),
             on_complete=on_animation_complete)
         # from kivy.graphics import Line, Color
