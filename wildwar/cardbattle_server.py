@@ -18,6 +18,12 @@ class TurnEnd(Exception):
     pass
 
 
+class GameEnd(Exception):
+    def __init__(self, result, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.result = result
+
+
 class Command(SO):
 
     def __init__(self, **kwargs):
@@ -463,75 +469,66 @@ class Server:
         actual_timeout = self.timeout + 5
 
         # Main Loop
-        for communicator in itertools.cycle(self.communicator_list):
-            current_player = self.player_dict[communicator.player_id]
-            gamestate.nth_turn += 1
-            nth_turn = gamestate.nth_turn
-            gamestate.current_player = current_player
-            gamestate.current_player_id = current_player.id
-            # Turn開始の前処理
-            yield from self.reset_stats()
-            yield from self.reduce_n_turns_until_movable_by(
-                n=1, target_id='$all')
+        try:
+            for communicator in itertools.cycle(self.communicator_list):
+                current_player = self.player_dict[communicator.player_id]
+                gamestate.nth_turn += 1
+                nth_turn = gamestate.nth_turn
+                gamestate.current_player = current_player
+                gamestate.current_player_id = current_player.id
+                # Turn開始の前処理
+                yield from self.reset_stats()
+                yield from self.reduce_n_turns_until_movable_by(
+                    n=1, target_id='$all')
 
-            # Turn開始
-            yield Command(
-                type='turn_begin',
-                params=SO(
-                    nth_turn=nth_turn,
-                    player_id=communicator.player_id)
-            )
-            yield from self.draw_card(current_player)
-            time_limit = time.time() + actual_timeout
-            # print('time_limit:', time_limit)
-            try:
-                while True:
-                    current_time = time.time()
-                    # print(time_limit - current_time)
-                    if current_time < time_limit:
-                        command = untrusted_json_to_smartobject(
-                            communicator.recieve(timeout=time_limit - current_time))
-                        if command is None:
-                            continue
-                        if command.nth_turn != nth_turn:
-                            logger.debug(
-                                '[S] nth_turn unmatched. ({} != {})'.format(
-                                    nth_turn, command.nth_turn))
-                            logger.debug(str(command))
-                            continue
-                        # logger.debug(command)
-                        command_handler = getattr(
-                            self, 'on_command_' + command.type, None)
-                        if command_handler is None:
-                            logger.debug(
-                                r"[S] Unknown command '{}'".format(command.type))
-                            continue
+                # Turn開始
+                yield Command(
+                    type='turn_begin',
+                    params=SO(
+                        nth_turn=nth_turn,
+                        player_id=communicator.player_id)
+                )
+                yield from self.draw_card(current_player)
+                time_limit = time.time() + actual_timeout
+                try:
+                    while True:
+                        current_time = time.time()
+                        if current_time < time_limit:
+                            command = untrusted_json_to_smartobject(
+                                communicator.recieve(timeout=time_limit - current_time))
+                            if command is None:
+                                continue
+                            if command.nth_turn != nth_turn:
+                                logger.debug(
+                                    '[S] nth_turn unmatched. ({} != {})'.format(
+                                        nth_turn, command.nth_turn))
+                                logger.debug(str(command))
+                                continue
+                            command_handler = getattr(
+                                self, 'on_command_' + command.type, None)
+                            if command_handler is None:
+                                logger.debug(
+                                    r"[S] Unknown command '{}'".format(command.type))
+                                continue
+                            else:
+                                yield from command_handler(params=command.params)
+                                result = self.func_judge(
+                                    board=self.board,
+                                    player_list=self.player_list)
+                                if result:
+                                    raise GameEnd(result)
                         else:
-                            yield from command_handler(params=command.params)
-                            result = self.func_judge(
-                                board=self.board,
-                                player_list=self.player_list)
-                            if result:
-                                yield Command(
-                                    type='game_end',
-                                    params=SO(winner_id=result.winner_id))
-                                return
-                        # elif command.type == 'turn_end':
-                        #     raise TurnEnd()
-                        # elif command.type == 'resign':
-                        #     self.resigned(communicator.player_id)
-                        #     return
-                        # else:
-                        #     pass
-                    else:
-                        raise TimeoutError()
-
-            except TimeoutError:
-                yield self.create_notification("時間切れです", 'information')
-            except TurnEnd:
-                pass
-            finally:
-                yield Command(type='turn_end', params=SO(nth_turn=nth_turn))
+                            raise TimeoutError()
+                except TimeoutError:
+                    yield self.create_notification("時間切れです", 'information')
+                except TurnEnd:
+                    pass
+                finally:
+                    yield Command(type='turn_end', params=SO(nth_turn=nth_turn))
+        except GameEnd as e:
+            yield Command(
+                type='game_end',
+                params=SO(winner_id=e.result.winner_id))
 
     def reset_stats(self):
         for uniti in self.unitinstance_factory.dict.values():
