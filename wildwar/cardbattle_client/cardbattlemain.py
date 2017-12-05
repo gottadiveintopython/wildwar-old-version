@@ -700,15 +700,19 @@ class CardBattleMain(Factory.RelativeLayout):
                 d_mag.remove_widget(d_wid)
                 del uniti_wid_dict[a_id]
                 del uniti_wid_dict[d_id]
+                del uniti_dict[a_id]
+                del uniti_dict[d_id]
             elif dead_id == a_id:
                 a_mag.parent.remove_widget(a_mag)
                 a_mag.remove_widget(a_wid)
                 del uniti_wid_dict[a_id]
+                del uniti_dict[a_id]
             elif dead_id == d_id:
                 d_cell = d_mag.parent
                 d_cell.remove_widget(d_mag)
                 d_mag.remove_widget(d_wid)
                 del uniti_wid_dict[d_id]
+                del uniti_dict[d_id]
                 a_mag.parent.remove_widget(a_mag)
                 d_cell.add_widget(a_mag)
                 a.n_turns_until_movable += 1
