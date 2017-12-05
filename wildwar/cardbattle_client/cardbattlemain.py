@@ -588,6 +588,28 @@ class CardBattleMain(Factory.RelativeLayout):
         return cardwidget
 
     @doesnt_need_to_wait_for_the_animation_to_complete
+    def on_command_game_end(self, params):
+        localize_str = self._localize_str
+        winner_id = params.winner_id
+        text = localize_str('引き分け') if winner_id == '$draw' else (
+            localize_str('勝利') if winner_id == self._player_id else
+            localize_str('敗北'))
+        label = AutoLabel(
+            text=text,
+            color=(0, 0, 0, 1),
+            outline_color=(1, 1, 1, ),
+            outline_width=3,
+            pos_hint={'center_x': .5, 'center_y': .5, },
+            size_hint=(.6, .1, ),
+        )
+        self.popup_layer.add_widget(label)
+        for cardwidget in self.cardwidget_dict.values():
+            cardwidget.opacity = 0
+        for playerwidget in self.playerwidget_dict.values():
+            playerwidget.opacity = 0
+        fadeout_widget(label, duration=4)
+
+    @doesnt_need_to_wait_for_the_animation_to_complete
     def on_command_reset_stats(self, params):
         for uniti in self.unitinstance_dict.values():
             uniti.power = uniti.o_power

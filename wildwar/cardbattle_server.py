@@ -229,8 +229,34 @@ class RandomDeckCreater:
         return deck
 
 
-def func_judge_default(**kwargs):
-    return SO(is_settled=False)
+def func_judge_default(*, board, player_list, **kwargs):
+    cols = board.size[0]
+    black_info = SO(
+        goal=board.cell_list[:cols],  # 先手のgoalは後手の本陣
+        player_id=player_list[0].id,
+        is_reached=False)  # goalに達したか否か
+    white_info = SO(
+        goal=board.cell_list[-cols:],
+        player_id=player_list[1].id,
+        is_reached=False)
+    infos = (black_info, white_info, )
+    for info in infos:
+        for cell in info.goal:
+            if cell.is_not_empty():
+                if cell.unitinstance.player_id == info.player_id:
+                    info.is_reached = True
+                    break
+    if black_info.is_reached:
+        if white_info.is_reached:
+            r = SO(winner_id='$draw')
+        else:
+            r = SO(winner_id=black_info.player_id)
+    else:
+        if white_info.is_reached:
+            r = SO(winner_id=white_info.player_id)
+        else:
+            r = None
+    return r
 
 
 def untrusted_json_to_smartobject(json_str):
@@ -482,6 +508,14 @@ class Server:
                             continue
                         else:
                             yield from command_handler(params=command.params)
+                            result = self.func_judge(
+                                board=self.board,
+                                player_list=self.player_list)
+                            if result:
+                                yield Command(
+                                    type='game_end',
+                                    params=SO(winner_id=result.winner_id))
+                                return
                         # elif command.type == 'turn_end':
                         #     raise TurnEnd()
                         # elif command.type == 'resign':
