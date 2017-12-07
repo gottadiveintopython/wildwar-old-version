@@ -58,7 +58,7 @@ Builder.load_string(r"""
 <CardBattleBoardsParent@FloatLayout+StencilAll>:
 
 <CardBattleMain>:
-    cardwidget_layer: id_cardwidget_layer
+    card_widget_layer: id_card_widget_layer
     popup_layer: id_popup_layer
     notificator: id_notificator
     timer: id_timer
@@ -99,7 +99,7 @@ Builder.load_string(r"""
             id: id_playerwidget_mine
             size_hint_y: 0.15
     CardLayer:
-        id: id_cardwidget_layer
+        id: id_card_widget_layer
     FloatLayout:
         id: id_popup_layer
         Notificator:
@@ -336,7 +336,7 @@ class CardLayer(DragRecognizerDashLine, Factory.Widget):
 
 class CardBattleMain(Factory.RelativeLayout):
 
-    cardwidget_layer = ObjectProperty()
+    card_widget_layer = ObjectProperty()
     popup_layer = ObjectProperty()
     notificator = ObjectProperty()
     timer = ObjectProperty()
@@ -353,11 +353,11 @@ class CardBattleMain(Factory.RelativeLayout):
         self.timer.bind(int_current_time=self.on_timer_tick)
         self._iso639 = iso639
         self._localize_str = lambda s: s  # この関数は後に実装する
-        self.cardwidget_layer.bind(on_operation_drag=self.on_operation_drag)
+        self.card_widget_layer.bind(on_operation_drag=self.on_operation_drag)
         self._command_recieving_trigger = Clock.create_trigger(
             self._try_to_recieve_command, 0.3)
 
-    def on_operation_drag(self, cardwidget_layer, widget_from, widget_to):
+    def on_operation_drag(self, card_widget_layer, widget_from, widget_to):
         if not self.gamestate.is_myturn:
             self.on_command_notification(params=SmartObject(
                 message=self._localize_str('今はあなたの番ではありません'),
@@ -433,7 +433,7 @@ class CardBattleMain(Factory.RelativeLayout):
     def wrap_in_magnet(self, card):
         magnet = MagnetAcrossLayout(
             duration=0.5,
-            actual_parent=self.cardwidget_layer)
+            actual_parent=self.card_widget_layer)
         magnet.add_widget(card)
         return magnet
 
@@ -523,7 +523,7 @@ class CardBattleMain(Factory.RelativeLayout):
             self.imagefile_dict = yaml.load(reader)
         # Cardの辞書
         self.card_dict = {}
-        self.cardwidget_dict = {}
+        self.card_widget_dict = {}
         # Unitinstanceの辞書
         self.uniti_dict = {}
         self.uniti_widget_dict = {}
@@ -563,30 +563,30 @@ class CardBattleMain(Factory.RelativeLayout):
             pos_hint={'center_y': 0.5, 'center_x': 0.5}
         )
         self.ids.id_boards_parent.add_widget(self.board)
-        self.cardwidget_layer.board = self.board
+        self.card_widget_layer.board = self.board
         self.timer.time_limit = params.timeout
 
-    def create_cardwidget(self, *, card_id, player):
+    def create_card_widget(self, *, card_id, player):
         card = self.card_dict.get(card_id)
         if card is None:
-            cardwidget = UnknownCardWidget()
+            card_widget = UnknownCardWidget()
         else:
             prototype_id = card.prototype_id
             prototype = self.prototype_dict[prototype_id]
             # print(prototype)
             if prototype.klass == 'UnitPrototype':
-                cardwidget = UnitCardWidget(
+                card_widget = UnitCardWidget(
                     prototype=prototype,
                     background_color=player.color,
                     imagefile=self.imagefile_dict[prototype_id],
                     id=card_id)
             elif prototype.klass == 'SpellPrototype':
-                cardwidget = SpellCardWidget(
+                card_widget = SpellCardWidget(
                     prototype=prototype,
                     background_color=player.color,
                     imagefile=self.imagefile_dict[prototype_id],
                     id=card_id)
-        return cardwidget
+        return card_widget
 
     @doesnt_need_to_wait_for_the_animation_to_complete
     def on_command_game_end(self, params):
@@ -604,8 +604,8 @@ class CardBattleMain(Factory.RelativeLayout):
             size_hint=(.6, .1, ),
         )
         self.popup_layer.add_widget(label)
-        for cardwidget in self.cardwidget_dict.values():
-            cardwidget.opacity = 0
+        for card_widget in self.card_widget_dict.values():
+            card_widget.opacity = 0
         for playerwidget in self.playerwidget_dict.values():
             playerwidget.opacity = 0
         fadeout_widget(label, duration=4)
@@ -679,16 +679,16 @@ class CardBattleMain(Factory.RelativeLayout):
         card_id = params.card_id
         player_id = params.drawer_id
         player = self.player_dict[player_id]
-        cardwidget = self.create_cardwidget(card_id=card_id, player=player)
-        cardwidget_layer = self.cardwidget_layer
-        cardwidget.pos = (
-            cardwidget_layer.right,
-            cardwidget_layer.top - cardwidget_layer.height / 2, )
+        card_widget = self.create_card_widget(card_id=card_id, player=player)
+        card_widget_layer = self.card_widget_layer
+        card_widget.pos = (
+            card_widget_layer.right,
+            card_widget_layer.top - card_widget_layer.height / 2, )
 
-        self.cardwidget_dict[card_id] = cardwidget
+        self.card_widget_dict[card_id] = card_widget
         playerwidget = self.playerwidget_dict[player_id]
-        magnet = self.wrap_in_magnet(cardwidget)
-        cardwidget.bind(on_release=self.show_detail_of_a_card)
+        magnet = self.wrap_in_magnet(card_widget)
+        card_widget.bind(on_release=self.show_detail_of_a_card)
         playerwidget.ids.id_tefuda.add_widget(magnet)
         player.n_cards_in_deck -= 1
         player.tefuda.append(card_id)
@@ -758,11 +758,11 @@ class CardBattleMain(Factory.RelativeLayout):
                 internal()
             self._command_recieving_trigger()
 
-        cardwidget_layer = self.cardwidget_layer
+        card_widget_layer = self.card_widget_layer
         play_arrow_animation(
             parent=self,
-            root_pos=cardwidget_layer.to_parent(*a_wid.center),
-            head_pos=cardwidget_layer.to_parent(*d_wid.center),
+            root_pos=card_widget_layer.to_parent(*a_wid.center),
+            head_pos=card_widget_layer.to_parent(*d_wid.center),
             hexcolors=('dd0000ff', '00dd00ff', ),
             on_complete=on_animation_complete)
         # from kivy.graphics import Line, Color
@@ -778,27 +778,27 @@ class CardBattleMain(Factory.RelativeLayout):
         uniti = params.uniti
         player_id = uniti.player_id
         player = self.player_dict[player_id]
-        cardwidget = self.cardwidget_dict[card_id]
+        card_widget = self.card_widget_dict[card_id]
         # UnitInstanceとUnitInstanceWidgetを生成
         uniti = UnitInstance(**params.uniti.__dict__)
         uniti_id = uniti.id
-        uniti_wid = UnitInstanceWidget(
+        uniti_widget = UnitInstanceWidget(
             uniti=uniti,
             id=uniti_id,
             imagefile=self.imagefile_dict[uniti.prototype_id],
             background_color=player.color)
         self.uniti_dict[uniti_id] = uniti
-        self.uniti_widget_dict[uniti_id] = uniti_wid
+        self.uniti_widget_dict[uniti_id] = uniti_widget
         # CardWidgetをUnitInstanceWidgetに置き換える
-        uniti_wid.pos = cardwidget.pos
-        uniti_wid.size = cardwidget.size
-        magnet = cardwidget.magnet
-        magnet.remove_widget(cardwidget)
-        magnet.add_widget(uniti_wid)
-        del self.cardwidget_dict[card_id]
+        uniti_widget.pos = card_widget.pos
+        uniti_widget.size = card_widget.size
+        magnet = card_widget.magnet
+        magnet.remove_widget(card_widget)
+        magnet.add_widget(uniti_widget)
+        del self.card_widget_dict[card_id]
         del self.card_dict[card_id]
         # Touchした時に詳細が見れるようにする
-        uniti_wid.bind(on_release=self.show_detail_of_a_instance)
+        uniti_widget.bind(on_release=self.show_detail_of_a_unitinstance)
         #
         self._compute_current_cost()
         # 操作したのが自分なら単純な親の付け替え
@@ -843,29 +843,29 @@ class CardBattleMain(Factory.RelativeLayout):
     #     if cell.is_not_empty():
     #         self.show_detail_of_a_card(cell)
 
-    def show_detail_of_a_card(self, cardwidget):
+    def show_detail_of_a_card(self, card_widget):
         modalview = CustomModalView(
             attach_to=self,
             auto_dismiss=True,
             size_hint=(0.95, 0.6, ),
             pos_hint={'center_x': 0.5, 'center_y': 0.5, })
-        if cardwidget.klass == 'UnitCardWidget':
+        if card_widget.klass == 'UnitCardWidget':
             viewer = UnitPrototypeDetailViewer(
-                prototype=cardwidget.prototype,
+                prototype=card_widget.prototype,
                 widget=UnitCardWidget(
-                    prototype=cardwidget.prototype,
-                    imagefile=cardwidget.imagefile,
-                    background_color=cardwidget.background_color),
+                    prototype=card_widget.prototype,
+                    imagefile=card_widget.imagefile,
+                    background_color=card_widget.background_color),
                 localize_str=self._localize_str,
                 tag_translation_dict=self.tag_translation_dict,
                 skill_dict=self.skill_dict)
-        elif cardwidget.klass == 'SpellCardWidget':
+        elif card_widget.klass == 'SpellCardWidget':
             viewer = SpellPrototypeDetailViewer(
-                prototype=cardwidget.prototype,
+                prototype=card_widget.prototype,
                 widget=SpellCardWidget(
-                    prototype=cardwidget.prototype,
-                    imagefile=cardwidget.imagefile,
-                    background_color=cardwidget.background_color),
+                    prototype=card_widget.prototype,
+                    imagefile=card_widget.imagefile,
+                    background_color=card_widget.background_color),
                 localize_str=self._localize_str,
                 tag_translation_dict=self.tag_translation_dict,
                 skill_dict=self.skill_dict)
@@ -874,7 +874,7 @@ class CardBattleMain(Factory.RelativeLayout):
         modalview.add_widget(viewer)
         modalview.open(self)
 
-    def show_detail_of_a_instance(self, uniti_widget):
+    def show_detail_of_a_unitinstance(self, uniti_widget):
         uniti = uniti_widget.uniti
         modalview = CustomModalView(
             attach_to=self,
