@@ -784,25 +784,25 @@ class CardBattleMain(Factory.RelativeLayout):
         player = self.player_dict[player_id]
         cardwidget = self.cardwidget_dict[card_id]
         # UnitInstanceとUnitInstanceWidgetを生成
-        unitinstance = UnitInstance(**params.unitinstance.__dict__)
-        unitinstance_id = unitinstance.id
-        unitinstance_widget = UnitInstanceWidget(
-            unitinstance=unitinstance,
-            id=unitinstance_id,
-            imagefile=self.imagefile_dict[unitinstance.prototype_id],
+        uniti = UnitInstance(**params.unitinstance.__dict__)
+        uniti_id = uniti.id
+        uniti_wid = UnitInstanceWidget(
+            unitinstance=uniti,
+            id=uniti_id,
+            imagefile=self.imagefile_dict[uniti.prototype_id],
             background_color=player.color)
-        self.unitinstance_dict[unitinstance_id] = unitinstance
-        self.unitinstance_widget_dict[unitinstance_id] = unitinstance_widget
+        self.unitinstance_dict[uniti_id] = uniti
+        self.unitinstance_widget_dict[uniti_id] = uniti_wid
         # CardWidgetをUnitInstanceWidgetに置き換える
-        unitinstance_widget.pos = cardwidget.pos
-        unitinstance_widget.size = cardwidget.size
+        uniti_wid.pos = cardwidget.pos
+        uniti_wid.size = cardwidget.size
         magnet = cardwidget.magnet
         magnet.remove_widget(cardwidget)
-        magnet.add_widget(unitinstance_widget)
+        magnet.add_widget(uniti_wid)
         del self.cardwidget_dict[card_id]
         del self.card_dict[card_id]
         # Touchした時に詳細が見れるようにする
-        unitinstance_widget.bind(on_release=self.show_detail_of_a_instance)
+        uniti_wid.bind(on_release=self.show_detail_of_a_instance)
         #
         self._compute_current_cost()
         # 操作したのが自分なら単純な親の付け替え
