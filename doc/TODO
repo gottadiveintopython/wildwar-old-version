@@ -2,9 +2,7 @@
 
 localize_str()を実装
 
-ユーザーが手札のCardをDragした時、どのように手札のCardであるか判別するか。又、どのよ
-うに画像効果を与えるか。
+音,音ズレ
 
-Bug
-DemoPlayer2側のCardを長押しした時にon_press()が呼ばれない。(何故かWindow座標がCard
-のon_touch_downに渡っている)
+costの計算
+

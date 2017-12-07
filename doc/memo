@@ -45,15 +45,16 @@ server -> client
         set_card_info
         use_unitcard
         reduce_n_turns_until_movable
+        reset_stats
         # use_spellcard
-        # attack
+        attack
         # support
-        # move
+        move
         # resign
         turn_begin
         turn_end
         game_begin
-        # game_end
+        game_end
         notification
 
 
@@ -64,7 +65,7 @@ GameのRule
     勝敗Check関数
 
 -----------------------------------------------------------------------
-Playerのidに"$"は使わせない。特殊名として使うから。(例:"$all")
+Playerのidに"$"は使わせない。特殊名として使うから。(例:"$all, $both, $draw")
 
 ----------------------------------------------------------
 rule_options
