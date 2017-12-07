@@ -480,13 +480,14 @@ class Server:
                 yield from self.reset_stats()
                 yield from self.reduce_n_turns_until_movable_by(
                     n=1, target_id='$all')
-
+                yield from self.set_max_cost(
+                    value=current_player.max_cost + 1, player=current_player)
                 # Turn開始
                 yield Command(
                     type='turn_begin',
                     params=SO(
                         nth_turn=nth_turn,
-                        player_id=communicator.player_id)
+                        player_id=current_player.id)
                 )
                 yield from self.draw_card(current_player)
                 time_limit = time.time() + actual_timeout
@@ -552,6 +553,12 @@ class Server:
         yield Command(
             type='reduce_n_turns_until_movable_by',
             params=SO(n=n, target_id=target_id))
+
+    def set_max_cost(self, *, value, player):
+        player.max_cost = value
+        yield Command(
+            type='set_max_cost',
+            params=SO(value=value, player_id=player.id))
 
     def on_command_turn_end(self, *, params):
         raise TurnEnd()

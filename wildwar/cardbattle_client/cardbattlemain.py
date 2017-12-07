@@ -450,7 +450,8 @@ class CardBattleMain(Factory.RelativeLayout):
         if command_handler:
             command_handler(command.params)
         else:
-            logger.critical('[C] Unknown command:' + command.type)
+            logger.critical('[C] Unknown command: ' + command.type)
+            self._command_recieving_trigger()
 
     @staticmethod
     def _merge_database(smartobject_dict, dict_dict):
@@ -615,6 +616,11 @@ class CardBattleMain(Factory.RelativeLayout):
             uniti.power = uniti.o_power
             uniti.attack = uniti.o_attack
             uniti.defense = uniti.o_defense
+
+    @doesnt_need_to_wait_for_the_animation_to_complete
+    def on_command_set_max_cost(self, params):
+        player = self.player_dict[params.player_id]
+        player.max_cost = params.value
 
     @doesnt_need_to_wait_for_the_animation_to_complete
     def on_command_reduce_n_turns_until_movable_by(self, params):
