@@ -9,6 +9,7 @@ kivy.require(r'1.10.0')
 from kivy.config import Config
 Config.set('graphics', 'width', 600 + 600 + 30)
 Config.set('graphics', 'height', 900)
+# Config.set('graphics', 'maxfps', 10)
 # Config.set('modules', 'inspector', '')
 Config.set('modules', 'touchring', 'image=cursor.png')
 from kivy.resources import resource_add_path
@@ -36,7 +37,8 @@ def run_server_thread(**kwargs):
         board_size=(5, 7,),
         timeout=10,
         how_to_decide_player_order="random",
-        func_create_deck=cardbattle_server.RandomDeckCreater(n_cards=10),
+        func_create_deck=cardbattle_server.RandomDeckCreater(
+            n_cards=10, unit_ratio=0.95),
         **kwargs)
     thread = threading.Thread(
         target=server.run,
