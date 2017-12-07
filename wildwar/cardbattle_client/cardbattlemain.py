@@ -751,6 +751,7 @@ class CardBattleMain(Factory.RelativeLayout):
                 a_mag.parent.remove_widget(a_mag)
                 d_cell.add_widget(a_mag)
                 a.n_turns_until_movable += 1
+            self._compute_current_cost()
 
         def on_animation_complete():
             if self.uioptions.skip_attack_animation:
@@ -802,6 +803,8 @@ class CardBattleMain(Factory.RelativeLayout):
         del self.card_dict[card_id]
         # Touchした時に詳細が見れるようにする
         unitinstance_widget.bind(on_release=self.show_detail_of_a_instance)
+        #
+        self._compute_current_cost()
         # 操作したのが自分なら単純な親の付け替え
         if self._player_id == player_id:
             magnet.parent.remove_widget(magnet)
@@ -830,6 +833,14 @@ class CardBattleMain(Factory.RelativeLayout):
     @doesnt_need_to_wait_for_the_animation_to_complete
     def on_command_set_card_info(self, params):
         self.card_dict[params.card.id] = params.card
+
+    def _compute_current_cost(self):
+        player_dict = self.player_dict
+        cost_dict = {player_id: 0 for player_id in player_dict.keys()}
+        for uniti in self.unitinstance_dict.values():
+            cost_dict[uniti.player_id] += uniti.cost
+        for player_id, cost in cost_dict.items():
+            player_dict[player_id].cost = cost
 
     # def on_operation_click(self, cell):
     #     logger.debug(r'on_operation_click :' + cell.id)

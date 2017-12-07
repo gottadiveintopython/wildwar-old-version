@@ -46,6 +46,7 @@ class Player(SO):
             'index': None,
             'color': (0, 0, 0, 0,),
             'max_cost': 0,
+            'cost': 0,
             'is_black': False,
             'tefuda': [],
             'deck': [],
@@ -480,8 +481,8 @@ class Server:
                 yield from self.reset_stats()
                 yield from self.reduce_n_turns_until_movable_by(
                     n=1, target_id='$all')
-                yield from self.set_max_cost(
-                    value=current_player.max_cost + 1, player=current_player)
+                yield from self.increase_max_cost_by(
+                    n=1, player=current_player)
                 # Turn開始
                 yield Command(
                     type='turn_begin',
@@ -560,6 +561,19 @@ class Server:
             type='set_max_cost',
             params=SO(value=value, player_id=player.id))
 
+    def increase_max_cost_by(self, *, n, player):
+        yield from self.set_max_cost(
+            value=player.max_cost + n,
+            player=player)
+
+    def _compute_current_cost(self):
+        player_dict = self.player_dict
+        cost_dict = {player_id: 0 for player_id in player_dict.keys()}
+        for uniti in self.unitinstance_factory.dict.values():
+            cost_dict[uniti.player_id] += uniti.cost
+        for player_id, cost in cost_dict.items():
+            player_dict[player_id].cost = cost
+
     def on_command_turn_end(self, *, params):
         raise TurnEnd()
 
@@ -600,10 +614,17 @@ class Server:
             yield self.create_notification(
                 'それはあなたのCardではありません', 'disallowed')
             return
+        #
+        prototype = self.unit_prototype_dict.get(card.prototype_id)
         # UnitCardであるか確認
-        if card.prototype_id not in self.unit_prototype_dict:
+        if prototype is None:
             yield self.create_notification(
                 'それはUnitCardではありません', 'disallowed')
+            return
+        # cost上限を越えないか確認
+        if (prototype.cost + current_player.cost) > current_player.max_cost:
+            yield self.create_notification(
+                'costが足りません', 'disallowed')
             return
         #
         cell_to = self.board.cell_dict.get(cell_to_id)
@@ -645,6 +666,7 @@ class Server:
         # 内部のDatabaseを更新
         cell_to.attach(unitinstance)
         current_player.tefuda.remove(card)
+        self._compute_current_cost()
 
     def on_command_use_spellcard(self, *, params):
         print('[S] on_command_use_spellcard', params)
@@ -779,6 +801,7 @@ class Server:
             yield Command(
                 type='attack',
                 params=SO(attacker_id=a_id, defender_id=d_id, dead_id=d_id))
+        self._compute_current_cost()
 
 
 def _calculate_vector(*, cell_from, cell_to, cols):
