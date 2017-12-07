@@ -125,15 +125,27 @@ def _test():
     notificator = Notificator(
         size_hint=(0.5, 0.5, ),
         pos_hint={'center_x': 0.5, 'center_y': 0.5, },)
-    sample_text = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    icon_key_list = [*notificator.icon_texture_dict.keys(), 'unknown_key']
+
+    args_tuple = (
+        ('information', 'Kivy is awesome!', ),
+        ('warning', 'Keep away!', ),
+        ('disallowed', 'You can not get in.', ),
+        ('lock', 'The chest is locked.', ),
+        ('unlock', 'Unlocked the chest.', ),
+        ('good', 'Gooood!', ),
+        ('wifi', 'Connection is stable.', ),
+        ('talk', "What's up.", ),
+        ('close', 'This is close icon.', ),
+        ('unknown key', 'unknown key', ),
+        (None, 'None', ), )
 
     def on_touch_down_handler(widget, __):
+        args = random.choice(args_tuple)
         widget.add_notification(
-            text=(sample_text * random.randint(1, 4)),
-            icon_key=random.choice(icon_key_list),
-            duration=7,
-            font_size=16)
+            text=args[1],
+            icon_key=args[0],
+            duration=4,
+            font_size=20)
 
     notificator.bind(on_touch_down=on_touch_down_handler)
     root = Factory.FloatLayout()
