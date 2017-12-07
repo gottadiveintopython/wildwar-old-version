@@ -48,19 +48,19 @@ Builder.load_string(r'''
 class UnitInstanceDetailViewer(Factory.RelativeLayout):
 
     def __init__(
-            self, *, unitinstance, prototype, widget=None, localize_str,
+            self, *, uniti, prototype, widget=None, localize_str,
             tag_translation_dict, skill_dict, **kwargs):
-        self.unitinstance = unitinstance
+        self.uniti = uniti
         self.prototype = prototype
         super().__init__(**kwargs)
         lcstr = localize_str
-        translated_tags = [tag_translation_dict[tag] for tag in unitinstance.tag_list]
+        translated_tags = [tag_translation_dict[tag] for tag in uniti.tag_list]
         if len(translated_tags) == 0:
             translated_tags.append(lcstr('無し'))
-        skill_names = [skill_dict[skill_id].name for skill_id in unitinstance.skill_id_list]
+        skill_names = [skill_dict[skill_id].name for skill_id in uniti.skill_id_list]
         if len(skill_names) == 0:
             skill_names.append(lcstr('無し'))
-        n_turns_until_movable = unitinstance.n_turns_until_movable
+        n_turns_until_movable = uniti.n_turns_until_movable
         self.ids.id_label_detail.text = r'''
 {}
 
@@ -85,11 +85,11 @@ class UnitInstanceDetailViewer(Factory.RelativeLayout):
             '\n  '.join(skill_names),
             lcstr('元のStats'),
             lcstr('基本値'),
-            unitinstance.o_power,
+            uniti.o_power,
             lcstr('攻撃力'),
-            unitinstance.o_attack,
+            uniti.o_attack,
             lcstr('防御力'),
-            unitinstance.o_defense,
+            uniti.o_defense,
             prototype.description)
         if widget:
             replace_widget(self.ids.id_dummy, widget)

@@ -81,20 +81,20 @@ class Cell(SO):
             'klass': 'Cell',
             'id': None,
             'index': None,
-            'unitinstance': None,
+            'uniti': None,
         }.items():
             kwargs.setdefault(key, value)
         super().__init__(**kwargs)
 
     def is_empty(self):
-        return self.unitinstance is None
+        return self.uniti is None
 
     def is_not_empty(self):
-        return self.unitinstance is not None
+        return self.uniti is not None
 
-    def attach(self, unitinstance):
+    def attach(self, uniti):
         if self.is_empty():
-            self.unitinstance = unitinstance
+            self.uniti = uniti
         else:
             logger.error("The cell '{}' already has a unit.".format(self.id))
 
@@ -102,9 +102,9 @@ class Cell(SO):
         if self.is_empty():
             logger.error("The cell '{}' doesn't have unit.".format(self.id))
         else:
-            previous_unitinstance = self.unitinstance
-            self.unitinstance = None
-            return previous_unitinstance
+            previous_uniti = self.uniti
+            self.uniti = None
+            return previous_uniti
 
 
 class Board(SO):
@@ -129,11 +129,11 @@ class Board(SO):
     def __str__(self):
         return '\n  '.join(
             ('Board:', *[
-                '{}: {}'.format(cell.id, cell.unitinstance_id)
+                '{}: {}'.format(cell.id, cell.uniti_id)
                 for cell in self.cell_list]))
 
 
-def load_unit_prototype_from_file(filepath):
+def load_unitprototype_from_file(filepath):
     with open(filepath, 'rt', encoding='utf-8') as reader:
         dictionary = yaml.load(reader)
     for prototype in dictionary.values():
@@ -147,7 +147,7 @@ def load_unit_prototype_from_file(filepath):
     }
 
 
-def load_spell_prototype_from_file(filepath):
+def load_spellprototype_from_file(filepath):
     with open(filepath, 'rt', encoding='utf-8') as reader:
         dictionary = yaml.load(reader)
     return {
@@ -220,16 +220,16 @@ class RandomDeckCreater:
 
     def __call__(
             self, *, player_id, card_factory,
-            unit_prototype_dict, spell_prototype_dict):
-        unit_prototype_id_list = list(unit_prototype_dict.keys())
-        spell_prototype_id_list = list(spell_prototype_dict.keys())
+            unitp_dict, spellp_dict):
+        unitp_id_list = list(unitp_dict.keys())
+        spellp_id_list = list(spellp_dict.keys())
 
         unit_ratio = self.unit_ratio
         deck = []
         for __ in range(self.n_cards):
             id_list = (
-                unit_prototype_id_list if random.random() <= unit_ratio
-                else spell_prototype_id_list)
+                unitp_id_list if random.random() <= unit_ratio
+                else spellp_id_list)
             deck.append(card_factory.create(
                 prototype_id=random.choice(id_list)))
 
@@ -250,7 +250,7 @@ def func_judge_default(*, board, player_list, **kwargs):
     for info in infos:
         for cell in info.goal:
             if cell.is_not_empty():
-                if cell.unitinstance.player_id == info.player_id:
+                if cell.uniti.player_id == info.player_id:
                     info.is_reached = True
                     break
     if black_info.is_reached:
@@ -299,7 +299,7 @@ class Server:
 
         communicators  # Playerと通信しあう窓口
         viewer  # 観戦者へ情報を送るだけの窓口
-        database_dir  # GameのDatabseであるunit_prototype.yamlがあるDirectory
+        database_dir  # GameのDatabseであるunitp.yamlがあるDirectory
         board_size  # (横のマス目の数, 縦のマス目の数, )
         timeout  # Turn毎の制限時間
         how_to_decide_player_order
@@ -336,34 +336,34 @@ class Server:
         # ----------------------------------------------------------------------
         # Prototype
         # ----------------------------------------------------------------------
-        unit_prototype_dict = load_unit_prototype_from_file(
+        unitp_dict = load_unitprototype_from_file(
             os.path.join(database_dir, 'unit_prototype.yaml')
         )
         # test用に適当にStatsを振る
         vlist = list(range(1, 4))
-        for prototype in unit_prototype_dict.values():
+        for prototype in unitp_dict.values():
             prototype.so_overwrite(
                 cost=random.choice(vlist),
                 power=random.choice(vlist),
                 defense=random.choice(vlist),
                 attack=random.choice(vlist),)
         #
-        spell_prototype_dict = load_spell_prototype_from_file(
+        spellp_dict = load_spellprototype_from_file(
             os.path.join(database_dir, 'spell_prototype.yaml')
         )
-        if set(unit_prototype_dict.keys()) & set(spell_prototype_dict.keys()):
+        if set(unitp_dict.keys()) & set(spellp_dict.keys()):
             logger.critical('[S] unitとspellのidに被りがあります')
             return
-        prototype_dict = {**unit_prototype_dict, **spell_prototype_dict, }
-        self.unit_prototype_dict = unit_prototype_dict
-        self.spell_prototype_dict = spell_prototype_dict
+        prototype_dict = {**unitp_dict, **spellp_dict, }
+        self.unitp_dict = unitp_dict
+        self.spellp_dict = spellp_dict
         self.prototype_dict = prototype_dict
 
         # ----------------------------------------------------------------------
         # Factory
         # ----------------------------------------------------------------------
         self.card_factory = card_factory = CardFactory()
-        self.unitinstance_factory = UnitInstanceFactory(unit_prototype_dict)
+        self.uniti_factory = UnitInstanceFactory(unitp_dict)
 
         # ----------------------------------------------------------------------
         # Player
@@ -386,8 +386,8 @@ class Server:
                 deck=func_create_deck(
                     player_id=communicator.player_id,
                     card_factory=card_factory,
-                    unit_prototype_dict=unit_prototype_dict,
-                    spell_prototype_dict=spell_prototype_dict))
+                    unitp_dict=unitp_dict,
+                    spellp_dict=spellp_dict))
             for communicator, color, index in zip(
                 communicator_list, player_colors, player_indices)
         ]
@@ -433,8 +433,8 @@ class Server:
                 params=SO(drawer_id=player.id, card_id=card.id))
 
     def corerun(self):
-        unit_prototype_dict = self.unit_prototype_dict
-        spell_prototype_dict = self.spell_prototype_dict
+        unitp_dict = self.unitp_dict
+        spellp_dict = self.spellp_dict
         board_size = self.board_size
         player_list = self.player_list
         gamestate = self.gamestate
@@ -447,8 +447,8 @@ class Server:
         yield Command(
             type='game_begin',
             params=SO(
-                unit_prototype_dict=unit_prototype_dict,
-                spell_prototype_dict=spell_prototype_dict,
+                unitp_dict=unitp_dict,
+                spellp_dict=spellp_dict,
                 timeout=self.timeout,
                 board_size=board_size,
                 player_list=[player.to_public() for player in player_list],
@@ -533,7 +533,7 @@ class Server:
                 params=SO(winner_id=e.result.winner_id))
 
     def reset_stats(self):
-        for uniti in self.unitinstance_factory.dict.values():
+        for uniti in self.uniti_factory.dict.values():
             uniti.so_overwrite(
                 power=uniti.o_power,
                 attack=uniti.o_attack,
@@ -547,10 +547,10 @@ class Server:
             else:
                 uniti.n_turns_until_movable = 0
         if target_id == '$all':
-            for uniti in self.unitinstance_factory.dict.values():
+            for uniti in self.uniti_factory.dict.values():
                 internal(uniti)
         else:
-            internal(self.unitinstance_factory.dict[target_id])
+            internal(self.uniti_factory.dict[target_id])
         yield Command(
             type='reduce_n_turns_until_movable_by',
             params=SO(n=n, target_id=target_id))
@@ -569,7 +569,7 @@ class Server:
     def _compute_current_cost(self):
         player_dict = self.player_dict
         cost_dict = {player_id: 0 for player_id in player_dict.keys()}
-        for uniti in self.unitinstance_factory.dict.values():
+        for uniti in self.uniti_factory.dict.values():
             cost_dict[uniti.player_id] += uniti.cost
         for player_id, cost in cost_dict.items():
             player_dict[player_id].cost = cost
@@ -615,7 +615,7 @@ class Server:
                 'それはあなたのCardではありません', 'disallowed')
             return
         #
-        prototype = self.unit_prototype_dict.get(card.prototype_id)
+        prototype = self.unitp_dict.get(card.prototype_id)
         # UnitCardであるか確認
         if prototype is None:
             yield self.create_notification(
@@ -653,18 +653,18 @@ class Server:
         yield Command(type='set_card_info', params=SO(card=card))
         #
         current_player_id = gamestate.current_player_id
-        unitinstance = self.unitinstance_factory.create(
+        uniti = self.uniti_factory.create(
             prototype_id=card.prototype_id,
             player_id=current_player_id)
         # UnitInstance設置Commandを全員に送信
         yield Command(
             type='use_unitcard',
             params=SO(
-                unitinstance=unitinstance,
+                uniti=uniti,
                 card_id=card_id,
                 cell_to_id=cell_to_id))
         # 内部のDatabaseを更新
-        cell_to.attach(unitinstance)
+        cell_to.attach(uniti)
         current_player.tefuda.remove(card)
         self._compute_current_cost()
 
@@ -708,14 +708,14 @@ class Server:
         # Drag元にあるUnitが操作しているPlayerの物であるか確認
         gamestate = self.gamestate
         current_player = gamestate.current_player
-        unitinstance_from = cell_from.unitinstance
-        if unitinstance_from.player_id != current_player.id:
+        uniti_from = cell_from.uniti
+        if uniti_from.player_id != current_player.id:
             yield self.create_notification(
                 'それはあなたのUnitではありません', 'disallowed')
             return
 
         # Drag元のUnitが行動可能であるか確認
-        if unitinstance_from.n_turns_until_movable > 0:
+        if uniti_from.n_turns_until_movable > 0:
             yield self.create_notification(
                 'そのUnitは行動不可能です', 'disallowed')
             return
@@ -737,9 +737,9 @@ class Server:
             return
         # 居る場合は「攻撃」もしくは「支援」
         else:
-            unitinstance_to = cell_to.unitinstance
+            uniti_to = cell_to.uniti
             # Drag先にあるUnitも操作しているPlayerの物なので「支援」
-            if unitinstance_to.player_id == current_player.id:
+            if uniti_to.player_id == current_player.id:
                 yield from self.do_command_support(cell_from=cell_from, cell_to=cell_to)
                 return
             # Drag先にあるUnitが操作しているPlayerの物では無いので「攻撃」
@@ -749,19 +749,19 @@ class Server:
 
     def do_command_move(self, *, cell_from, cell_to):
         # 自軍の本陣へは動けない
-        player = self.player_dict[cell_from.unitinstance.player_id]
+        player = self.player_dict[cell_from.uniti.player_id]
         if player.honjin_prefix == cell_to.id[0]:
             yield self.create_notification(
                 'その場所へは動けません', 'disallowed')
             return
         #
-        unitinstance = cell_from.unitinstance
+        uniti = cell_from.uniti
         yield Command(
             type='move',
             params=SO(
-                unitinstance_from_id=unitinstance.id,
+                uniti_from_id=uniti.id,
                 cell_to_id=cell_to.id))
-        unitinstance.n_turns_until_movable += 1
+        uniti.n_turns_until_movable += 1
         cell_to.attach(cell_from.detach())
 
     def do_command_support(self, *, cell_from, cell_to):
@@ -769,11 +769,11 @@ class Server:
             "'支援'はまだ実装していません", 'information')
 
     def do_command_attack(self, *, cell_from, cell_to):
-        a = cell_from.unitinstance
-        d = cell_to.unitinstance
+        a = cell_from.uniti
+        d = cell_to.uniti
         a_id = a.id
         d_id = d.id
-        uniti_dict = self.unitinstance_factory.dict
+        uniti_dict = self.uniti_factory.dict
         a.power += a.attack
         a.attack = 0
         d.power += d.defense

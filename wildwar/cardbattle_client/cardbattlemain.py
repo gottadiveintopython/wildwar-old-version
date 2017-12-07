@@ -489,19 +489,19 @@ class CardBattleMain(Factory.RelativeLayout):
         with open(
                 resource_find('unit_prototype_{}.yaml'.format(self._iso639)),
                 'rt', encoding='utf-8') as reader:
-            self.unit_prototype_dict = CardBattleMain._merge_database(
-                params.unit_prototype_dict.__dict__,
+            self.unitp_dict = CardBattleMain._merge_database(
+                params.unitp_dict.__dict__,
                 yaml.load(reader))
         # SpellPrototypeの辞書
         with open(
                 resource_find('spell_prototype_{}.yaml'.format(self._iso639)),
                 'rt', encoding='utf-8') as reader:
-            self.spell_prototype_dict = CardBattleMain._merge_database(
-                params.spell_prototype_dict.__dict__,
+            self.spellp_dict = CardBattleMain._merge_database(
+                params.spellp_dict.__dict__,
                 yaml.load(reader))
         # 利便性の為、UnitPrototypeの辞書とSpellPrototypeの辞書を合成した辞書も作る
         self.prototype_dict = {
-            **self.unit_prototype_dict, **self.spell_prototype_dict, }
+            **self.unitp_dict, **self.spellp_dict, }
         # Skillの辞書
         with open(
                 resource_find('skill_{}.yaml'.format(self._iso639)),
@@ -525,8 +525,8 @@ class CardBattleMain(Factory.RelativeLayout):
         self.card_dict = {}
         self.cardwidget_dict = {}
         # Unitinstanceの辞書
-        self.unitinstance_dict = {}
-        self.unitinstance_widget_dict = {}
+        self.uniti_dict = {}
+        self.uniti_widget_dict = {}
 
         # ----------------------------------------------------------------------
         # Playerを初期化
@@ -612,7 +612,7 @@ class CardBattleMain(Factory.RelativeLayout):
 
     @doesnt_need_to_wait_for_the_animation_to_complete
     def on_command_reset_stats(self, params):
-        for uniti in self.unitinstance_dict.values():
+        for uniti in self.uniti_dict.values():
             uniti.power = uniti.o_power
             uniti.attack = uniti.o_attack
             uniti.defense = uniti.o_defense
@@ -632,10 +632,10 @@ class CardBattleMain(Factory.RelativeLayout):
         n = params.n
         target_id = params.target_id
         if target_id == '$all':
-            for uniti in self.unitinstance_dict.values():
+            for uniti in self.uniti_dict.values():
                 internal(uniti)
         else:
-            internal(self.unitinstance_dict[target_id])
+            internal(self.uniti_dict[target_id])
 
     @doesnt_need_to_wait_for_the_animation_to_complete
     def on_command_turn_begin(self, params):
@@ -697,13 +697,13 @@ class CardBattleMain(Factory.RelativeLayout):
         # logger.debug(str(playerstate.size))
 
     def on_command_move(self, params):
-        unitinstance_from_id = params.unitinstance_from_id
-        unitinstance_from = self.unitinstance_dict[unitinstance_from_id]
-        unitinstance_widget_from = \
-            self.unitinstance_widget_dict[unitinstance_from_id]
+        uniti_from_id = params.uniti_from_id
+        uniti_from = self.uniti_dict[uniti_from_id]
+        uniti_widget_from = \
+            self.uniti_widget_dict[uniti_from_id]
         cell_to = self.board.cell_dict[params.cell_to_id]
-        unitinstance_from.n_turns_until_movable += 1
-        magnet = unitinstance_widget_from.magnet
+        uniti_from.n_turns_until_movable += 1
+        magnet = uniti_widget_from.magnet
         cell_from = magnet.parent
         cell_from.remove_widget(magnet)
         cell_to.add_widget(magnet)
@@ -713,8 +713,8 @@ class CardBattleMain(Factory.RelativeLayout):
         a_id = params.attacker_id
         d_id = params.defender_id
         dead_id = params.dead_id
-        uniti_wid_dict = self.unitinstance_widget_dict
-        uniti_dict = self.unitinstance_dict
+        uniti_wid_dict = self.uniti_widget_dict
+        uniti_dict = self.uniti_dict
         a = uniti_dict[a_id]
         d = uniti_dict[d_id]
         a_wid = uniti_wid_dict[a_id]
@@ -772,27 +772,23 @@ class CardBattleMain(Factory.RelativeLayout):
         #         points=(*attacker_widget.center, *defender_widget.center, ),
         #         width=2)
 
-    @staticmethod
-    def create_unitinstance(*, player, prototype):
-        return UnitInstance(**prototype.__dict__, )
-
     def on_command_use_unitcard(self, params):
         card_id = params.card_id
         cell_to_id = params.cell_to_id
-        unitinstance = params.unitinstance
-        player_id = unitinstance.player_id
+        uniti = params.uniti
+        player_id = uniti.player_id
         player = self.player_dict[player_id]
         cardwidget = self.cardwidget_dict[card_id]
         # UnitInstanceとUnitInstanceWidgetを生成
-        uniti = UnitInstance(**params.unitinstance.__dict__)
+        uniti = UnitInstance(**params.uniti.__dict__)
         uniti_id = uniti.id
         uniti_wid = UnitInstanceWidget(
-            unitinstance=uniti,
+            uniti=uniti,
             id=uniti_id,
             imagefile=self.imagefile_dict[uniti.prototype_id],
             background_color=player.color)
-        self.unitinstance_dict[uniti_id] = uniti
-        self.unitinstance_widget_dict[uniti_id] = uniti_wid
+        self.uniti_dict[uniti_id] = uniti
+        self.uniti_widget_dict[uniti_id] = uniti_wid
         # CardWidgetをUnitInstanceWidgetに置き換える
         uniti_wid.pos = cardwidget.pos
         uniti_wid.size = cardwidget.size
@@ -810,7 +806,7 @@ class CardBattleMain(Factory.RelativeLayout):
             magnet.parent.remove_widget(magnet)
             self.board.cell_dict[cell_to_id].add_widget(magnet)
             self._command_recieving_trigger()
-        # 操作したのが自分でないならunitinstance_widgetを一旦中央に拡大表示
+        # 操作したのが自分でないならuniti_widgetを一旦中央に拡大表示
         else:
             modalview = CustomModalViewNoBackground(
                 attach_to=self,
@@ -837,7 +833,7 @@ class CardBattleMain(Factory.RelativeLayout):
     def _compute_current_cost(self):
         player_dict = self.player_dict
         cost_dict = {player_id: 0 for player_id in player_dict.keys()}
-        for uniti in self.unitinstance_dict.values():
+        for uniti in self.uniti_dict.values():
             cost_dict[uniti.player_id] += uniti.cost
         for player_id, cost in cost_dict.items():
             player_dict[player_id].cost = cost
@@ -878,20 +874,20 @@ class CardBattleMain(Factory.RelativeLayout):
         modalview.add_widget(viewer)
         modalview.open(self)
 
-    def show_detail_of_a_instance(self, unitinstance_widget):
-        unitinstance = unitinstance_widget.unitinstance
+    def show_detail_of_a_instance(self, uniti_widget):
+        uniti = uniti_widget.uniti
         modalview = CustomModalView(
             attach_to=self,
             auto_dismiss=True,
             size_hint=(0.95, 0.6, ),
             pos_hint={'center_x': 0.5, 'center_y': 0.5, })
         viewer = UnitInstanceDetailViewer(
-            unitinstance=unitinstance,
-            prototype=self.prototype_dict[unitinstance.prototype_id],
+            uniti=uniti,
+            prototype=self.prototype_dict[uniti.prototype_id],
             widget=UnitInstanceWidget(
-                unitinstance=unitinstance,
-                imagefile=unitinstance_widget.imagefile,
-                background_color=unitinstance_widget.background_color),
+                uniti=uniti,
+                imagefile=uniti_widget.imagefile,
+                background_color=uniti_widget.background_color),
             localize_str=self._localize_str,
             tag_translation_dict=self.tag_translation_dict,
             skill_dict=self.skill_dict)

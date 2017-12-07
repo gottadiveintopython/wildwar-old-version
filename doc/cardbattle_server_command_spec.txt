@@ -45,8 +45,8 @@ Serverが送って来るjsonの構造
    "type": "game_begin",
    "send_to": "$all",
    "params": {
-     "unit_prototype_dict": <値にUnitPrototypeを持つ辞書>,
-     "spell_prototype_dict": <値にSpellPrototypeを持つ辞書>,
+     "unitp_dict": <値にUnitPrototypeを持つ辞書>,
+     "spellp_dict": <値にSpellPrototypeを持つ辞書>,
      "timeout": 8,
      "board_size": [5, 5 ],
      "player_list": <Playerの配列>

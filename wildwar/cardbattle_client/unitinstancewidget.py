@@ -38,28 +38,28 @@ Builder.load_string(r"""
         pos_hint: {'x': 0, 'top': 1, }
         size_hint: 0.2, 0.2
         bold: True
-        text: str(root.unitinstance.cost)
+        text: str(root.uniti.cost)
     Image:
         pos_hint: {'right': 1, 'top': 1, }
         size_hint: None, None
         size: self.texture_size
         source: 'icon_lock.png'
-        opacity: 0 if root.unitinstance.n_turns_until_movable == 0 else 1
+        opacity: 0 if root.uniti.n_turns_until_movable == 0 else 1
     BoxLayout:
         size_hint: 1, 0.2
         AutoLabel:
             bold: True
             text:
-                (str(root.unitinstance.attack)
-                if root.unitinstance.attack != 0 else '')
+                (str(root.uniti.attack)
+                if root.uniti.attack != 0 else '')
         AutoLabel:
             bold: True
-            text: str(root.unitinstance.power)
+            text: str(root.uniti.power)
         AutoLabel:
             bold: True
             text:
-                (str(root.unitinstance.defense)
-                if root.unitinstance.defense != 0 else '')
+                (str(root.uniti.defense)
+                if root.uniti.defense != 0 else '')
 
 """)
 
@@ -68,6 +68,6 @@ class UnitInstanceWidget(Factory.ButtonBehavior, Factory.RelativeLayout):
     magnet = ObjectProperty(None, allownone=True)
     klass = StringProperty('UnitInstanceWidget')
     id = StringProperty()
-    unitinstance = ObjectProperty()
+    uniti = ObjectProperty()
     imagefile = StringProperty()
     background_color = ListProperty((0, 0, 0, 0, ))
