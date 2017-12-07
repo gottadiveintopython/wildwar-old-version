@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 
-from .notificater import Notificater
+from .notificator import Notificator

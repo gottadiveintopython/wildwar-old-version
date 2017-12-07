@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
-__all__ = ('Notificater', )
+__all__ = ('Notificator', )
 
 import sys
 import os.path
 
 import kivy
 kivy.require(r'1.10.0')
-from kivy.core.audio import SoundLoader
 from kivy.atlas import Atlas
 from kivy.factory import Factory
 from kivy.lang import Builder
@@ -21,7 +20,7 @@ from kivy.properties import (
 from kivy.garden.magnet import Magnet
 
 DATA_ROOT = os.path.dirname(sys.modules[__name__].__file__)
-ATLAS_PATH = os.path.join(DATA_ROOT, 'notificater-icons.atlas')
+ATLAS_PATH = os.path.join(DATA_ROOT, 'notificator-icons.atlas')
 
 
 def fadeout_widget(widget, *, duration=4, transition='in_cubic'):
@@ -36,7 +35,7 @@ def fadeout_widget(widget, *, duration=4, transition='in_cubic'):
 
 
 Builder.load_string(r'''
-<NotificaterItem>:
+<NotificatorItem>:
     size_hint_y: None
     height: id_boxlayout.height
     canvas.before:
@@ -68,7 +67,7 @@ Builder.load_string(r'''
             text_size: self.width, None
             size_hint_y: None
             height: self.texture_size[1]
-<Notificater>:
+<Notificator>:
     id: id_layout
     orientation: 'vertical'
     spacing: 10
@@ -76,14 +75,14 @@ Builder.load_string(r'''
 ''')
 
 
-class NotificaterItem(Factory.FloatLayout):
+class NotificatorItem(Factory.FloatLayout):
     font_size = NumericProperty()
     text = StringProperty()
     color = ListProperty()
     icon_texture = ObjectProperty()
 
 
-class Notificater(Factory.BoxLayout, Factory.StencilView):
+class Notificator(Factory.BoxLayout, Factory.StencilView):
     default_font_size = NumericProperty(16)
     color = ListProperty((1, 1, 1, 1, ))
     icon_texture_dict = DictProperty()
@@ -98,7 +97,7 @@ class Notificater(Factory.BoxLayout, Factory.StencilView):
             font_size=None,
             icon_key='',
             duration='4'):
-        item = NotificaterItem(
+        item = NotificatorItem(
             text=text,
             icon_texture=self.icon_texture_dict.get(icon_key),
             font_size=(
@@ -123,11 +122,11 @@ def _test():
     from kivy.app import runTouchApp
     import random
 
-    notificater = Notificater(
+    notificator = Notificator(
         size_hint=(0.5, 0.5, ),
         pos_hint={'center_x': 0.5, 'center_y': 0.5, },)
     sample_text = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    icon_key_list = [*notificater.icon_texture_dict.keys(), 'unknown_key']
+    icon_key_list = [*notificator.icon_texture_dict.keys(), 'unknown_key']
 
     def on_touch_down_handler(widget, __):
         widget.add_notification(
@@ -136,9 +135,9 @@ def _test():
             duration=7,
             font_size=16)
 
-    notificater.bind(on_touch_down=on_touch_down_handler)
+    notificator.bind(on_touch_down=on_touch_down_handler)
     root = Factory.FloatLayout()
-    root.add_widget(notificater)
+    root.add_widget(notificator)
     runTouchApp(root)
 
 

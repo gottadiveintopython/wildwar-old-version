@@ -28,7 +28,7 @@ from custommodalview import CustomModalView, CustomModalViewNoBackground
 from detailviewer import (
     UnitPrototypeDetailViewer, SpellPrototypeDetailViewer,
     UnitInstanceDetailViewer, )
-from notificater import Notificater
+from notificator import Notificator
 from .cardbattleplayer import Player, CardBattlePlayer
 from .cardwidget import UnknownCardWidget, UnitCardWidget, SpellCardWidget
 from .unitinstancewidget import UnitInstanceWidget
@@ -60,7 +60,7 @@ Builder.load_string(r"""
 <CardBattleMain>:
     cardwidget_layer: id_cardwidget_layer
     popup_layer: id_popup_layer
-    notificater: id_notificater
+    notificator: id_notificator
     timer: id_timer
     BoxLayout:
         orientation: 'vertical'
@@ -102,8 +102,8 @@ Builder.load_string(r"""
         id: id_cardwidget_layer
     FloatLayout:
         id: id_popup_layer
-        Notificater:
-            id: id_notificater
+        Notificator:
+            id: id_notificator
             size_hint: 0.7, 0.3
             pos_hint: {'center_x': 0.5, 'center_y': 0.5, }
             default_font_size: 20
@@ -338,7 +338,7 @@ class CardBattleMain(Factory.RelativeLayout):
 
     cardwidget_layer = ObjectProperty()
     popup_layer = ObjectProperty()
-    notificater = ObjectProperty()
+    notificator = ObjectProperty()
     timer = ObjectProperty()
     # gamestate = ObjectProperty()
 
@@ -662,7 +662,7 @@ class CardBattleMain(Factory.RelativeLayout):
 
     @doesnt_need_to_wait_for_the_animation_to_complete
     def on_command_notification(self, params):
-        self.notificater.add_notification(
+        self.notificator.add_notification(
             text=self._localize_str(params.message),
             icon_key=params.type,
             duration=3)
