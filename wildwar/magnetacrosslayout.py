@@ -4,12 +4,14 @@ Based on kivy.garden.magnet
 
 from kivy.animation import Animation
 from kivy.uix.widget import Widget
-from kivy.properties import NumericProperty
+from kivy.properties import NumericProperty, ObjectProperty
 
 
 class MagnetAcrossLayout(Widget):
     r''''''
     duration = NumericProperty(1)
+    child = ObjectProperty(None, allownone=True)
+    r'''(read-only)'''
 
     def __init__(self, *, actual_parent, transition_dict=None, **kwargs):
         super().__init__(**kwargs)
@@ -18,7 +20,6 @@ class MagnetAcrossLayout(Widget):
             if transition_dict is None else transition_dict.copy())
         self._animations = []
         self._actual_parent = actual_parent
-        self._child = None
         self.bind(**{key: self.attract for key in self._transition_dict})
 
     def add_widget(self, widget, **args):
@@ -28,8 +29,8 @@ class MagnetAcrossLayout(Widget):
                 " before 'add_widget'.")
         else:
             pass
-        if self._child is None:
-            self._child = widget
+        if self.child is None:
+            self.child = widget
             self._actual_parent.add_widget(widget)
             if hasattr(widget, 'magnet'):
                 widget.magnet = self
@@ -37,9 +38,9 @@ class MagnetAcrossLayout(Widget):
             raise ValueError('MagnetAcrossLayout can have only one children')
 
     def remove_widget(self, widget):
-        if self._child is widget:
+        if self.child is widget:
             self._actual_parent.remove_widget(widget)
-            self._child = None
+            self.child = None
             if hasattr(widget, 'magnet'):
                 widget.magnet = None
         else:
@@ -50,12 +51,12 @@ class MagnetAcrossLayout(Widget):
         self.property('size').dispatch(self)
 
     def attract(self, *args):
-        if self._child is None:
+        if self.child is None:
             return
 
         if self._animations:
             for animation in self._animations:
-                animation.stop(self._child)
+                animation.stop(self.child)
             self._animations = []
 
         for property_name in self._transition_dict.keys():
@@ -71,7 +72,7 @@ class MagnetAcrossLayout(Widget):
                     duration=self.duration,
                     **{property_name: getattr(self, property_name), })
 
-            animation.start(self._child)
+            animation.start(self.child)
             self._animations.append(animation)
 
 
