@@ -34,7 +34,7 @@ from .cardwidget import UnknownCardWidget, UnitCardWidget, SpellCardWidget
 from .unitinstancewidget import UnitInstanceWidget
 from .timer import Timer
 from .turnendbutton import TurnEndButton
-from arrowanimation import play_arrow_animation
+from arrowanimation import play_stretch_animation, OutlinedPolygon
 
 
 Builder.load_string(r"""
@@ -759,11 +759,13 @@ class CardBattleMain(Factory.RelativeLayout):
             self._command_recieving_trigger()
 
         card_widget_layer = self.card_widget_layer
-        play_arrow_animation(
+        play_stretch_animation(
             parent=self,
+            widget=OutlinedPolygon.create_from_template(
+                'arrow2', line_width=2, line_color=(0, 1, 0, 1, )),
             root_pos=card_widget_layer.to_parent(*a_wid.center),
             head_pos=card_widget_layer.to_parent(*d_wid.center),
-            hexcolors=('dd0000ff', '00dd00ff', ),
+            anim_duration=1,
             on_complete=on_animation_complete)
         # from kivy.graphics import Line, Color
         # with self.canvas:

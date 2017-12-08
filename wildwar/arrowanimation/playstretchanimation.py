@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-__all__ = ('play_arrow_animation', )
+__all__ = ('play_stretch_animation', )
 
 # from kivy.config import Config
 # Config.set('modules', 'inspector', '')
@@ -12,55 +12,41 @@ from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.graphics.transformation import Matrix
 
-if __name__ == '__main__':
-    from gradientfill import GradientFill
-    from gradientpolygon import GradientPolygon
-    import sys
-    sys.path.append('..')
-else:
-    from .gradientfill import GradientFill
-    from .gradientpolygon import GradientPolygon
-from stencilviewex import StencilViewEx
 
-
-def play_arrow_animation(
-        *, parent, root_pos, head_pos, anim_duration=1,
-        hexcolors=('ffffffff', '008800ff', '0000ffff', ), on_complete=None):
-    r'''parent上のroot_posからhead_posにかけて矢印が伸びるAnimationを表示する
+def play_stretch_animation(
+        *, parent, widget, root_pos, head_pos,
+        anim_duration=1, on_complete=None):
+    r'''parent上のroot_posからhead_posにかけてwidgetが伸びるAnimationを表示する
 
     :Parameters:
         `parent`:
-            矢印の親となるWidget
+            widgetの親となるWidget
+        `widget`:
+            伸ばすAnimation対象のWidget
         `root_pos`: tuple
-            矢印の根本の位置
+            widgetの根本の位置
         `head_pos`: tuple
-            矢印の先端が向かう位置
+            widgetの先端が向かう位置
         `anim_duration`: int, defaults to 1.
             Animation全体の長さ。この値の半分の時間をかけて矢印はhead_posへ到達し、
-            残りの時間はグラデーションのAnimationのみを行う。
-        `hexcolors`: tuple, defaults to ('ffffffff', '008800ff', '0000ffff', ).
-            矢印を塗りつぶすグラデーションの色
+            残りの時間も過ぎた時にwidgetが消える。
         `on_complete`: callable, defaults to None.
             Animationが完了した時に呼ばれるcallable
 
     '''
+
     vector = Vector(head_pos) - root_pos
 
     # x軸とvectorの成す角度を弧度法で求めている
     angle = -math.atan2(-vector.y, vector.x)
 
-    arrow = GradientPolygon(
-        gradientfill=GradientFill(
-            n_repeating=3,
-            hexcolors=hexcolors),
-        stencilviewex=StencilViewEx.create_from_template('arrow2'))
     scatter = Factory.Scatter(
         do_scale=False,
         do_rotation=False,
         do_translation=False,
         size_hint=(None, None, ))
-    scatter.bind(size=arrow.setter('size'))
-    scatter.add_widget(arrow)
+    scatter.bind(size=widget.setter('size'))
+    scatter.add_widget(widget)
 
     scatter.size = (10, 50, )
     scatter.pos = (0, -25, )
@@ -73,7 +59,6 @@ def play_arrow_animation(
         duration=anim_duration / 2)
 
     def on_animation_complete(__):
-        arrow.stop_animation()
         parent.remove_widget(scatter)
         if on_complete:
             on_complete()
@@ -83,7 +68,6 @@ def play_arrow_animation(
 
     animation.bind(on_complete=on_arrow_reached)
     animation.start(scatter)
-    arrow.start_animation()
 
 
 def _test():
@@ -91,23 +75,23 @@ def _test():
     from kivy.lang import Builder
 
     root = Builder.load_string(r'''
-BoxLayout:
-    RelativeLayout:
-        id: left_pane
-    RelativeLayout:
-        id: right_pane
+FloatLayout:
+    Widget:
+        id: target
+        size_hint: 0.6, 0.6
+        pos_hint: {'center_x': 0.5, 'center_y': 0.5, }
+        canvas:
+            Rectangle:
+                pos: 98, 198
+                size: 3, 3
     ''')
 
     def on_touch_down(widget, touch):
-        play_arrow_animation(
-            parent=widget.ids.left_pane,
+        play_stretch_animation(
+            parent=widget,
+            widget=Factory.Button(),
             root_pos=(100, 200, ),
-            head_pos=(200, 100, ),
-            anim_duration=2)
-        play_arrow_animation(
-            parent=widget.ids.right_pane,
-            root_pos=(100, 200, ),
-            head_pos=(200, 100, ),
+            head_pos=touch.pos,
             anim_duration=2)
 
     root.bind(on_touch_down=on_touch_down)

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-__all__ = ('StencilViewEx', )
+__all__ = ('FilledPolygon', )
 
 r'''StencilViewとは違って任意の多角形で切り抜ける
 
 
 例:子Widgetの描画を二等辺三角形で切り抜く
 
-StencilViewEx:
+FilledPolygon:
     mesh_points: (0, 0, ), (0.5, 1, ), (1, 0, )
     mesh_indices: range(3)
     mesh_mode: 'triangles'
@@ -25,17 +25,14 @@ from kivy.properties import StringProperty, ListProperty
 
 
 Builder.load_string(r'''
-<StencilViewEx>:
+<FilledPolygon>:
     canvas:
-        StencilPush:
+        Color:
+            rgba: self.color
         Mesh:
             vertices: self.mesh_vertices
             indices: self.mesh_indices
             mode: self.mesh_mode
-        StencilUse:
-    canvas.after:
-        StencilUnUse:
-        StencilPop:
 ''')
 
 
@@ -44,14 +41,14 @@ TEMPLATE_DICT = {
         'mesh_points': (
             (0.0, 0.3, ),
             (0.0, 0.7, ),
-            (0.7, 0.3, ),
             (0.7, 0.7, ),
-            (0.7, 0.0, ),
             (0.7, 1.0, ),
             (1.0, 0.5, ),
+            (0.7, 0.0, ),
+            (0.7, 0.3, ),
         ),
         'mesh_indices': (
-            0, 1, 2, 1, 2, 3, 4, 5, 6,
+            0, 1, 2, 3, 4, 5, 0, 2, 6,
         ),
         'mesh_mode': 'triangles',
     },
@@ -59,23 +56,26 @@ TEMPLATE_DICT = {
         'mesh_points': (
             (0.0, 0.5, ),
             (0.7, 0.3, ),
-            (0.7, 0.7, ),
             (0.7, 0.0, ),
-            (0.7, 1.0, ),
             (1.0, 0.5, ),
+            (0.7, 1.0, ),
+            (0.7, 0.7, ),
         ),
         'mesh_indices': (
-            0, 1, 2, 3, 4, 5,
+            0, 1, 5, 2, 3, 4,
         ),
         'mesh_mode': 'triangles',
     },
 }
 
 
-class StencilViewEx(Factory.Widget):
+class FilledPolygon(Factory.Widget):
+
+    color = ListProperty((1, 1, 1, 1, ))
+    r'''塗り潰す色'''
 
     mesh_points = ListProperty()
-    r'''Maskを形作る頂点Data
+    r'''Meshを形作る頂点Data
 
     ((x1, y1, ), (x2, x2, ), ...) の形式で値を入れる。座標の原点はこのWidgetの左下
     で、xはこのWidgetの幅を1とした時の割合、yはこのWidgetの高さを1とした時の割合で
@@ -95,8 +95,8 @@ class StencilViewEx(Factory.Widget):
     はいけない。'''
 
     @staticmethod
-    def create_from_template(name):
-        return StencilViewEx(**TEMPLATE_DICT[name])
+    def create_from_template(name, **kwargs):
+        return FilledPolygon(**TEMPLATE_DICT[name], **kwargs)
 
     def __init__(self, **kwargs):
         self._update_vertices_trigger = \
@@ -105,7 +105,6 @@ class StencilViewEx(Factory.Widget):
 
     def _update_vertices(self, __):
         points = self.mesh_points
-        # print('points', points)
         vertices = self.mesh_vertices
         if (len(vertices) // 4) < len(points):
             vertices = [0, ] * (len(points) * 4)
@@ -116,7 +115,6 @@ class StencilViewEx(Factory.Widget):
             vertices[i * 4] = sx * width + x
             vertices[i * 4 + 1] = sy * height + y
         self.mesh_vertices = vertices
-        # print('vertices', vertices)
 
     def on_mesh_points(self, __, value):
         self._update_vertices_trigger()
@@ -129,31 +127,8 @@ class StencilViewEx(Factory.Widget):
 
 
 def _test():
-    root = StencilViewEx.create_from_template('arrow2')
-    button = Factory.Button(
-        text='All your base are belong to us.',
-        font_size=40)
-    root.bind(size=button.setter('size'))
-    root.bind(pos=button.setter('pos'))
-    root.add_widget(button)
+    root = FilledPolygon.create_from_template('arrow2', color=(0, 1, 0, 1, ))
     runTouchApp(root)
-
-# if __name__ == '__main__':
-#     root = Builder.load_string(r'''
-# FloatLayout:
-#     StencilViewEx:
-#         pos: 30, 30
-#         size: 300, 300
-#         size_hint: None, None
-#         mesh_points: (0, 0, ), (0.5, 1, ), (1, 0, ), (0.7, 1, ), (1.2, 0, ), (1.7, 1, ), (1.4, 0, ), (1.9, 1, ), (2.5, 0, ),
-#         mesh_indices: range(9)
-#         mesh_mode: 'triangles'
-#         Button:
-#             text: 'All your base are belong to us.'
-#             font_size: 40
-#             size: root.size
-#     ''')
-#     runTouchApp(root)
 
 
 if __name__ == '__main__':
