@@ -6,6 +6,8 @@ __all__ = (
     'replace_widget', 'bring_widget_to_front',
 )
 
+from copy import copy
+
 import kivy
 kivy.require(r'1.10.0')
 from kivy.factory import Factory
@@ -13,21 +15,36 @@ from kivy.factory import Factory
 # from kivy.clock import Clock
 from kivy.animation import Animation
 
-from .adjustfontsizebehavior import AdjustFontsizeBehavior
+try:
+    from .adjustfontsizebehavior import AdjustFontsizeBehavior
+except ImportError:
+    from adjustfontsizebehavior import AdjustFontsizeBehavior
 
 
-def replace_widget(old, new):
-    r'''old.parentは非None、new.parentはNoneでなければならない'''
-    assert old.parent is not None
-    assert new.parent is None
-    new.pos = old.pos
-    new.pos_hint = old.pos_hint
-    new.size = old.size
-    new.size_hint = old.size_hint
-    parent = old.parent
-    index = parent.children.index(old)
-    parent.remove_widget(old)
-    parent.add_widget(new, index=index)
+def replace_widget(w1, w2):
+    r'''二つのWidgetの位置を入れ替える'''
+    widgets = (w1, w2, )
+    infos = reversed([
+        {
+            'parent': w.parent,
+            'index': w.parent.children.index(w) if w.parent else None,
+            'pos': copy(w.pos),
+            'pos_hint': copy(w.pos_hint),
+            'size': copy(w.size),
+            'size_hint': copy(w.size_hint)}
+        for w in widgets])
+    for w in widgets:
+        parent = w.parent
+        if parent:
+            parent.remove_widget(w)
+    for w, info in zip(widgets, infos):
+        w.pos = info['pos']
+        w.pos_hint = info['pos_hint']
+        w.size = info['size']
+        w.size_hint = info['size_hint']
+        parent = info['parent']
+        if parent:
+            parent.add_widget(w, index=info['index'])
 
 
 def bring_widget_to_front(widget):
@@ -100,3 +117,53 @@ class ModalViewNoBackground(Factory.ModalView):
         self.canvas.clear()
         self.canvas.before.clear()
         self.canvas.after.clear()
+
+
+def _test_replace_widget():
+    import random
+    from kivy.lang import Builder
+    from kivy.app import runTouchApp
+    from kivy.garden.magnet import Magnet
+
+    root = Builder.load_string(r'''
+BoxLayout:
+    GridLayout:
+        id: id_grid
+        spacing: 10
+        padding: 10
+        cols: 2
+        rows: 2
+        Magnet:
+            TextInput:
+        Magnet:
+            Button:
+        Magnet:
+            Button:
+        Magnet:
+            TextInput:
+    AnchorLayout:
+        id: id_anchor
+        Magnet:
+            size_hint: None, None
+            Widget:
+    ''')
+
+    # 親を持たないWidget同士の入れ替え
+    replace_widget(Factory.Button(), Factory.Button())
+
+    # 親を持つWidget と 持たないWidget の入れ替え
+    replace_widget(
+        root.ids.id_anchor.children[0].children[0],
+        Factory.Button(text='button'))
+
+    # 親を持つWidget同士の入れ替え
+    def on_touch_down(root, touch):
+        replace_widget(
+            root.ids.id_anchor.children[0],
+            random.choice(root.ids.id_grid.children))
+    root.bind(on_touch_down=on_touch_down)
+    runTouchApp(root)
+
+
+if __name__ == '__main__':
+    _test_replace_widget()
