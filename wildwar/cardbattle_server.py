@@ -640,10 +640,10 @@ class Server:
                 'そこには既にUnitが居ます', 'disallowed')
             return
         # Unitを置こうとしているCellが自陣であるか確認
-        if cell_to_id[0] != current_player.first_row_prefix:
-            yield self.create_notification(
-                'そこには置けません', 'disallowed')
-            return
+        # if cell_to_id[0] != current_player.first_row_prefix:
+        #     yield self.create_notification(
+        #         'そこには置けません', 'disallowed')
+        #     return
 
         # ----------------------------------------------------------------------
         # 有効なCommandである事が確認できたのでUnitを置く為の処理に入る
