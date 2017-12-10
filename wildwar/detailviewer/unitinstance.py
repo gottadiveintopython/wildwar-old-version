@@ -84,10 +84,10 @@ class UnitInstanceDetailViewer(Factory.RelativeLayout):
             lcstr('技能'),
             '\n  '.join(skill_names),
             lcstr('元のStats'),
-            lcstr('基本値'),
-            uniti.o_power,
             lcstr('攻撃力'),
             uniti.o_attack,
+            lcstr('基本値'),
+            uniti.o_power,
             lcstr('防御力'),
             uniti.o_defense,
             prototype.description)
