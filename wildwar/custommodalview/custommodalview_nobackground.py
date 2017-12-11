@@ -16,25 +16,16 @@ from kivy.config import Config
 Config.set('modules', 'inspector', '')
 from kivy.factory import Factory
 from kivy.lang import Builder
-from kivy.properties import (
-    ObjectProperty, BooleanProperty, NumericProperty, )
-from kivy.animation import Animation
+from kivy.properties import ObjectProperty, BooleanProperty
 
 
-Builder.load_string(r'''
-<CustomModalViewNoBackground>:
-    pos: self.parent.pos if self.parent else (0, 0, )
-    size: self.parent.size if self.parent else (0, 0, )
-''')
-
-
-class CustomModalViewNoBackground(Factory.AnchorLayout):
+class CustomModalViewNoBackground(Factory.RelativeLayout):
     attach_to = ObjectProperty(None)
     auto_dismiss = BooleanProperty(True)
     __events__ = ('on_open', 'on_dismiss', )
 
     def __init__(self, **kwargs):
-        kwargs.setdefault('pos_hint', {'x': 0, 'y': 0, })
+        kwargs.setdefault('pos_hint', {'center_x': 0.5, 'center_y': 0.5, })
         super().__init__(**kwargs)
 
     def open(self, *largs):

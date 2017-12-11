@@ -23,18 +23,16 @@ from kivy.animation import Animation
 
 Builder.load_string(r'''
 <CustomModalView>:
-    pos: self.parent.pos if self.parent else (0, 0, )
-    size: self.parent.size if self.parent else (0, 0, )
     canvas.before:
         Color:
             rgba: 0, 0, 0, self.background_opacity
         Rectangle:
-            pos: self.parent.to_local(*self.parent.pos) if self.parent else (0, 0,)
+            pos: -self.x, -self.y
             size: self.parent.size if self.parent else (0, 0,)
 ''')
 
 
-class CustomModalView(Factory.AnchorLayout):
+class CustomModalView(Factory.RelativeLayout):
     attach_to = ObjectProperty(None)
     auto_dismiss = BooleanProperty(True)
     background_opacity = NumericProperty(0)
@@ -42,7 +40,7 @@ class CustomModalView(Factory.AnchorLayout):
     __events__ = ('on_open', 'on_dismiss', )
 
     def __init__(self, **kwargs):
-        kwargs.setdefault('pos_hint', {'x': 0, 'y': 0, })
+        kwargs.setdefault('pos_hint', {'center_x': 0.5, 'center_y': 0.5, })
         super().__init__(**kwargs)
 
     def open(self, *largs):
@@ -51,8 +49,6 @@ class CustomModalView(Factory.AnchorLayout):
             return
         self.background_opacity = 0
         parent = self.attach_to or Window
-        self.pos = parent.pos
-        self.size = parent.size
         parent.add_widget(self)
         animation = Animation(
             background_opacity=0.7,
@@ -107,6 +103,12 @@ def _test():
     Window.clearcolor = (.5, .5, 0, 1, )
 
     root = Builder.load_string(r'''
+<Widget>:
+    canvas.after:
+        Line:
+            rectangle: self.x+1,self.y+1,self.width-1,self.height-1
+            dash_offset: 5
+            dash_length: 3
 BoxLayout:
     button: button
     modalviews_parent: modalviews_parent
@@ -114,16 +116,23 @@ BoxLayout:
         Button:
             id: button
             text: 'open modalview'
-    FloatLayout:
-    # RelativeLayout:
-        id: modalviews_parent
+    # FloatLayout:
+    RelativeLayout:
+        RelativeLayout:
+            size_hint: 0.9, 0.9
+            pos_hint: dict(center_x=0.5, center_y=0.5, )
+            id: modalviews_parent
     ''')
 
     def on_press(button):
         label = Factory.Label(
             font_size=40,
             text='Yeah')
-        modalview = CustomModalView(attach_to=root.modalviews_parent)
+        # modalview = CustomModalView(
+        #     attach_to=root.modalviews_parent)
+        modalview = CustomModalView(
+            attach_to=root.modalviews_parent,
+            size_hint=(0.5, 0.5, ))
         modalview.add_widget(label)
         modalview.open()
     root.button.bind(on_press=on_press)
