@@ -35,6 +35,7 @@ from .unitinstancewidget import UnitInstanceWidget
 from .timer import Timer
 from .turnendbutton import TurnEndButton
 from arrowanimation import play_stretch_animation, OutlinedPolygon
+from .battleanimation import play_battle_animation
 
 
 Builder.load_string(r"""
@@ -122,7 +123,7 @@ class GameState(Factory.EventDispatcher):
 
 
 class UIOptions(Factory.EventDispatcher):
-    skip_attack_animation = BooleanProperty()
+    skip_battle_animation = BooleanProperty()
 
 
 class UnitInstance(Factory.EventDispatcher):
@@ -346,7 +347,7 @@ class CardBattleMain(Factory.RelativeLayout):
         self.gamestate = GameState(
             nth_turn=0, is_myturn=False)
         self.uioptions = UIOptions(
-            skip_attack_animation=True)
+            skip_battle_animation=False)
         super().__init__(**kwargs)
         self._communicator = communicator
         self._player_id = communicator.player_id
@@ -545,12 +546,12 @@ class CardBattleMain(Factory.RelativeLayout):
         }
         for key, playerwidget in self.playerwidget_dict.items():
             replace_widget(
-                old=self.ids[
+                self.ids[
                     'id_playerwidget_mine'
                     if key == self._player_id
                     else 'id_playerwidget_opponent'
                 ],
-                new=playerwidget)
+                playerwidget)
         # ----------------------------------------------------------------------
         #
         # ----------------------------------------------------------------------
@@ -723,11 +724,6 @@ class CardBattleMain(Factory.RelativeLayout):
         d_mag = d_wid.magnet
 
         def internal():
-            a.power += a.attack
-            a.attack = 0
-            d.power += d.defense
-            d.defense = 0
-            a.power, d.power = a.power - d.power, d.power - a.power
             if dead_id == '$both':
                 a_mag.parent.remove_widget(a_mag)
                 a_mag.remove_widget(a_wid)
@@ -752,11 +748,29 @@ class CardBattleMain(Factory.RelativeLayout):
                 d_cell.add_widget(a_mag)
                 a.n_turns_until_movable += 1
             self._compute_current_cost()
+            self._command_recieving_trigger()
 
         def on_animation_complete():
-            if self.uioptions.skip_attack_animation:
+            if self.uioptions.skip_battle_animation:
+                a.power += a.attack
+                a.attack = 0
+                d.power += d.defense
+                d.defense = 0
+                a.power, d.power = a.power - d.power, d.power - a.power
                 internal()
-            self._command_recieving_trigger()
+            else:
+                if a.player_id == self._player_id:
+                    is_attacker_mine = True
+                    left_wid = a_wid
+                    right_wid = d_wid
+                else:
+                    is_attacker_mine = False
+                    left_wid = d_wid
+                    right_wid = a_wid
+                play_battle_animation(
+                    parent=self, is_left_attacking_to_right=is_attacker_mine,
+                    left_uniti_widget=left_wid, right_uniti_widget=right_wid,
+                    on_complete=internal)
 
         card_widget_layer = self.card_widget_layer
         play_stretch_animation(
@@ -765,7 +779,7 @@ class CardBattleMain(Factory.RelativeLayout):
                 'arrow2', line_width=2, line_color=(0, 1, 0, 1, )),
             root_pos=card_widget_layer.to_parent(*a_wid.center),
             head_pos=card_widget_layer.to_parent(*d_wid.center),
-            anim_duration=1,
+            anim_duration=0.6,
             on_complete=on_animation_complete)
         # from kivy.graphics import Line, Color
         # with self.canvas:
@@ -849,8 +863,7 @@ class CardBattleMain(Factory.RelativeLayout):
         modalview = CustomModalView(
             attach_to=self,
             auto_dismiss=True,
-            size_hint=(0.95, 0.6, ),
-            pos_hint={'center_x': 0.5, 'center_y': 0.5, })
+            size_hint=(0.95, 0.6, ),)
         if card_widget.klass == 'UnitCardWidget':
             viewer = UnitPrototypeDetailViewer(
                 prototype=card_widget.prototype,
@@ -881,8 +894,7 @@ class CardBattleMain(Factory.RelativeLayout):
         modalview = CustomModalView(
             attach_to=self,
             auto_dismiss=True,
-            size_hint=(0.95, 0.6, ),
-            pos_hint={'center_x': 0.5, 'center_y': 0.5, })
+            size_hint=(0.95, 0.6, ), )
         viewer = UnitInstanceDetailViewer(
             uniti=uniti,
             prototype=self.prototype_dict[uniti.prototype_id],
