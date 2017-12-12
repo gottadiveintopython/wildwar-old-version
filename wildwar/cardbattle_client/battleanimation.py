@@ -34,7 +34,7 @@ class BattleAnimationPlayer(Factory.RelativeLayout):
 
 
 def play_battle_animation(
-        *, parent, is_left_attacking_to_right,
+        *, parent, is_left_attacking_to_right, play_se,
         left_uniti_widget, right_uniti_widget, on_complete=None):
     player = BattleAnimationPlayer()
     # player.do_layout()
@@ -100,6 +100,7 @@ def play_battle_animation(
             animation.start(left_uniti_widget)
         else:
             animation.start(right_uniti_widget)
+        play_se('se_attack')
 
     def animation_phase1(__):
         a.power += a.attack

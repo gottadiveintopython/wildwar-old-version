@@ -3,11 +3,13 @@
 __all__ = ('CardBattleMain', )
 
 import functools
+import random
 
 import yaml
 import kivy
 kivy.require(r'1.10.0')
 from kivy.clock import Clock
+from kivy.core.audio import SoundLoader
 from kivy.lang import Builder
 from kivy.factory import Factory
 from kivy.resources import resource_find
@@ -36,6 +38,7 @@ from .timer import Timer
 from .turnendbutton import TurnEndButton
 from arrowanimation import play_stretch_animation, OutlinedPolygon
 from .battleanimation import play_battle_animation
+from bgmplayer import BgmPlayer
 
 
 Builder.load_string(r"""
@@ -117,6 +120,22 @@ def copy_dictionary(dictionary, *, keys_exclude):
         for key, value in dictionary.items() if key not in keys_exclude}
 
 
+def _create_function_play_se(soundfile_dict):
+
+    sounds = {
+        key: SoundLoader.load(filename)
+        for key, filename in soundfile_dict.items()
+    }
+
+    def play_se(key):
+        sound = sounds[key]
+        if sound.state == r'play':
+            sound.stop()
+        sound.play()
+
+    return play_se
+
+
 class GameState(Factory.EventDispatcher):
     nth_turn = NumericProperty()
     is_myturn = BooleanProperty()
@@ -124,6 +143,8 @@ class GameState(Factory.EventDispatcher):
 
 class UIOptions(Factory.EventDispatcher):
     skip_battle_animation = BooleanProperty()
+    play_sound_effect = BooleanProperty()
+    play_bgm = BooleanProperty()
 
 
 class UnitInstance(Factory.EventDispatcher):
@@ -347,7 +368,9 @@ class CardBattleMain(Factory.RelativeLayout):
         self.gamestate = GameState(
             nth_turn=0, is_myturn=False)
         self.uioptions = UIOptions(
-            skip_battle_animation=False)
+            skip_battle_animation=False,
+            play_sound_effect=True,
+            play_bgm=True)
         super().__init__(**kwargs)
         self._communicator = communicator
         self._player_id = communicator.player_id
@@ -483,6 +506,25 @@ class CardBattleMain(Factory.RelativeLayout):
         self._on_command_game_begin_called = True
 
         # ----------------------------------------------------------------------
+        # 音を準備
+        # ----------------------------------------------------------------------
+        # 音声Fileの辞書
+        with open(
+                resource_find('soundfile_dict.yaml'),
+                'rt', encoding='utf-8') as reader:
+            soundfile_dict = yaml.load(reader)
+        sefile_dict = {
+            key: filename for key, filename in soundfile_dict.items()
+            if key.startswith('se_')}
+        bgmfile_dict = {
+            key: filename for key, filename in soundfile_dict.items()
+            if key.startswith('bgm_')}
+        self._se_key_list = tuple(sefile_dict.keys())
+        self._bgm_key_list = [item for item in bgmfile_dict.keys() if item != 'bgm_battle']
+        self._play_se = _create_function_play_se(sefile_dict)
+        self._bgmplayer = BgmPlayer(bgmfile_dict, cache=True)
+
+        # ----------------------------------------------------------------------
         # Databaseを初期化
         # ----------------------------------------------------------------------
 
@@ -566,6 +608,19 @@ class CardBattleMain(Factory.RelativeLayout):
         self.ids.id_boards_parent.add_widget(self.board)
         self.card_widget_layer.board = self.board
         self.timer.time_limit = params.timeout
+
+        self._current_bgm_key = random.choice(self._bgm_key_list)
+        self.play_bgm(self._current_bgm_key)
+
+    def play_se(self, key, *args, **kwargs):
+        if self.uioptions.play_sound_effect:
+            Clock.schedule_once(
+                lambda __: self._play_se(key, *args, **kwargs), 0)
+
+    def play_bgm(self, key, *args, **kwargs):
+        if self.uioptions.play_bgm:
+            Clock.schedule_once(
+                lambda __: self._bgmplayer.play(key, *args, **kwargs), 0)
 
     def create_card_widget(self, *, card_id, player):
         card = self.card_dict.get(card_id)
@@ -708,6 +763,7 @@ class CardBattleMain(Factory.RelativeLayout):
         cell_from = magnet.parent
         cell_from.remove_widget(magnet)
         cell_to.add_widget(magnet)
+        self.play_se('se_move')
         self._command_recieving_trigger()
 
     def on_command_attack(self, params):
@@ -749,6 +805,7 @@ class CardBattleMain(Factory.RelativeLayout):
                 a.n_turns_until_movable += 1
             self._compute_current_cost()
             self._command_recieving_trigger()
+            self.play_bgm(self._current_bgm_key)
 
         def on_animation_complete():
             if self.uioptions.skip_battle_animation:
@@ -767,10 +824,11 @@ class CardBattleMain(Factory.RelativeLayout):
                     is_attacker_mine = False
                     left_wid = d_wid
                     right_wid = a_wid
+                self.play_bgm('bgm_battle', save_previous_bgm_offset=True)
                 play_battle_animation(
                     parent=self, is_left_attacking_to_right=is_attacker_mine,
                     left_uniti_widget=left_wid, right_uniti_widget=right_wid,
-                    on_complete=internal)
+                    on_complete=internal, play_se=self.play_se)
 
         card_widget_layer = self.card_widget_layer
         play_stretch_animation(

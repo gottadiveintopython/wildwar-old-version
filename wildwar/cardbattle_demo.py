@@ -73,6 +73,11 @@ class DemoApp(App):
 
         root.add_widget(CardBattleMain(communicator=p1_to_s, iso639='ja'))
         root.add_widget(CardBattleMain(communicator=p2_to_s, iso639='ja'))
+        uioption = root.children[0].uioptions
+        uioption.play_bgm = False
+        uioption.play_se = False
+        # uioption.skip_battle_animation = True
+        root.children[0].uioptions.play_se = False
         self.server_communicators = (s_to_p1, s_to_p2, )
         return root
 
