@@ -46,6 +46,14 @@ Builder.load_string(r"""
 
 #:set OVERLAYCOLOR_DICT { 'normal': [0, 0, 0, 0], 'down': [1, 1, 1, 0.15], }
 
+# 全てのWidgetの境界を可視化するコード
+# <Widget>:
+#     canvas.after:
+#         Line:
+#             rectangle: self.x+1,self.y+1,self.width-1,self.height-1
+#             dash_offset: 5
+#             dash_length: 3
+
 <Cell>:
     canvas:
         Color:
@@ -457,6 +465,7 @@ class CardBattleMain(Factory.RelativeLayout):
     def wrap_in_magnet(self, card):
         magnet = MagnetAcrossLayout(
             duration=0.5,
+            pos_hint={'center_x': .5, 'center_y': .5, },
             actual_parent=self.card_widget_layer)
         magnet.add_widget(card)
         return magnet
@@ -885,8 +894,7 @@ class CardBattleMain(Factory.RelativeLayout):
             modalview = CustomModalViewNoBackground(
                 attach_to=self,
                 auto_dismiss=False,
-                size_hint=(0.4, 0.4, ),
-                pos_hint={'center_x': 0.5, 'center_y': 0.5, })
+                size_hint=(0.4, 0.4, ), )
 
             def on_open(modalview):
                 magnet.parent.remove_widget(magnet)
