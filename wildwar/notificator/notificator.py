@@ -64,6 +64,8 @@ Builder.load_string(r'''
             text: root.text
             font_size: root.font_size
             color: root.color
+            outline_color: 0, 0, 0, 1,
+            outline_width: 1
             text_size: self.width, None
             size_hint_y: None
             height: self.texture_size[1]
