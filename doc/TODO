@@ -2,7 +2,12 @@
 
 localize_str()を実装
 
-音,音ズレ
+音
+    Notification
+    Cardを引く
+    Unit召喚時
+    勝った時
+    負けた時
 
 Menu
     投了
