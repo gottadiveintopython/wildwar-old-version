@@ -411,13 +411,12 @@ class CardBattleMain(Factory.RelativeLayout):
                         cell_to_id=cell_to.id))
                 return
         elif widget_from.klass == 'UnitCardWidget':
-            if widget_to.klass == 'Cell':
-                self.send_command(
-                    type='use_unitcard',
-                    params=SmartObject(
-                        card_id=widget_from.id,
-                        cell_to_id=widget_to.id))
-                return
+            self.send_command(
+                type='use_unitcard',
+                params=SmartObject(
+                    card_id=widget_from.id,
+                    cell_to_id=widget_to.id))
+            return
         elif widget_from.klass == 'SpellCardWidget':
             if widget_to.klass == 'Cell':
                 cell_to = widget_to
