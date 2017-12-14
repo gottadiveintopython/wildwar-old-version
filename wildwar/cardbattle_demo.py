@@ -6,9 +6,12 @@ import threading
 
 import kivy
 kivy.require(r'1.10.0')
+import kivy.utils
 from kivy.config import Config
 Config.set('graphics', 'width', 600 + 600 + 30)
 Config.set('graphics', 'height', 900)
+if kivy.utils.platform in ('linux', 'win', 'macosx', ):
+    Config.set('widgets', 'scrolltimeout', 400)
 # Config.set('graphics', 'maxfps', 10)
 # Config.set('modules', 'inspector', '')
 Config.set('modules', 'touchring', 'image=cursor.png')
@@ -77,7 +80,6 @@ class DemoApp(App):
         uioption.play_bgm = False
         uioption.play_se = False
         # uioption.skip_battle_animation = True
-        root.children[0].uioptions.play_se = False
         self.server_communicators = (s_to_p1, s_to_p2, )
         return root
 
