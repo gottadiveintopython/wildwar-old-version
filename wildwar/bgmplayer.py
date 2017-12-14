@@ -7,7 +7,7 @@ from kivy.core.audio import SoundLoader
 
 class BgmPlayer:
 
-    def __init__(self, soundfile_dict, *, cache=False):
+    def __init__(self, soundfile_dict, *, cache=False, volume=0.7):
         self.info_dict = {
             key: {
                 'filename': filename,
@@ -16,6 +16,7 @@ class BgmPlayer:
             for key, filename in soundfile_dict.items()}
         self.current = None
         self.cache = cache
+        self.volume = volume
 
     def play(self, key, *, save_previous_bgm_offset=False):
         current = self.current
@@ -51,6 +52,7 @@ class BgmPlayer:
         else:
             info['sound'] = sound = SoundLoader.load(info['filename'])
             sound.loop = True
+            sound.volume = self.volume
             sound.play()
             sound.seek(info['offset'])
 
