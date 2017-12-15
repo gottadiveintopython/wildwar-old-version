@@ -13,5 +13,5 @@ def apply():
         fn_regular='RictyDiminished-Regular.ttf',
         fn_bold='RictyDiminished-Bold.ttf')
     Builder.load_string(
-        '<Label>:\n    font_name: r"{}"'.format(REGISTRATION_NAME)
+        '<Label,TextInput>:\n    font_name: r"{}"'.format(REGISTRATION_NAME)
     )
