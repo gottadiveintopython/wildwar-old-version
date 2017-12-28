@@ -6,11 +6,13 @@ import os.path
 import random
 import time
 import itertools
+import json
 
 import yaml
+from attrdict import AttrDict, AttrMap
 
 import setup_logging
-from smartobject import SmartObject as SO
+from slotsdict import SlotsDict, JSONEncoder
 logger = setup_logging.get_logger(__name__)
 
 
@@ -24,22 +26,28 @@ class GameEnd(Exception):
         self.result = result
 
 
-class Command(SO):
+class Command(SlotsDict):
+    __slots__ = ('klass', 'type', 'send_to', 'params', )
 
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         for key, value in {
             'klass': 'Command',
             'type': None,
             'send_to': '$all',
             'params': None,
         }.items():
-            kwargs.setdefault(key, value)
-        super().__init__(**kwargs)
+            self.setdefault(key, value)
 
 
-class Player(SO):
+class Player(SlotsDict):
+    __slots__ = (
+        'klass', 'id', 'index', 'color', 'max_cost', 'cost', 'is_black',
+        'tefuda', 'deck', 'honjin_prefix', 'first_row_prefix',
+        'second_row_prefix', 'n_tefuda', 'n_cards_in_deck', )
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         for key, value in {
             'klass': 'Player',
             'id': '',
@@ -54,12 +62,11 @@ class Player(SO):
             'first_row_prefix': '',  # 全ての自分のUnitが置ける領域のCellの接頭辞
             'second_row_prefix': '',  # 一部の特殊な自分のUnitが置ける領域のCellの接頭辞
         }.items():
-            kwargs.setdefault(key, value)
-        super().__init__(**kwargs)
+            self.setdefault(key, value)
 
     def to_public(self):
-        obj = self.so_copy()
-        obj.so_update(n_tefuda=len(self.tefuda), n_cards_in_deck=len(self.deck))
+        obj = Player(self)
+        obj.update(n_tefuda=len(self.tefuda), n_cards_in_deck=len(self.deck))
         del obj.tefuda
         del obj.deck
         del obj.index
@@ -74,17 +81,18 @@ class Player(SO):
             return card
 
 
-class Cell(SO):
+class Cell(SlotsDict):
+    __slots__ = ('klass', 'id', 'index', 'uniti', )
 
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         for key, value in {
             'klass': 'Cell',
             'id': None,
             'index': None,
             'uniti': None,
         }.items():
-            kwargs.setdefault(key, value)
-        super().__init__(**kwargs)
+            self.setdefault(key, value)
 
     def is_empty(self):
         return self.uniti is None
@@ -107,7 +115,9 @@ class Cell(SO):
             return previous_uniti
 
 
-class Board(SO):
+class Board(SlotsDict):
+    __slots__ = (
+        'klass', 'size', 'cell_list', 'cell_dict', 'center_row_prefix', )
 
     def __init__(self, *, size):
         cols, rows = size
@@ -133,6 +143,12 @@ class Board(SO):
                 for cell in self.cell_list]))
 
 
+class UnitPrototype(SlotsDict):
+    __slots__ = (
+        'klass', 'id', 'cost', 'attack', 'power', 'defense', 'skill_id_list',
+        'tag_list', )
+
+
 def load_unitprototype_from_file(filepath):
     with open(filepath, 'rt', encoding='utf-8') as reader:
         dictionary = yaml.load(reader)
@@ -142,31 +158,40 @@ def load_unitprototype_from_file(filepath):
         prototype.setdefault('skill_id_list', [])
         prototype.setdefault('tag_list', [])
     return {
-        key: SO(klass='UnitPrototype', id=key, **value)
+        key: UnitPrototype(klass='UnitPrototype', id=key, **value)
         for key, value in dictionary.items()
     }
+
+
+class SpellPrototype(SlotsDict):
+    __slots__ = ('klass', 'id', 'cost', 'target', )
 
 
 def load_spellprototype_from_file(filepath):
     with open(filepath, 'rt', encoding='utf-8') as reader:
         dictionary = yaml.load(reader)
     return {
-        key: SO(klass='SpellPrototype', id=key, **value)
+        key: SpellPrototype(klass='SpellPrototype', id=key, **value)
         for key, value in dictionary.items()
     }
 
 
-class GameState(SO):
+class GameState(SlotsDict):
+    __slots__ = ('klass', 'nth_turn', 'current_player', 'current_player_id', )
 
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         for key, value in {
             'klass': 'GameState',
             'nth_turn': None,
             'current_player': None,
             'current_player_id': None,
         }.items():
-            kwargs.setdefault(key, value)
-        super().__init__(**kwargs)
+            self.setdefault(key, value)
+
+
+class Card(SlotsDict):
+    __slots__ = ('klass', 'id', 'prototype_id', )
 
 
 class CardFactory:
@@ -176,7 +201,7 @@ class CardFactory:
         self.dict = {}
 
     def create(self, *, prototype_id):
-        card = SO(
+        card = Card(
             klass='Card',
             id=r'{:04}'.format(self.n_created),
             prototype_id=prototype_id
@@ -184,6 +209,12 @@ class CardFactory:
         self.n_created += 1
         self.dict[card.id] = card
         return card
+
+
+class UnitInstance(SlotsDict):
+    __slots__ = UnitPrototype.__slots__ + (
+        'prototype_id', 'player_id', 'n_turns_until_movable',
+        'o_power', 'o_attack', 'o_defense')
 
 
 class UnitInstanceFactory:
@@ -195,19 +226,17 @@ class UnitInstanceFactory:
 
     def create(self, *, prototype_id, player_id):
         prototype = self.prototype_dict[prototype_id]
-        kwargs = prototype.so_to_dict()
-        kwargs.update(
+        obj = UnitInstance(
+            prototype,
             klass='UnitInstance',
             id=r'{}.{:04}'.format(prototype_id, self.n_created),
             prototype_id=prototype_id,
             player_id=player_id,
             n_turns_until_movable=1,
-            o_power=kwargs['power'],
-            o_attack=kwargs['attack'],
-            o_defense=kwargs['defense'],
-        )
+            o_power=prototype.power,
+            o_attack=prototype.attack,
+            o_defense=prototype.defense)
         self.n_created += 1
-        obj = SO(**kwargs)
         self.dict[obj.id] = obj
         return obj
 
@@ -238,44 +267,44 @@ class RandomDeckCreater:
 
 def func_judge_default(*, board, player_list, **kwargs):
     cols = board.size[0]
-    black_info = SO(
-        goal=board.cell_list[:cols],  # 先手のgoalは後手の本陣
-        player_id=player_list[0].id,
-        is_reached=False)  # goalに達したか否か
-    white_info = SO(
-        goal=board.cell_list[-cols:],
-        player_id=player_list[1].id,
-        is_reached=False)
+    black_info = {
+        'goal': board.cell_list[:cols],  # 先手のgoalは後手の本陣
+        'player_id': player_list[0].id,
+        'is_reached': False, }  # goalに達したか否か
+    white_info = {
+        'goal': board.cell_list[-cols:],
+        'player_id': player_list[1].id,
+        'is_reached': False, }
     infos = (black_info, white_info, )
     for info in infos:
-        for cell in info.goal:
+        for cell in info['goal']:
             if cell.is_not_empty():
-                if cell.uniti.player_id == info.player_id:
-                    info.is_reached = True
+                if cell.uniti.player_id == info['player_id']:
+                    info['is_reached'] = True
                     break
-    if black_info.is_reached:
-        if white_info.is_reached:
-            r = SO(winner_id='$draw')
+    if black_info['is_reached']:
+        if white_info['is_reached']:
+            r = AttrDict(winner_id='$draw')
         else:
-            r = SO(winner_id=black_info.player_id)
+            r = AttrDict(winner_id=black_info['player_id'])
     else:
-        if white_info.is_reached:
-            r = SO(winner_id=white_info.player_id)
+        if white_info['is_reached']:
+            r = AttrDict(winner_id=white_info['player_id'])
         else:
             r = None
     return r
 
 
-def untrusted_json_to_smartobject(json_str):
+def load_untrusted_json(json_str):
     try:
-        obj = SO.load_from_json(json_str)
+        obj = json.loads(json_str, parse_int=int, parse_constant=bool)
         if (
-            obj.klass == 'Command' and
-            isinstance(obj.type, str) and
-            (obj.params is None or isinstance(obj.params, SO)) and
-            isinstance(obj.nth_turn, int)
+            obj['klass'] == 'Command' and
+            isinstance(obj['type'], str) and
+            (obj['params'] is None or isinstance(obj['params'], dict)) and
+            isinstance(obj['nth_turn'], int)
         ):
-            return obj
+            return AttrMap(obj)
     except Exception as e:
         logger.debug('[S] Failed to decode json.')
         logger.debug(str(e))
@@ -308,7 +337,7 @@ class Server:
         func_judge  # 勝敗判定を行うcallable
         func_create_deck  # 山札を作るcallable
         '''
-        self.viewer = viewer or SO(
+        self.viewer = viewer or AttrDict(
             klass='DummyViewer',
             player_id='$dummy',
             send=(lambda __: None))
@@ -342,7 +371,7 @@ class Server:
         # test用に適当にStatsを振る
         vlist = list(range(1, 4))
         for prototype in unitp_dict.values():
-            prototype.so_overwrite(
+            prototype.update(
                 cost=random.choice(vlist),
                 power=random.choice(vlist),
                 defense=random.choice(vlist),
@@ -392,12 +421,12 @@ class Server:
                 communicator_list, player_colors, player_indices)
         ]
         self.player_dict = {player.id: player for player in player_list}
-        self.player_list[0].so_overwrite(
+        self.player_list[0].update(
             is_black=True,
             honjin_prefix='b',
             first_row_prefix=str(board_size[1] - 3),
             second_row_prefix=str(board_size[1] - 4))
-        self.player_list[1].so_overwrite(
+        self.player_list[1].update(
             is_black=False,
             honjin_prefix='w',
             first_row_prefix='0',
@@ -412,7 +441,8 @@ class Server:
     def run(self):
         communicator_list = (*self.communicator_list, self.viewer, )
         for command in self.corerun():
-            json_command = command.so_to_json(indent=2)
+            json_command = json.dumps(
+                command, ensure_ascii=False, indent=2, cls=JSONEncoder)
             logger.debug('[S] SERVER COMMAND')
             logger.debug(json_command)
             for communicator in communicator_list:
@@ -427,10 +457,10 @@ class Server:
             yield Command(
                 type='set_card_info',
                 send_to=player.id,
-                params=SO(card=card))
+                params={'card': card, })
             yield Command(
                 type='draw',
-                params=SO(drawer_id=player.id, card_id=card.id))
+                params={'drawer_id': player.id, 'card_id': card.id, })
 
     def corerun(self):
         unitp_dict = self.unitp_dict
@@ -446,13 +476,12 @@ class Server:
         # ----------------------------------------------------------------------
         yield Command(
             type='game_begin',
-            params=SO(
-                unitp_dict=unitp_dict,
-                spellp_dict=spellp_dict,
-                timeout=self.timeout,
-                board_size=board_size,
-                player_list=[player.to_public() for player in player_list],
-            )
+            params={
+                'unitp_dict': unitp_dict,
+                'spellp_dict': spellp_dict,
+                'timeout': self.timeout,
+                'board_size': board_size,
+                'player_list': [player.to_public() for player in player_list], }
         )
 
         # ----------------------------------------------------------------------
@@ -486,9 +515,9 @@ class Server:
                 # Turn開始
                 yield Command(
                     type='turn_begin',
-                    params=SO(
-                        nth_turn=nth_turn,
-                        player_id=current_player.id)
+                    params={
+                        'nth_turn': nth_turn,
+                        'player_id': current_player.id, }
                 )
                 yield from self.draw_card(current_player)
                 time_limit = time.time() + actual_timeout
@@ -496,7 +525,7 @@ class Server:
                     while True:
                         current_time = time.time()
                         if current_time < time_limit:
-                            command = untrusted_json_to_smartobject(
+                            command = load_untrusted_json(
                                 communicator.recieve(timeout=time_limit - current_time))
                             if command is None:
                                 continue
@@ -526,15 +555,16 @@ class Server:
                 except TurnEnd:
                     pass
                 finally:
-                    yield Command(type='turn_end', params=SO(nth_turn=nth_turn))
+                    yield Command(
+                        type='turn_end', params={'nth_turn': nth_turn, })
         except GameEnd as e:
             yield Command(
                 type='game_end',
-                params=SO(winner_id=e.result.winner_id))
+                params={'winner_id': e.result.winner_id, })
 
     def reset_stats(self):
         for uniti in self.uniti_factory.dict.values():
-            uniti.so_overwrite(
+            uniti.update(
                 power=uniti.o_power,
                 attack=uniti.o_attack,
                 defense=uniti.o_defense)
@@ -553,13 +583,13 @@ class Server:
             internal(self.uniti_factory.dict[target_id])
         yield Command(
             type='reduce_n_turns_until_movable_by',
-            params=SO(n=n, target_id=target_id))
+            params={'n': n, 'target_id': target_id, })
 
     def set_max_cost(self, *, value, player):
         player.max_cost = value
         yield Command(
             type='set_max_cost',
-            params=SO(value=value, player_id=player.id))
+            params={'value': value, 'player_id': player.id, })
 
     def increase_max_cost_by(self, *, n, player):
         yield from self.set_max_cost(
@@ -581,7 +611,7 @@ class Server:
         return Command(
             type='notification',
             send_to=(send_to or self.gamestate.current_player_id),
-            params=SO(message=message, type=type))
+            params={'message': message, 'type': type, })
 
     def on_command_use_unitcard(self, *, params):
         r'''clientからuse_unitcardコマンドが送られて来た時に呼ばれるMethod
@@ -650,7 +680,7 @@ class Server:
         # ----------------------------------------------------------------------
 
         # 手札の情報を持ち主以外にも送信
-        yield Command(type='set_card_info', params=SO(card=card))
+        yield Command(type='set_card_info', params={'card': card, })
         #
         current_player_id = gamestate.current_player_id
         uniti = self.uniti_factory.create(
@@ -659,10 +689,10 @@ class Server:
         # UnitInstance設置Commandを全員に送信
         yield Command(
             type='use_unitcard',
-            params=SO(
-                uniti=uniti,
-                card_id=card_id,
-                cell_to_id=cell_to_id))
+            params={
+                'uniti': uniti,
+                'card_id': card_id,
+                'cell_to_id': cell_to_id, })
         # 内部のDatabaseを更新
         cell_to.attach(uniti)
         current_player.tefuda.remove(card)
@@ -758,9 +788,9 @@ class Server:
         uniti = cell_from.uniti
         yield Command(
             type='move',
-            params=SO(
-                uniti_from_id=uniti.id,
-                cell_to_id=cell_to.id))
+            params={
+                'uniti_from_id': uniti.id,
+                'cell_to_id': cell_to.id, })
         uniti.n_turns_until_movable += 1
         cell_to.attach(cell_from.detach())
 
@@ -786,13 +816,19 @@ class Server:
             del uniti_dict[d_id]
             yield Command(
                 type='attack',
-                params=SO(attacker_id=a_id, defender_id=d_id, dead_id='$both'))
+                params={
+                    'attacker_id': a_id,
+                    'defender_id': d_id,
+                    'dead_id': '$both', })
         elif a.power < d.power:
             cell_from.detach()
             del uniti_dict[a_id]
             yield Command(
                 type='attack',
-                params=SO(attacker_id=a_id, defender_id=d_id, dead_id=a_id))
+                params={
+                    'attacker_id': a_id,
+                    'defender_id': d_id,
+                    'dead_id': a_id, })
         else:
             cell_to.detach()
             cell_to.attach(cell_from.detach())
@@ -800,7 +836,10 @@ class Server:
             a.n_turns_until_movable += 1
             yield Command(
                 type='attack',
-                params=SO(attacker_id=a_id, defender_id=d_id, dead_id=d_id))
+                params={
+                    'attacker_id': a_id,
+                    'defender_id': d_id,
+                    'dead_id': d_id, })
         self._compute_current_cost()
 
 
