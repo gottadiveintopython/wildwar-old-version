@@ -4,8 +4,11 @@ __all__ = ('CardBattleMain', )
 
 import functools
 import random
+import json
 
 import yaml
+from attrdict import AttrDict, AttrMap
+
 import kivy
 kivy.require(r'1.10.0')
 from kivy.clock import Clock
@@ -20,7 +23,6 @@ from kivy.properties import (
 
 import setup_logging
 logger = setup_logging.get_logger(__name__)
-from smartobject import SmartObject
 from dragrecognizer import DragRecognizerDashLine
 from magnetacrosslayout import MagnetAcrossLayout
 from basicwidgets import (
@@ -391,7 +393,7 @@ class CardBattleMain(Factory.RelativeLayout):
 
     def on_operation_drag(self, card_widget_layer, widget_from, widget_to):
         if not self.gamestate.is_myturn:
-            self.on_command_notification(params=SmartObject(
+            self.on_command_notification(params=dict(
                 message=self._localize_str('今はあなたの番ではありません'),
                 type='disallowed'))
             return
@@ -406,14 +408,14 @@ class CardBattleMain(Factory.RelativeLayout):
             if cell_to:
                 self.send_command(
                     type='cell_to_cell',
-                    params=SmartObject(
+                    params=dict(
                         cell_from_id=cell_from_id,
                         cell_to_id=cell_to.id))
                 return
         elif widget_from.klass == 'UnitCardWidget':
             self.send_command(
                 type='use_unitcard',
-                params=SmartObject(
+                params=dict(
                     card_id=widget_from.id,
                     cell_to_id=widget_to.id))
             return
@@ -427,13 +429,13 @@ class CardBattleMain(Factory.RelativeLayout):
             if cell_to:
                 self.send_command(
                     type='use_spellcard',
-                    params=SmartObject(
+                    params=dict(
                         card_id=widget_from.id,
                         cell_to_id=cell_to.id))
                 return
         elif widget_from.klass == 'Cell':
             return
-        self.on_command_notification(params=SmartObject(
+        self.on_command_notification(params=dict(
             message=self._localize_str('無効な操作です'), type='disallowed'))
 
     def on_timer_tick(self, timer, seconds):
@@ -445,18 +447,21 @@ class CardBattleMain(Factory.RelativeLayout):
                     params=None)
             elif seconds == time_limit - 5:
                 timer.color = (1, 0, 0, 1, )
-                self.on_command_notification(params=SmartObject(
+                self.on_command_notification(params=dict(
                     message=self._localize_str('残り5秒'), type='warning'))
 
     def on_turnendbutton_press(self):
         self.send_command(type='turn_end', params=None)
 
     def send_command(self, *, type, params):
-        json_command = SmartObject(
-            klass='Command',
-            type=type,
-            nth_turn=self.gamestate.nth_turn,
-            params=params).so_to_json(indent=2)
+        json_command = json.dumps(
+            {
+                'klass': 'Command',
+                'type': type,
+                'nth_turn': self.gamestate.nth_turn,
+                'params': params,
+            },
+            indent=2, ensure_ascii=False)
         logger.debug('[C] CLIENT COMMAND')
         logger.debug(json_command)
         self._communicator.send(json_command)
@@ -477,7 +482,8 @@ class CardBattleMain(Factory.RelativeLayout):
         if jsonstr is None:
             self._command_recieving_trigger()
             return
-        command = SmartObject.load_from_json(jsonstr)
+        command = AttrMap(json.loads(
+            jsonstr, parse_int=int, parse_constant=bool))
         command_handler = getattr(self, 'on_command_' + command.type, None)
         if command_handler:
             command_handler(command.params)
@@ -486,14 +492,14 @@ class CardBattleMain(Factory.RelativeLayout):
             self._command_recieving_trigger()
 
     @staticmethod
-    def _merge_database(smartobject_dict, dict_dict):
+    def _merge_database(database1, database2):
         r'''internal use'''
-        keys = frozenset(smartobject_dict.keys())
-        if keys != frozenset(dict_dict.keys()):
+        keys = frozenset(database1.keys())
+        if keys != frozenset(database2.keys()):
             logger.critical('databaseのkeyが一致していません。')
             return
         return {
-            key: SmartObject(**dict_dict[key], **smartobject_dict[key].__dict__)
+            key: AttrDict(**database2[key], **database1[key])
             for key in keys
         }
 
@@ -541,14 +547,14 @@ class CardBattleMain(Factory.RelativeLayout):
                 resource_find('unit_prototype_{}.yaml'.format(self._iso639)),
                 'rt', encoding='utf-8') as reader:
             self.unitp_dict = CardBattleMain._merge_database(
-                params.unitp_dict.__dict__,
+                params.unitp_dict,
                 yaml.load(reader))
         # SpellPrototypeの辞書
         with open(
                 resource_find('spell_prototype_{}.yaml'.format(self._iso639)),
                 'rt', encoding='utf-8') as reader:
             self.spellp_dict = CardBattleMain._merge_database(
-                params.spellp_dict.__dict__,
+                params.spellp_dict,
                 yaml.load(reader))
         # 利便性の為、UnitPrototypeの辞書とSpellPrototypeの辞書を合成した辞書も作る
         self.prototype_dict = {
@@ -558,7 +564,7 @@ class CardBattleMain(Factory.RelativeLayout):
                 resource_find('skill_{}.yaml'.format(self._iso639)),
                 'rt', encoding='utf-8') as reader:
             self.skill_dict = {
-                key: SmartObject(type='Skill', id=key, **value)
+                key: AttrDict(type='Skill', id=key, **value)
                 for key, value in yaml.load(reader).items()
             }
         # Tagの翻訳用辞書
@@ -584,7 +590,7 @@ class CardBattleMain(Factory.RelativeLayout):
         # ----------------------------------------------------------------------
         self.player_list = [
             Player(**copy_dictionary(
-                player.__dict__,
+                player,
                 keys_exclude=('n_tefuda', 'klass', )
             )) for player in params.player_list]
         self.player_dict = {
@@ -733,8 +739,8 @@ class CardBattleMain(Factory.RelativeLayout):
     @doesnt_need_to_wait_for_the_animation_to_complete
     def on_command_notification(self, params):
         self.notificator.add_notification(
-            text=self._localize_str(params.message),
-            icon_key=params.type,
+            text=self._localize_str(params['message']),
+            icon_key=params['type'],
             duration=3)
 
     @doesnt_need_to_wait_for_the_animation_to_complete
@@ -862,7 +868,7 @@ class CardBattleMain(Factory.RelativeLayout):
         player = self.player_dict[player_id]
         card_widget = self.card_widget_dict[card_id]
         # UnitInstanceとUnitInstanceWidgetを生成
-        uniti = UnitInstance(**params.uniti.__dict__)
+        uniti = UnitInstance(**params.uniti)
         uniti_id = uniti.id
         uniti_widget = UnitInstanceWidget(
             uniti=uniti,
