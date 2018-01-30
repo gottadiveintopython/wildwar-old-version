@@ -14,7 +14,7 @@ class Team(SlotsDict):
     __slots__ = ('members', 'name', )
 
 
-class SmartObjectTest(unittest.TestCase):
+class SlotsDictTest(unittest.TestCase):
 
     def test_exception(self):
         obj = Person(name='Bob', age=20)
