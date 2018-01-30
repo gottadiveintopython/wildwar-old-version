@@ -2,19 +2,16 @@
 
 __all__ = ('FilledPolygon', )
 
-r'''StencilViewとは違って任意の多角形で切り抜ける
+r'''内側を塗りつぶした多角形を簡単に表示する為のWidget
 
 
-例:子Widgetの描画を二等辺三角形で切り抜く
+例: 二等辺三角形を表示するWidget
 
 FilledPolygon:
+    color: 1, 1, 1, 1
     mesh_points: (0, 0, ), (0.5, 1, ), (1, 0, )
     mesh_indices: range(3)
     mesh_mode: 'triangles'
-    Button:
-        text: 'AAAAAAA'
-        font_size: 40
-        size: root.size
 '''
 
 from kivy.app import runTouchApp
