@@ -124,7 +124,16 @@ class FilledPolygon(Factory.Widget):
 
 
 def _test():
-    root = FilledPolygon.create_from_template('arrow2', color=(0, 1, 0, 1, ))
+    root = Factory.BoxLayout(orientation='vertical')
+    root.add_widget(FilledPolygon.create_from_template(
+        'arrow2', color=(0, 1, 0, 1, )))
+    root.add_widget(Builder.load_string(r'''
+FilledPolygon:
+    color: 1, 1, 1, 1
+    mesh_points: (0, 0, ), (0.5, 1, ), (1, 0, )
+    mesh_indices: range(3)
+    mesh_mode: 'triangles'
+'''))
     runTouchApp(root)
 
 
