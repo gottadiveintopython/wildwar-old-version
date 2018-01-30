@@ -10,7 +10,7 @@ A card-game inspired by "Battle Line Conquest" which is a card-game developed by
 
 # 開發環境
 
-Python 3.6  
+Python 3.5.0  
 Kivy 1.10  
 
 # 開發記録(Developer's Dialy)
