@@ -38,7 +38,7 @@ def run_server_thread(**kwargs):
         n_tefuda_init=4,
         max_tefuda=8,
         board_size=(5, 7,),
-        timeout=10,
+        timeout=20,
         how_to_decide_player_order="random",
         func_create_deck=cardbattle_server.RandomDeckCreater(
             n_cards=10, unit_ratio=0.95),
