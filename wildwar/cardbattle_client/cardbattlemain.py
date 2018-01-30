@@ -842,7 +842,7 @@ class CardBattleMain(Factory.RelativeLayout):
         play_stretch_animation(
             parent=self,
             widget=OutlinedPolygon.create_from_template(
-                'arrow2', line_width=2, line_color=(0, 1, 0, 1, )),
+                'arrow2', line_width=2, color=(0, 1, 0, 1, )),
             root_pos=card_widget_layer.to_parent(*a_wid.center),
             head_pos=card_widget_layer.to_parent(*d_wid.center),
             anim_duration=0.6,
