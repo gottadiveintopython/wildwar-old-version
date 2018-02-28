@@ -2,7 +2,7 @@
 
 bgm_8bit: bgm_maoudamashii_8bit17.ogg
 bgm_ethnic: bgm_maoudamashii_ethnic21.ogg
-bgm_fantasy04: bgm_maoudamashii_fantasy04.ogg
+# bgm_fantasy04: bgm_maoudamashii_fantasy04.ogg
 bgm_factasy05: bgm_maoudamashii_fantasy05.ogg
 bgm_battle: game_maoudamashii_1_battle09(edit).ogg
 # bgm_win: game_maoudamashii_1_battle09(edit).ogg
