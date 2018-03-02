@@ -40,7 +40,7 @@ class SlotsDict(MutableMapping):
         return len(self.__slots__)
 
     def __iter__(self):
-        return self.__slots__
+        return iter(self.__slots__)
 
     def items(self):
         for key in self.__slots__:
