@@ -416,7 +416,7 @@ class Server:
             random.shuffle(communicator_list)
         else:
             raise ValueError('Unknown method to decide player order')
-        player_colors = ((0.4, 0, 0, 1, ), (0, 0.2, 0, 1, ), )
+        player_colors = ((0.4, 0, 0, 1, ), (0, 0.3, 0, 1, ), )
         player_indices = range(N_PLAYERS)
         self.player_list = player_list = [
             Player(
