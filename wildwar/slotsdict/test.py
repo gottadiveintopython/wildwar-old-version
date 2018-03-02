@@ -106,8 +106,8 @@ class SlotsDictTest(unittest.TestCase):
         obj.__str__()
 
     def test_jsonize(self):
-        rei = Person(name='Rei', age=20, sex=True)
-        ken = Person(name=None, age=21.0, )
+        rei = Person(name='Rei', age=20)
+        ken = Person(name=None, age=21.0, sex='male')
         team1 = Team(members=[rei, ken, ], name='Red')
         s = json.dumps(team1, indent=2)
         print(s)

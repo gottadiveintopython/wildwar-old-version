@@ -13,13 +13,10 @@ class SlotsDict(MutableMapping):
     def __class__(self):
         return dict
 
-    def __init__(self, **kwargs):
-        default_kwargs = self.__slotsdict__
-        difference = frozenset(kwargs.keys()) - frozenset(default_kwargs.keys())
-        if difference:
-            raise ValueError('Invalid keyword arguments: {}'.format(tuple(difference)))
-        for key, value in default_kwargs.items():
-            setattr(self, key, kwargs.get(key, value))
+    def __init__(self, *args, **kwargs):
+        self.update(*args, **kwargs)
+        for key, value in self.__slotsdict__.items():
+            self.setdefault(key, value)
 
     def __getitem__(self, key):
         try:
