@@ -3,15 +3,22 @@
 import json
 import unittest
 
-from slotsdict import SlotsDict
+from slotsdict import SlotsDictMeta
 
 
-class Person(SlotsDict):
-    __slots__ = ('name', 'age', 'sex', )
+class Person(metaclass=SlotsDictMeta):
+    __slotsdict__ = dict(
+        name='<default_name>',
+        age=0,
+        sex='female',
+    )
 
 
-class Team(SlotsDict):
-    __slots__ = ('members', 'name', )
+class Team(metaclass=SlotsDictMeta):
+    __slotsdict__ = dict(
+        name='<default_team_name>',
+        members=[],
+    )
 
 
 class SlotsDictTest(unittest.TestCase):
@@ -19,50 +26,56 @@ class SlotsDictTest(unittest.TestCase):
     def test_exception(self):
         obj = Person(name='Bob', age=20)
 
-        # __slots__に無い属性への読み書き
+        # ----------------------------------------------------------------------
+        # 読み込み
+        # ----------------------------------------------------------------------
+
+        # __slotsdict__に無い属性
         with self.assertRaises(AttributeError):
             print(obj.unknown_attr)
         with self.assertRaises(KeyError):
             print(obj['unknown_attr'])
+        # __slotsdict__にある属性
+        temp = obj.sex
+        temp = obj['sex']
+
+        # ----------------------------------------------------------------------
+        # 書き込み
+        # ----------------------------------------------------------------------
+
+        # __slotsdict__に無い属性
         with self.assertRaises(AttributeError):
             obj.unknown_attr = 1
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(KeyError):
             obj['unknown_attr'] = 1
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(KeyError):
             obj.update(unknown_attr=1)
 
-        # __slots__に無い属性の削除
-        with self.assertRaises(AttributeError):
-            del obj.unknown_attr
-        with self.assertRaises(KeyError):
-            del obj['unknown_attr']
-
-        # __slots__にはあるが初期化されていない属性の読み込み
-        with self.assertRaises(AttributeError):
-            print(obj.sex)
-        with self.assertRaises(KeyError):
-            print(obj['sex'])
-
-        # __slots__にはあるが初期化されていない属性の削除
-        with self.assertRaises(AttributeError):
-            del obj.sex
-        with self.assertRaises(KeyError):
-            del obj['sex']
-
-        # __slots__にはあるが初期化されていない属性の書き込み
+        # __slotsdict__にある属性
         obj.sex = 'male'
         obj['sex'] = 'male'
 
-        # 初期化済みの属性への読み書き
-        print(obj.name)
-        print(obj['name'])
-        obj.name = 'Ken'
-        obj['name'] = 'Marina'
-        obj.update(name='Peter')
+        # ----------------------------------------------------------------------
+        # 削除
+        # ----------------------------------------------------------------------
 
-        # 初期化済みの属性の削除
-        del obj.sex
-        del obj['name']
+        # __slotsdict__に無い属性
+        with self.assertRaises(Exception):
+            del obj.unknown_attr
+        with self.assertRaises(Exception):
+            del obj['unknown_attr']
+        # __slotsdict__にある属性
+        with self.assertRaises(Exception):
+            del obj.sex
+        with self.assertRaises(Exception):
+            del obj['sex']
+
+        # ----------------------------------------------------------------------
+        # 継承
+        # ----------------------------------------------------------------------
+        with self.assertRaises(Exception):
+            class Villager(Person):
+                pass
 
     def test_exception_msg(self):
         print('---- Check Error Message (START) ----')
@@ -81,9 +94,10 @@ class SlotsDictTest(unittest.TestCase):
         obj = Person(name='Bob', age=20)
         obj.__getitem__('name')
         obj.__setitem__('name', 'Ken')
-        obj.__delitem__('name')
-        obj._sd_existing_values()
-        obj._sd_existing_keys()
+        with self.assertRaises(Exception):
+            obj.__delitem__('name')
+        with self.assertRaises(Exception):
+            obj.__delattr('name')
         obj.__len__()
         obj.__iter__()
         obj.items()
@@ -102,16 +116,5 @@ class SlotsDictTest(unittest.TestCase):
         print(str(team1))
 
 
-def _test():
-    class NeoPerson(Person):
-        __slots__ = Person.__slots__ + ('blood', 'ibm', )
-
-    obj = NeoPerson(name='neo', blood='B')
-    obj.sex = 'male'
-    # obj.aaaa = 20
-    print(obj)
-
-
 if __name__ == '__main__':
-    _test()
-    # unittest.main()
+    unittest.main()
