@@ -3,7 +3,7 @@
 import json
 import unittest
 
-from slotsdict import SlotsDict, JSONEncoder
+from slotsdict import SlotsDict
 
 
 class Person(SlotsDict):
@@ -95,7 +95,7 @@ class SlotsDictTest(unittest.TestCase):
         rei = Person(name='Rei', age=20, sex=True)
         ken = Person(name=None, age=21.0, )
         team1 = Team(members=[rei, ken, ], name='Red')
-        s = json.dumps(team1, indent=2, cls=JSONEncoder)
+        s = json.dumps(team1, indent=2)
         print(s)
         d = json.loads(s)
         print(d)
@@ -115,4 +115,3 @@ def _test():
 if __name__ == '__main__':
     _test()
     # unittest.main()
-

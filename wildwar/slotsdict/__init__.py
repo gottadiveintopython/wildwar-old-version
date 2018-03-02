@@ -43,6 +43,6 @@ class SubBook(Book):
 '''
 
 try:
-    from .slotsdict import SlotsDict, JSONEncoder
+    from .slotsdict import SlotsDict
 except ImportError:
-    from slotsdict import SlotsDict, JSONEncoder
+    from slotsdict import SlotsDict

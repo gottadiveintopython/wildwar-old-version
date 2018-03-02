@@ -7,6 +7,10 @@ import json
 class SlotsDict(MutableMapping):
     __slots__ = ()
 
+    @property
+    def __class__(self):
+        return dict
+
     def __init__(self, *args, **kwargs):
         self.update(*args, **kwargs)
 
@@ -62,12 +66,4 @@ class SlotsDict(MutableMapping):
         return self._sd_existing_values()
 
     def __str__(self):
-        return json.dumps(self, indent=2, cls=JSONEncoder)
-
-
-class JSONEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, SlotsDict):
-            return dict(obj.items())
-        else:
-            return json.JSONEncoder
+        return json.dumps(self, indent=2)

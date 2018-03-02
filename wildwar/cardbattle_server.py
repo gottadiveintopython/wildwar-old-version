@@ -12,7 +12,7 @@ import yaml
 from attrdict import AttrDict, AttrMap
 
 import setup_logging
-from slotsdict import SlotsDict, JSONEncoder
+from slotsdict import SlotsDict
 logger = setup_logging.get_logger(__name__)
 
 
@@ -442,7 +442,7 @@ class Server:
         communicator_list = (*self.communicator_list, self.viewer, )
         for command in self.corerun():
             json_command = json.dumps(
-                command, ensure_ascii=False, indent=2, cls=JSONEncoder)
+                command, ensure_ascii=False, indent=2)
             logger.debug('[S] SERVER COMMAND')
             logger.debug(json_command)
             for communicator in communicator_list:
