@@ -65,20 +65,28 @@ Builder.load_string(r"""
     AutoLabel:
         pos_hint: {'x': 0, 'top': 1}
         size_hint: 0.2, 0.2
-        bold: True
+        # bold: True
+        outline_color: 0, 0, 0, 1,
+        outline_width: 1
         text: str(root.prototype.cost)
     BoxLayout:
         size_hint: 1, 0.2
         AutoLabel:
-            bold: True
+            # bold: True
+            outline_color: 0, 0, 0, 1,
+            outline_width: 1
             text:
                 (str(root.prototype.attack)
                 if root.prototype.attack != 0 else '')
         AutoLabel:
-            bold: True
+            # bold: True
+            outline_color: 0, 0, 0, 1,
+            outline_width: 1
             text: str(root.prototype.power)
         AutoLabel:
-            bold: True
+            # bold: True
+            outline_color: 0, 0, 0, 1,
+            outline_width: 1
             text:
                 (str(root.prototype.defense)
                 if root.prototype.defense != 0 else '')
