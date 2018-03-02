@@ -12,7 +12,7 @@ import yaml
 from attrdict import AttrDict, AttrMap
 
 import setup_logging
-from slotsdict import SlotsDict
+from slotsdict import SlotsDictMeta
 logger = setup_logging.get_logger(__name__)
 
 
@@ -26,50 +26,37 @@ class GameEnd(Exception):
         self.result = result
 
 
-class Command(SlotsDict):
-    __slots__ = ('klass', 'type', 'send_to', 'params', )
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        for key, value in {
-            'klass': 'Command',
-            'type': None,
-            'send_to': '$all',
-            'params': None,
-        }.items():
-            self.setdefault(key, value)
+class Command(metaclass=SlotsDictMeta):
+    __slotsdict__ = {
+        'klass': 'Command',
+        'type': None,
+        'send_to': '$all',
+        'params': None,
+    }
 
 
-class Player(SlotsDict):
-    __slots__ = (
-        'klass', 'id', 'index', 'color', 'max_cost', 'cost', 'is_black',
-        'tefuda', 'deck', 'honjin_prefix', 'first_row_prefix',
-        'second_row_prefix', 'n_tefuda', 'n_cards_in_deck', )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for key, value in {
-            'klass': 'Player',
-            'id': '',
-            'index': None,
-            'color': (0, 0, 0, 0,),
-            'max_cost': 0,
-            'cost': 0,
-            'is_black': False,
-            'tefuda': [],
-            'deck': [],
-            'honjin_prefix': '',  # 本陣(敵Unitに入られたら負けになる領域)のCellのidの接頭辞
-            'first_row_prefix': '',  # 全ての自分のUnitが置ける領域のCellの接頭辞
-            'second_row_prefix': '',  # 一部の特殊な自分のUnitが置ける領域のCellの接頭辞
-        }.items():
-            self.setdefault(key, value)
+class Player(metaclass=SlotsDictMeta):
+    __slotsdict__ = {
+        'klass': 'Player',
+        'id': '$default_id',
+        'index': None,
+        'color': (0, 0, 0, 0,),
+        'max_cost': 0,
+        'cost': 0,
+        'is_black': False,
+        'tefuda': (),
+        'deck': (),
+        'honjin_prefix': '',  # 本陣(敵Unitに入られたら負けになる領域)のCellのidの接頭辞
+        'first_row_prefix': '',  # 全ての自分のUnitが置ける領域のCellの接頭辞
+        'second_row_prefix': '',  # 一部の特殊な自分のUnitが置ける領域のCellの接頭辞
+    }
 
     def to_public(self):
-        obj = Player(self)
+        obj = dict(self)
         obj.update(n_tefuda=len(self.tefuda), n_cards_in_deck=len(self.deck))
-        del obj.tefuda
-        del obj.deck
-        del obj.index
+        del obj['tefuda']
+        del obj['deck']
+        del obj['index']
         return obj
 
     def draw_card(self):
@@ -81,18 +68,13 @@ class Player(SlotsDict):
             return card
 
 
-class Cell(SlotsDict):
-    __slots__ = ('klass', 'id', 'index', 'uniti', )
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        for key, value in {
-            'klass': 'Cell',
-            'id': None,
-            'index': None,
-            'uniti': None,
-        }.items():
-            self.setdefault(key, value)
+class Cell(metaclass=SlotsDictMeta):
+    __slotsdict__ = {
+        'klass': 'Cell',
+        'id': '$default_id',
+        'index': None,
+        'uniti': None,
+    }
 
     def is_empty(self):
         return self.uniti is None
@@ -115,9 +97,14 @@ class Cell(SlotsDict):
             return previous_uniti
 
 
-class Board(SlotsDict):
-    __slots__ = (
-        'klass', 'size', 'cell_list', 'cell_dict', 'center_row_prefix', )
+class Board(metaclass=SlotsDictMeta):
+    __slotsdict__ = {
+        'klass': 'Board',
+        'size': (0, 0, ),
+        'cell_list': None,
+        'cell_dict': None,
+        'center_row_prefix': '',
+    }
 
     def __init__(self, *, size):
         cols, rows = size
@@ -131,7 +118,7 @@ class Board(SlotsDict):
         for index, cell in enumerate(cell_list):
             cell.index = index
         super().__init__(
-            klass='Board', size=size,
+            size=size,
             cell_list=cell_list, cell_dict=None,
             center_row_prefix=(None if rows % 2 == 0 else rows // 2 + 1))
         self.cell_dict = {cell.id: cell for cell in cell_list}
@@ -143,10 +130,17 @@ class Board(SlotsDict):
                 for cell in self.cell_list]))
 
 
-class UnitPrototype(SlotsDict):
-    __slots__ = (
-        'klass', 'id', 'cost', 'attack', 'power', 'defense', 'skill_id_list',
-        'tag_list', )
+class UnitPrototype(metaclass=SlotsDictMeta):
+    __slotsdict__ = {
+        'klass': 'UnitPrototype',
+        'id': '$default_id',
+        'cost': 0,
+        'attack': 0,
+        'power': 0,
+        'defense': 0,
+        'skill_id_list': (),
+        'tag_list': (),
+    }
 
 
 def load_unitprototype_from_file(filepath):
@@ -163,8 +157,13 @@ def load_unitprototype_from_file(filepath):
     }
 
 
-class SpellPrototype(SlotsDict):
-    __slots__ = ('klass', 'id', 'cost', 'target', )
+class SpellPrototype(metaclass=SlotsDictMeta):
+    __slotsdict__ = {
+        'klass': 'SpellPrototype',
+        'id': '$default_id',
+        'cost': 0,
+        'target': ''
+    }
 
 
 def load_spellprototype_from_file(filepath):
@@ -176,22 +175,21 @@ def load_spellprototype_from_file(filepath):
     }
 
 
-class GameState(SlotsDict):
-    __slots__ = ('klass', 'nth_turn', 'current_player', 'current_player_id', )
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        for key, value in {
-            'klass': 'GameState',
-            'nth_turn': None,
-            'current_player': None,
-            'current_player_id': None,
-        }.items():
-            self.setdefault(key, value)
+class GameState(metaclass=SlotsDictMeta):
+    __slotsdict__ = {
+        'klass': 'GameState',
+        'nth_turn': None,
+        'current_player': None,
+        'current_player_id': None,
+    }
 
 
-class Card(SlotsDict):
-    __slots__ = ('klass', 'id', 'prototype_id', )
+class Card(metaclass=SlotsDictMeta):
+    __slotsdict__ = {
+        'klass': 'Card',
+        'id': '$default_id',
+        'prototype_id': '$default_id',
+    }
 
 
 class CardFactory:
@@ -211,10 +209,23 @@ class CardFactory:
         return card
 
 
-class UnitInstance(SlotsDict):
-    __slots__ = UnitPrototype.__slots__ + (
-        'prototype_id', 'player_id', 'n_turns_until_movable',
-        'o_power', 'o_attack', 'o_defense')
+class UnitInstance(metaclass=SlotsDictMeta):
+    __slotsdict__ = {
+        'klass': 'UnitInstance',
+        'id': '$default_id',
+        'cost': 0,
+        'attack': 0,
+        'power': 0,
+        'defense': 0,
+        'skill_id_list': (),
+        'tag_list': (),
+        'prototype_id': '$default_id',
+        'player_id': '$default_id',
+        'n_turns_until_movable': 0,
+        'o_power': 0,
+        'o_attack': 0,
+        'o_defense': 0,
+    }
 
 
 class UnitInstanceFactory:
@@ -412,6 +423,7 @@ class Server:
                 id=communicator.player_id,
                 index=index,
                 color=color,
+                tefuda=[],
                 deck=func_create_deck(
                     player_id=communicator.player_id,
                     card_factory=card_factory,
