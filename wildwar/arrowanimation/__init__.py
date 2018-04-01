@@ -2,4 +2,3 @@
 
 from .playstretchanimation import play_stretch_animation
 from .outlinedpolygon import OutlinedPolygon
-from .filledpolygon import FilledPolygon
