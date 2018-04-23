@@ -2,12 +2,24 @@
 
 from collections.abc import MutableMapping
 from abc import ABCMeta
+from collections import ChainMap
 
 import json
 
 
-class SlotsDict(MutableMapping):
-    __slots__ = ()
+class SlotsDictMeta(ABCMeta):
+
+    def __new__(cls, name, bases, attributes):
+        merged_slotsdict = ChainMap(
+            attributes['__slotsdict__'] if '__slotsdict__' in attributes else {},
+            *[base.__slotsdict__ for base in bases if hasattr(base, '__slotsdict__')])
+        attributes['__slots__'] = tuple(merged_slotsdict.keys())
+        attributes['__slotsdict__'] = {**merged_slotsdict}
+        return super().__new__(cls, name, bases, attributes)
+
+
+class SlotsDict(MutableMapping, metaclass=SlotsDictMeta):
+    __slotsdict__ = {}
 
     @property
     def __class__(self):
@@ -57,12 +69,3 @@ class SlotsDict(MutableMapping):
 
     def __str__(self):
         return json.dumps(self, indent=2)
-
-
-class SlotsDictMeta(ABCMeta):
-
-    def __new__(cls, name, bases, attributes):
-        if len(bases) != 0:
-            raise Exception('SuperClassは指定できません。強制的にSlotsDictになります。')
-        attributes['__slots__'] = tuple(attributes['__slotsdict__'].keys())
-        return super().__new__(cls, name, (SlotsDict, ), attributes)

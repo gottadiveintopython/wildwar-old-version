@@ -6,9 +6,9 @@ r'''__slots__によって作れる属性が制限された辞書
 
 使い方:
 
-from slotsdict import SlotsDictMeta
+from slotsdict import SlotsDict
 
-class Book(metaclass=SlotsDictMeta):
+class Book(SlotsDict):
     # 許可する辞書のKeyとその既定値
     __slotsdict__ = {
         'title': 'default title',
@@ -30,18 +30,6 @@ del book['title']  # 削除はできずExceptionが投げられる
 
 book.weight = 10     # __slotsdict__に無いので AttributeError
 book['weight'] = 10  # 辞書としてアクセスした為 KeyError
-
-
-
-制約:
-
-派生Classは作れない
-
-class PhotoBook(Book):  # Exceptionが投げられる
-    pass
 '''
 
-try:
-    from .slotsdict import SlotsDictMeta
-except ImportError:
-    from slotsdict import SlotsDictMeta
+from .slotsdict import SlotsDict

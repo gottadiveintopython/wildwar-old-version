@@ -12,7 +12,7 @@ import yaml
 from attrdict import AttrDict, AttrMap
 
 import setup_logging
-from slotsdict import SlotsDictMeta
+from slotsdict import SlotsDict
 logger = setup_logging.get_logger(__name__)
 
 
@@ -26,7 +26,7 @@ class GameEnd(Exception):
         self.result = result
 
 
-class Command(metaclass=SlotsDictMeta):
+class Command(SlotsDict):
     __slotsdict__ = {
         'klass': 'Command',
         'type': None,
@@ -35,7 +35,7 @@ class Command(metaclass=SlotsDictMeta):
     }
 
 
-class Player(metaclass=SlotsDictMeta):
+class Player(SlotsDict):
     __slotsdict__ = {
         'klass': 'Player',
         'id': '$default_id',
@@ -68,7 +68,7 @@ class Player(metaclass=SlotsDictMeta):
             return card
 
 
-class Cell(metaclass=SlotsDictMeta):
+class Cell(SlotsDict):
     __slotsdict__ = {
         'klass': 'Cell',
         'id': '$default_id',
@@ -97,7 +97,7 @@ class Cell(metaclass=SlotsDictMeta):
             return previous_uniti
 
 
-class Board(metaclass=SlotsDictMeta):
+class Board(SlotsDict):
     __slotsdict__ = {
         'klass': 'Board',
         'size': (0, 0, ),
@@ -130,7 +130,7 @@ class Board(metaclass=SlotsDictMeta):
                 for cell in self.cell_list]))
 
 
-class UnitPrototype(metaclass=SlotsDictMeta):
+class UnitPrototype(SlotsDict):
     __slotsdict__ = {
         'klass': 'UnitPrototype',
         'id': '$default_id',
@@ -157,7 +157,7 @@ def load_unitprototype_from_file(filepath):
     }
 
 
-class SpellPrototype(metaclass=SlotsDictMeta):
+class SpellPrototype(SlotsDict):
     __slotsdict__ = {
         'klass': 'SpellPrototype',
         'id': '$default_id',
@@ -175,7 +175,7 @@ def load_spellprototype_from_file(filepath):
     }
 
 
-class GameState(metaclass=SlotsDictMeta):
+class GameState(SlotsDict):
     __slotsdict__ = {
         'klass': 'GameState',
         'nth_turn': None,
@@ -184,7 +184,7 @@ class GameState(metaclass=SlotsDictMeta):
     }
 
 
-class Card(metaclass=SlotsDictMeta):
+class Card(SlotsDict):
     __slotsdict__ = {
         'klass': 'Card',
         'id': '$default_id',
@@ -209,7 +209,7 @@ class CardFactory:
         return card
 
 
-class UnitInstance(metaclass=SlotsDictMeta):
+class UnitInstance(SlotsDict):
     __slotsdict__ = {
         'klass': 'UnitInstance',
         'id': '$default_id',

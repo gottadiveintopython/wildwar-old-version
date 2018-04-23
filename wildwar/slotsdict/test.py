@@ -3,10 +3,10 @@
 import json
 import unittest
 
-from slotsdict import SlotsDictMeta
+from slotsdict import SlotsDict
 
 
-class Person(metaclass=SlotsDictMeta):
+class Person(SlotsDict):
     __slotsdict__ = dict(
         name='<default_name>',
         age=0,
@@ -14,7 +14,7 @@ class Person(metaclass=SlotsDictMeta):
     )
 
 
-class Team(metaclass=SlotsDictMeta):
+class Team(SlotsDict):
     __slotsdict__ = dict(
         name='<default_team_name>',
         members=[],
@@ -71,11 +71,12 @@ class SlotsDictTest(unittest.TestCase):
             del obj['sex']
 
         # ----------------------------------------------------------------------
-        # 継承
+        # 菱型継承
         # ----------------------------------------------------------------------
-        with self.assertRaises(Exception):
-            class Villager(Person):
-                pass
+        class Villager(Person): pass
+        class Student(Person): pass
+        with self.assertRaises(TypeError):
+            class Both(Villager, Student): pass
 
     def test_exception_msg(self):
         print('---- Check Error Message (START) ----')
