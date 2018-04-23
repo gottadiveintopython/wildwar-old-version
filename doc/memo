@@ -72,5 +72,5 @@ rule_options
     board_size: (cols, rows)
     how_to_decide_player_order: "random" or "iteration"
     n_yamafuda_init
-    n_tefuda_init
-    max_tefuda
+    init_n_tefuda
+    max_n_tefuda

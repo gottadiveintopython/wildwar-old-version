@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-__all__ = ('Server', 'RandomDeckCreater', )
+__all__ = ('Server', 'Rule', )
 
 import os.path
 import random
@@ -14,6 +14,18 @@ from attrdict import AttrDict, AttrMap
 import setup_logging
 from slotsdict import SlotsDict
 logger = setup_logging.get_logger(__name__)
+
+
+class Rule(SlotsDict):
+    __slotsdict__ = {
+        'init_n_tefuda': 4,
+        'max_n_tefuda': 8,
+        'board_size': (5, 7,),
+        'timeout': 20,
+        'how_to_decide_player_order': "random",
+        'func_create_deck': None,
+        'func_judge': None,
+    }
 
 
 class TurnEnd(Exception):
@@ -325,39 +337,23 @@ def _load_untrusted_json(json_str):
 
 class Server:
 
-    # def __init__(
-    #         self, *,
-    #         communicators, viewer,
-    #         database_dir, board_size, timeout, how_to_decide_player_order,
-    #         n_tefuda_init, max_tefuda,
-    #         func_judge=None, func_create_deck):
-    def __init__(
-            self, *, communicators, viewer=None, database_dir, board_size, timeout,
-            how_to_decide_player_order, n_tefuda_init, max_tefuda,
-            func_judge=None, func_create_deck):
+    def __init__(self, *, communicators, viewer=None, database_dir, rule):
         r'''引数解説
 
         communicators  # Playerと通信しあう窓口
-        viewer  # 観戦者へ情報を送るだけの窓口
-        database_dir  # GameのDatabseであるunitp.yamlがあるDirectory
-        board_size  # (横のマス目の数, 縦のマス目の数, )
-        timeout  # Turn毎の制限時間
-        how_to_decide_player_order
-        n_tefuda_init  # 手札の初期枚数
-        max_tefuda  # 手札の上限枚数
-        func_judge  # 勝敗判定を行うcallable
-        func_create_deck  # 山札を作るcallable
+        viewer         # 観戦者へ情報を送るだけの窓口
+        database_dir   # GameのDatabseであるunitp.yamlがあるDirectory
+        rule           # Gameの規則
         '''
         self.viewer = viewer or AttrDict(
             klass='DummyViewer',
             player_id='$dummy',
             send=(lambda __: None))
-        self.board_size = board_size
-        self.timeout = timeout
-        self.n_tefuda_init = n_tefuda_init
-        self.max_tefuda = max_tefuda
-        self.func_judge = (
-            _func_judge_default if func_judge is None else func_judge)
+        self.rule = rule = Rule(rule)
+        if rule.func_judge is None:
+            rule.func_judge = _func_judge_default
+        if rule.func_create_deck is None:
+            rule.func_create_deck = RandomDeckCreater(n_cards=20, unit_ratio=1.0)
         self.gamestate = GameState()
 
         N_PLAYERS = 2
@@ -366,12 +362,12 @@ class Server:
         # check arguments
         # ----------------------------------------------------------------------
         assert os.path.isdir(database_dir)
-        assert 3 <= board_size[0] <= 9
-        assert 7 <= board_size[1] <= 9
-        assert timeout > 0
-        assert how_to_decide_player_order in ('iteration', 'random', )
-        assert n_tefuda_init >= 0
-        assert max_tefuda >= 1
+        assert 3 <= rule.board_size[0] <= 9
+        assert 7 <= rule.board_size[1] <= 9
+        assert rule.timeout > 0
+        assert rule.how_to_decide_player_order in ('iteration', 'random', )
+        assert rule.init_n_tefuda >= 0
+        assert rule.max_n_tefuda >= 1
 
         # ----------------------------------------------------------------------
         # Prototype
@@ -410,9 +406,9 @@ class Server:
         # ----------------------------------------------------------------------
         self.communicator_list = communicator_list = list(communicators)
         assert len(communicator_list) == N_PLAYERS
-        if how_to_decide_player_order == 'iteration':
+        if rule.how_to_decide_player_order == 'iteration':
             pass
-        elif how_to_decide_player_order == 'random':
+        elif rule.how_to_decide_player_order == 'random':
             random.shuffle(communicator_list)
         else:
             raise ValueError('Unknown method to decide player order')
@@ -424,7 +420,7 @@ class Server:
                 index=index,
                 color=color,
                 tefuda=[],
-                deck=func_create_deck(
+                deck=rule.func_create_deck(
                     player_id=communicator.player_id,
                     card_factory=card_factory,
                     unitp_dict=unitp_dict,
@@ -436,8 +432,8 @@ class Server:
         self.player_list[0].update(
             is_black=True,
             honjin_prefix='b',
-            first_row_prefix=str(board_size[1] - 3),
-            second_row_prefix=str(board_size[1] - 4))
+            first_row_prefix=str(rule.board_size[1] - 3),
+            second_row_prefix=str(rule.board_size[1] - 4))
         self.player_list[1].update(
             is_black=False,
             honjin_prefix='w',
@@ -447,7 +443,7 @@ class Server:
         # ----------------------------------------------------------------------
         # Board
         # ----------------------------------------------------------------------
-        self.board = Board(size=board_size)
+        self.board = Board(size=rule.board_size)
         # print(self.board)
 
     def run(self):
@@ -477,7 +473,7 @@ class Server:
     def corerun(self):
         unitp_dict = self.unitp_dict
         spellp_dict = self.spellp_dict
-        board_size = self.board_size
+        rule = self.rule
         player_list = self.player_list
         gamestate = self.gamestate
 
@@ -491,16 +487,16 @@ class Server:
             params={
                 'unitp_dict': unitp_dict,
                 'spellp_dict': spellp_dict,
-                'timeout': self.timeout,
-                'board_size': board_size,
+                'timeout': rule.timeout,
+                'board_size': rule.board_size,
                 'player_list': [player.to_public() for player in player_list], }
         )
 
         # ----------------------------------------------------------------------
-        # 両Playerともに手札をn_tefuda_init枚引く
+        # 両Playerともに手札をinit_n_tefuda枚引く
         # ----------------------------------------------------------------------
         for player in player_list:
-            for i in range(self.n_tefuda_init):
+            for i in range(rule.init_n_tefuda):
                 yield from self.draw_card(player)
 
         # ----------------------------------------------------------------------
@@ -508,7 +504,7 @@ class Server:
         # ----------------------------------------------------------------------
 
         # 通信の遅延や時計の精度を考慮して実際の制限時間は少し多めにする
-        actual_timeout = self.timeout + 5
+        actual_timeout = rule.timeout + 5
 
         # Main Loop
         try:
@@ -555,7 +551,7 @@ class Server:
                                 continue
                             else:
                                 yield from command_handler(params=command.params)
-                                result = self.func_judge(
+                                result = rule.func_judge(
                                     board=self.board,
                                     player_list=self.player_list)
                                 if result:
@@ -764,7 +760,7 @@ class Server:
 
         # Unitの移動可能範囲内か確認
         vector = _calculate_vector(
-            cell_from=cell_from, cell_to=cell_to, cols=self.board_size[0])
+            cell_from=cell_from, cell_to=cell_to, cols=self.rule.board_size[0])
         movement = _calculate_movement(vector)
         # print('vector:', vector, '    移動量:', movement)
         MAX_MOVEMENT = 1
