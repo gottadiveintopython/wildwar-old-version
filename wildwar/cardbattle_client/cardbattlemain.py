@@ -374,7 +374,7 @@ class CardBattleMain(Factory.RelativeLayout):
     timer = ObjectProperty()
     # gamestate = ObjectProperty()
 
-    def __init__(self, *, communicator, iso639, **kwargs):
+    def __init__(self, *, communicator, lang, **kwargs):
         self.gamestate = GameState(
             nth_turn=0, is_myturn=False)
         self.uioptions = UIOptions(
@@ -385,7 +385,7 @@ class CardBattleMain(Factory.RelativeLayout):
         self._communicator = communicator
         self._player_id = communicator.player_id
         self.timer.bind(int_current_time=self.on_timer_tick)
-        self._iso639 = iso639
+        self._lang = lang
         self._localize_str = lambda s: s  # この関数は後に実装する
         self.card_widget_layer.bind(on_operation_drag=self.on_operation_drag)
         self._command_recieving_trigger = Clock.create_trigger(
@@ -544,14 +544,14 @@ class CardBattleMain(Factory.RelativeLayout):
 
         # UnitPrototypeの辞書
         with open(
-                resource_find('unit_prototype_{}.yaml'.format(self._iso639)),
+                resource_find('unit_prototype_{}.yaml'.format(self._lang)),
                 'rt', encoding='utf-8') as reader:
             self.unitp_dict = CardBattleMain._merge_database(
                 params.unitp_dict,
                 yaml.load(reader))
         # SpellPrototypeの辞書
         with open(
-                resource_find('spell_prototype_{}.yaml'.format(self._iso639)),
+                resource_find('spell_prototype_{}.yaml'.format(self._lang)),
                 'rt', encoding='utf-8') as reader:
             self.spellp_dict = CardBattleMain._merge_database(
                 params.spellp_dict,
@@ -561,7 +561,7 @@ class CardBattleMain(Factory.RelativeLayout):
             **self.unitp_dict, **self.spellp_dict, }
         # Skillの辞書
         with open(
-                resource_find('skill_{}.yaml'.format(self._iso639)),
+                resource_find('skill_{}.yaml'.format(self._lang)),
                 'rt', encoding='utf-8') as reader:
             self.skill_dict = {
                 key: AttrDict(type='Skill', id=key, **value)
@@ -569,7 +569,7 @@ class CardBattleMain(Factory.RelativeLayout):
             }
         # Tagの翻訳用辞書
         with open(
-                resource_find('tag_translation_{}.yaml'.format(self._iso639)),
+                resource_find('tag_translation_{}.yaml'.format(self._lang)),
                 'rt', encoding='utf-8') as reader:
             self.tag_translation_dict = yaml.load(reader)
 

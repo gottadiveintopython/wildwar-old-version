@@ -143,7 +143,7 @@ class UnitPrototype(SlotsDict):
     }
 
 
-def load_unitprototype_from_file(filepath):
+def _load_unitprototype_from_file(filepath):
     with open(filepath, 'rt', encoding='utf-8') as reader:
         dictionary = yaml.load(reader)
     for prototype in dictionary.values():
@@ -166,7 +166,7 @@ class SpellPrototype(SlotsDict):
     }
 
 
-def load_spellprototype_from_file(filepath):
+def _load_spellprototype_from_file(filepath):
     with open(filepath, 'rt', encoding='utf-8') as reader:
         dictionary = yaml.load(reader)
     return {
@@ -276,7 +276,7 @@ class RandomDeckCreater:
         return deck
 
 
-def func_judge_default(*, board, player_list, **kwargs):
+def _func_judge_default(*, board, player_list, **kwargs):
     cols = board.size[0]
     black_info = {
         'goal': board.cell_list[:cols],  # 先手のgoalは後手の本陣
@@ -306,7 +306,7 @@ def func_judge_default(*, board, player_list, **kwargs):
     return r
 
 
-def load_untrusted_json(json_str):
+def _load_untrusted_json(json_str):
     try:
         obj = json.loads(json_str, parse_int=int, parse_constant=bool)
         if (
@@ -357,7 +357,7 @@ class Server:
         self.n_tefuda_init = n_tefuda_init
         self.max_tefuda = max_tefuda
         self.func_judge = (
-            func_judge_default if func_judge is None else func_judge)
+            _func_judge_default if func_judge is None else func_judge)
         self.gamestate = GameState()
 
         N_PLAYERS = 2
@@ -376,7 +376,7 @@ class Server:
         # ----------------------------------------------------------------------
         # Prototype
         # ----------------------------------------------------------------------
-        unitp_dict = load_unitprototype_from_file(
+        unitp_dict = _load_unitprototype_from_file(
             os.path.join(database_dir, 'unit_prototype.yaml')
         )
         # test用に適当にStatsを振る
@@ -388,7 +388,7 @@ class Server:
                 defense=random.choice(vlist),
                 attack=random.choice(vlist),)
         #
-        spellp_dict = load_spellprototype_from_file(
+        spellp_dict = _load_spellprototype_from_file(
             os.path.join(database_dir, 'spell_prototype.yaml')
         )
         if set(unitp_dict.keys()) & set(spellp_dict.keys()):
@@ -537,7 +537,7 @@ class Server:
                     while True:
                         current_time = time.time()
                         if current_time < time_limit:
-                            command = load_untrusted_json(
+                            command = _load_untrusted_json(
                                 communicator.recieve(timeout=time_limit - current_time))
                             if command is None:
                                 continue

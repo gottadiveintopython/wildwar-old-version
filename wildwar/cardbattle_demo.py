@@ -74,8 +74,8 @@ class DemoApp(App):
             # touch.pop()
         root.on_touch_down = on_touch_down
 
-        root.add_widget(CardBattleMain(communicator=p1_to_s, iso639='ja'))
-        root.add_widget(CardBattleMain(communicator=p2_to_s, iso639='ja'))
+        root.add_widget(CardBattleMain(communicator=p1_to_s, lang='ja'))
+        root.add_widget(CardBattleMain(communicator=p2_to_s, lang='ja'))
         uioption = root.children[0].uioptions
         uioption.play_bgm = False
         uioption.play_se = False
